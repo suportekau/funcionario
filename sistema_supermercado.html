@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sistema Supermercado LEV+</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.container {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  text-align: center;
+  width: 360px;
+}
+h2 { margin-bottom: 20px; }
+button {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:hover { background-color: #0056b3; }
+.btn-voltar { background-color: #6c757d; }
+.btn-voltar:hover { background-color: #565e64; }
+input, select { width: 90%; padding: 8px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; text-transform: uppercase; }
+.hidden { display: none; }
+.lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+.item { display: flex; justify-content: space-between; align-items: center; background: #f1f3f5; padding: 6px 8px; border-radius: 6px; margin: 4px 0; transition: background 0.2s; }
+.item:hover { background-color: #e0e3e7; }
+.btn-excluir { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: background 0.2s, transform 0.1s; }
+.btn-excluir:hover { background-color: #b02a37; transform: scale(1.1); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="container" id="loginContainer">
+  <h2>Login</h2>
+  <input type="text" id="loginUsuario" placeholder="Usuário" /><br />
+  <input type="password" id="loginSenha" placeholder="Senha" /><br />
+  <button onclick="fazerLogin()">Entrar</button>
+</div>
+
+<!-- MENU PRINCIPAL -->
+<div class="container hidden" id="menu">
+  <h2>Menu Principal</h2>
+  <button onclick="abrirCadastro()">Cadastro</button>
+  <button onclick="abrirLancamento()">Lançamento</button>
+  <button onclick="sair()">Sair</button>
+</div>
+
+<!-- MENU CADASTRO -->
+<div class="container hidden" id="menuCadastro">
+  <h2>Cadastro</h2>
+  <button onclick="abrirInserir()">Inserir</button>
+  <button onclick="abrirConsultar()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
+
+<!-- INSERIR CADASTRO -->
+<div class="container hidden" id="inserir">
+  <h2>Inserir / Editar Funcionário</h2>
+  <input type="hidden" id="idEditando" />
+  <input type="text" id="nome" placeholder="Nome" /><br />
+  <input type="text" id="cargo" placeholder="Cargo" /><br />
+  <button onclick="salvarCadastro()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- CONSULTAR CADASTRO -->
+<div class="container hidden" id="consultar">
+  <h2>Consultar Funcionários</h2>
+  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
+  <div class="lista" id="listaCadastros"></div>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- MENU LANÇAMENTO -->
+<div class="container hidden" id="menuLancamento">
+  <h2>Lançamento</h2>
+  <button onclick="abrirInserirLancamento()">Inserir</button>
+  <button onclick="abrirConsultarLancamento()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
+
+<!-- INSERIR LANÇAMENTO -->
+<div class="container hidden" id="inserirLancamento">
+  <h2>Inserir / Editar Lançamento</h2>
+  <input type="hidden" id="idLancEditando" />
+  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
+  <datalist id="nomesCadastradosLanc"></datalist>
+  <input type="date" id="dataLanc" />
+  <select id="tipoLanc">
+    <option value="">Selecione Tipo</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
+  </select>
+  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
+  <button onclick="salvarLancamento()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<!-- CONSULTAR LANÇAMENTO -->
+<div class="container hidden" id="consultarLancamento">
+  <h2>Consultar Lançamentos</h2>
+  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
+  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
+  <div class="lista" id="listaLancamentos"></div>
+  <button onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function fazerLogin(){
+  const usuario = document.getElementById('loginUsuario').value.trim().toUpperCase();
+  const senha = document.getElementById('loginSenha').value.trim();
+  if(usuario==='ADMIN' && senha==='1234'){
+    document.getElementById('loginContainer').classList.add('hidden');
+    document.getElementById('menu').classList.remove('hidden');
+    alert('Login bem-sucedido!');
+  } else {
+    alert('Usuário ou senha incorretos!');
+  }
+}
+function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function sair(){ alert('Saindo do sistema...'); location.reload(); }
+</script>
+</body>
+</html>
