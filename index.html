@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sistema Simples com Login</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.container {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  text-align: center;
+  width: 360px;
+}
+h2 { margin-bottom: 20px; }
+button {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:hover { background-color: #0056b3; }
+.btn-voltar { background-color: #6c757d; }
+.btn-voltar:hover { background-color: #565e64; }
+input, select { width: 90%; padding: 8px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; text-transform: uppercase; }
+.hidden { display: none; }
+.lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+.item { display: flex; justify-content: space-between; align-items: center; background: #f1f3f5; padding: 6px 8px; border-radius: 6px; margin: 4px 0; transition: background 0.2s; }
+.item:hover { background-color: #e0e3e7; }
+.btn-excluir { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: background 0.2s, transform 0.1s; }
+.btn-excluir:hover { background-color: #b02a37; transform: scale(1.1); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="container" id="loginContainer">
+  <h2>Login</h2>
+  <input type="text" id="loginUsuario" placeholder="Usuário" /><br />
+  <input type="password" id="loginSenha" placeholder="Senha" /><br />
+  <button onclick="fazerLogin()">Entrar</button>
+</div>
+
+<!-- MENU PRINCIPAL -->
+<div class="container hidden" id="menu">
+  <h2>Menu Principal</h2>
+  <button onclick="abrirCadastro()">Cadastro</button>
+  <button onclick="abrirLancamento()">Lançamento</button>
+  <button onclick="sair()">Sair</button>
+</div>
+
+<!-- Restante do seu sistema continua igual (menuCadastro, inserir, consultar, menuLancamento, etc.) -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+// ===== LOGIN =====
+function fazerLogin(){
+  const usuario = document.getElementById('loginUsuario').value.trim().toUpperCase();
+  const senha = document.getElementById('loginSenha').value.trim();
+  
+  // Usuário fixo
+  if(usuario==='ADMIN' && senha==='1234'){
+    document.getElementById('loginContainer').classList.add('hidden');
+    document.getElementById('menu').classList.remove('hidden');
+    alert('Login bem-sucedido!');
+  } else {
+    alert('Usuário ou senha incorretos!');
+  }
+}
+
+// ===== MAIÚSCULAS =====
+document.addEventListener('input', e => {
+  if(e.target.tagName==='INPUT' && e.target.type==='text') e.target.value = e.target.value.toUpperCase();
+});
+// ===== ENTER MUDA DE CAMPO =====
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter'){
+    const form = Array.from(document.querySelectorAll('input, select, button')).filter(el=>el.offsetParent!==null && !el.disabled);
+    const idx=form.indexOf(e.target);
+    if(idx>-1 && idx<form.length-1){ e.preventDefault(); form[idx+1].focus(); }
+  }
+});
+
+// ===== NAVEGAÇÃO =====
+function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+function sair(){ alert('Saindo do sistema...'); location.reload(); }
+
+// O resto do código do seu sistema (cadastro, lançamentos, PDF) continua igual...
+</script>
+
+</body>
+</html>
+
+<!-- MENU CADASTRO -->
+<div class="container hidden" id="menuCadastro">
+  <h2>Cadastro</h2>
+  <button onclick="abrirInserir()">Inserir</button>
+  <button onclick="abrirConsultar()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
+
+<!-- INSERIR CADASTRO -->
+<div class="container hidden" id="inserir">
+  <h2>Inserir / Editar Funcionário</h2>
+  <input type="hidden" id="idEditando" />
+  <input type="text" id="nome" placeholder="Nome" /><br />
+  <input type="text" id="cargo" placeholder="Cargo" /><br />
+  <button onclick="salvarCadastro()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- CONSULTAR CADASTRO -->
+<div class="container hidden" id="consultar">
+  <h2>Consultar Funcionários</h2>
+  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
+  <div class="lista" id="listaCadastros"></div>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- MENU LANÇAMENTO -->
+<div class="container hidden" id="menuLancamento">
+  <h2>Lançamento</h2>
+  <button onclick="abrirInserirLancamento()">Inserir</button>
+  <button onclick="abrirConsultarLancamento()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
+
+<!-- INSERIR LANÇAMENTO -->
+<div class="container hidden" id="inserirLancamento">
+  <h2>Inserir / Editar Lançamento</h2>
+  <input type="hidden" id="idLancEditando" />
+  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
+  <datalist id="nomesCadastradosLanc"></datalist>
+  <input type="date" id="dataLanc" />
+  <select id="tipoLanc">
+    <option value="">Selecione Tipo</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
+  </select>
+  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
+  <button onclick="salvarLancamento()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<!-- CONSULTAR LANÇAMENTO -->
+<div class="container hidden" id="consultarLancamento">
+  <h2>Consultar Lançamentos</h2>
+  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
+  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
+  <div class="lista" id="listaLancamentos"></div>
+  <button onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+// ===== MAIÚSCULAS =====
+document.addEventListener('input', e => {
+  if(e.target.tagName==='INPUT' && e.target.type==='text') e.target.value = e.target.value.toUpperCase();
+});
+// ===== ENTER MUDA DE CAMPO =====
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter'){
+    const form = Array.from(document.querySelectorAll('input, select, button')).filter(el=>el.offsetParent!==null && !el.disabled);
+    const idx=form.indexOf(e.target);
+    if(idx>-1 && idx<form.length-1){ e.preventDefault(); form[idx+1].focus(); }
+  }
+});
+
+// ===== NAVEGAÇÃO =====
+function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function sair(){ alert('Saindo do sistema...'); location.reload(); }
+
+// ===== CADASTRO =====
+const nomeInput = document.getElementById('nome');
+const cargoInput = document.getElementById('cargo');
+const idEditandoInput = document.getElementById('idEditando');
+
+function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+
+function salvarCadastro(){
+  const nome = nomeInput.value.trim();
+  const cargo = cargoInput.value.trim();
+  if(!nome||!cargo)return alert('Preencha todos os campos.');
+  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+  const idEditando = idEditandoInput.value;
+  if(idEditando){
+    const idx=cadastros.findIndex(c=>c.id==idEditando);
+    if(idx>-1){ cadastros[idx].nome=nome; cadastros[idx].cargo=cargo; }
+  }else{
+    const novoId=cadastros.length?cadastros[cadastros.length-1].id+1:1;
+    cadastros.push({id:novoId,nome,cargo});
+  }
+  localStorage.setItem('cadastros',JSON.stringify(cadastros));
+  limparCamposCadastro();
+  voltarCadastro();
+}
+
+function mostrarCadastros(){
+  const lista=document.getElementById('listaCadastros');
+  const filtro=document.getElementById('filtro').value.trim().toUpperCase();
+  lista.innerHTML='';
+  let cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  if(filtro) cadastros=cadastros.filter(c=>c.nome.toUpperCase().includes(filtro));
+  cadastros.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<span ondblclick="editarCadastro(${c.id})" title="Dê duplo clique para editar"><strong>${c.nome}</strong> - ${c.cargo}</span>
+      <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
+    lista.appendChild(div);
+  });
+}
+
+function editarCadastro(id){
+  const cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  const c=cadastros.find(c=>c.id===id);
+  if(!c)return;
+  esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+  idEditandoInput.value=c.id; nomeInput.value=c.nome; cargoInput.value=c.cargo;
+}
+
+function excluirCadastro(id){
+  if(!confirm('Excluir este cadastro?'))return;
+  let cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  cadastros=cadastros.filter(c=>c.id!==id);
+  localStorage.setItem('cadastros',JSON.stringify(cadastros));
+  mostrarCadastros();
+}
+
+function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
+
+// ===== LANÇAMENTOS =====
+const nomeLanc=document.getElementById('nomeLanc');
+const dataLanc=document.getElementById('dataLanc');
+const tipoLanc=document.getElementById('tipoLanc');
+const valorLanc=document.getElementById('valorLanc');
+const idLancEditando=document.getElementById('idLancEditando');
+
+function abrirInserirLancamento(){
+  const cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  if(cadastros.length===0){
+    alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
+    abrirCadastro();
+    return;
+  }
+  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+  limparCamposLancamento();
+  atualizarDatalistLanc();
+}
+function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
+
+function salvarLancamento(){
+  const nome = nomeLanc.value.trim().toUpperCase();
+  const data = dataLanc.value;
+  const tipo = tipoLanc.value;
+  const valor = parseFloat(valorLanc.value);
+  if(!nome||!data||!tipo||isNaN(valor))return alert('Preencha todos os campos corretamente.');
+  const cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  if(!cadastros.find(c=>c.nome === nome)){
+    return alert('Nome não cadastrado. Cadastre antes de lançar.');
+  }
+  let lancamentos=JSON.parse(localStorage.getItem('lancamentos'))||[];
+  const idEditando = idLancEditando.value;
+  if(idEditando){
+    const idx=lancamentos.findIndex(l=>l.id==idEditando);
+    if(idx>-1){
+      lancamentos[idx].nome=nome;
+      lancamentos[idx].data=data;
+      lancamentos[idx].tipo=tipo;
+      lancamentos[idx].valor=valor;
+    }
+  }else{
+    const novoId=lancamentos.length?lancamentos[lancamentos.length-1].id+1:1;
+    lancamentos.push({id:novoId,nome,data,tipo,valor});
+  }
+  localStorage.setItem('lancamentos',JSON.stringify(lancamentos));
+  limparCamposLancamento();
+  voltarLancamento();
+}
+
+function mostrarLancamentos(){
+  const lista=document.getElementById('listaLancamentos');
+  const filtroNome=document.getElementById('filtroLanc').value.trim().toUpperCase();
+  const filtroMesAno=document.getElementById('filtroMesAno').value;
+  lista.innerHTML='';
+  let lancamentos=JSON.parse(localStorage.getItem('lancamentos'))||[];
+  if(filtroNome) lancamentos=lancamentos.filter(l=>l.nome.toUpperCase().includes(filtroNome));
+  if(filtroMesAno) lancamentos=lancamentos.filter(l=>l.data.startsWith(filtroMesAno));
+  lancamentos.forEach(l=>{
+    const div=document.createElement('div');
+    div.className='item';
+    div.innerHTML=`<span ondblclick="editarLancamento(${l.id})" title="Dê duplo clique para editar">
+      <strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2)}
+    </span>
+    <button class="btn-excluir" onclick="excluirLancamento(${l.id})" title="Excluir">🗑️</button>`;
+    lista.appendChild(div);
+  });
+}
+
+function editarLancamento(id){
+  const lancamentos=JSON.parse(localStorage.getItem('lancamentos'))||[];
+  const l=lancamentos.find(l=>l.id===id);
+  if(!l)return;
+  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+  idLancEditando.value=l.id;
+  nomeLanc.value=l.nome;
+  dataLanc.value=l.data;
+  tipoLanc.value=l.tipo;
+  valorLanc.value=l.valor;
+}
+
+function excluirLancamento(id){
+  if(!confirm('Excluir este lançamento?'))return;
+  let lancamentos=JSON.parse(localStorage.getItem('lancamentos'))||[];
+  lancamentos=lancamentos.filter(l=>l.id!==id);
+  localStorage.setItem('lancamentos',JSON.stringify(lancamentos));
+  mostrarLancamentos();
+}
+
+function limparCamposLancamento(){
+  idLancEditando.value='';
+  nomeLanc.value='';
+  dataLanc.value='';
+  tipoLanc.value='';
+  valorLanc.value='';
+}
+
+function atualizarDatalistLanc(){
+  const datalist = document.getElementById('nomesCadastradosLanc');
+  const cadastros=JSON.parse(localStorage.getItem('cadastros'))||[];
+  datalist.innerHTML='';
+  cadastros.forEach(c=>{
+    const option=document.createElement('option');
+    option.value=c.nome;
+    datalist.appendChild(option);
+  });
+}
+
+// ===== GERAR PDF RESUMO LANÇAMENTOS =====
+async function gerarPDFResumoLancamentos(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  // Título centralizado
+  pdf.setFontSize(14);
+  pdf.setFont("helvetica", "bold");
+  const titulo = "SUPERMERCADO LEV +";
+  const tituloWidth = pdf.getTextWidth(titulo);
+  pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
+
+  // Data e hora atual à esquerda
+  const agora = new Date();
+  const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(dataHoraStr, 10, 22);
+
+  // Período (mês/ano) centralizado, se selecionado
+  const filtroMesAno = document.getElementById('filtroMesAno').value;
+  if(filtroMesAno){
+    const [ano, mes] = filtroMesAno.split('-');
+    const periodoStr = `Período: ${mes}/${ano}`;
+    const periodoWidth = pdf.getTextWidth(periodoStr);
+    pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
+  }
+
+  pdf.setFontSize(12);
+  let y = 32;
+
+  // Obter filtros e gerar resumo
+  const filtroNome = document.getElementById('filtroLanc').value.trim().toUpperCase();
+
+  let lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
+  if(filtroNome) lancamentos = lancamentos.filter(l => l.nome.toUpperCase().includes(filtroNome));
+  if(filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
+
+  // Resumo somando valores por nome
+  const resumo = {};
+  lancamentos.forEach(l => {
+    if (!resumo[l.nome]) resumo[l.nome] = 0;
+    resumo[l.nome] += l.valor;
+  });
+
+  const nomesOrdenados = Object.keys(resumo).sort();
+
+  nomesOrdenados.forEach(nome => {
+    if (y > 280) {
+      pdf.addPage();
+      y = 20;
+    }
+
+    const valorFormatado = "R$ " + resumo[nome].toFixed(2);
+
+    const leftX = 10;
+    const rightX = pageWidth - 10;
+
+    const nomeWidth = pdf.getTextWidth(nome);
+    const valorWidth = pdf.getTextWidth(valorFormatado);
+
+    // Calcula quantidade de pontos para preencher o espaço entre nome e valor
+    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
+    const dotWidth = pdf.getTextWidth('.');
+    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
+    const dots = '.'.repeat(dotsCount);
+
+    // Monta a linha
+    const linha = nome + ' ' + dots + ' ' + valorFormatado;
+
+    pdf.text(linha, leftX, y);
+
+    y += 10;
+  });
+
+  pdf.save("Resumo_Lancamentos_SUPERMERCADO_LEV+.pdf");
+}
+</script>
+
+</body>
+</html>
