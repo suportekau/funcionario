@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários</title>
+<title>Sistema Simples - Funcionários (Firebase)</title>
 <style>
   /* Visual igual ao seu, porém responsivo */
   body {
@@ -62,7 +62,7 @@
 
   .hidden { display: none; }
 
-  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+  .lista { text-align: left; margin-top: 10px; max-height: 300px; overflow-y: auto; }
 
   .item {
     display: flex;
@@ -82,10 +82,15 @@
   }
   .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
 
+  .row { display:flex; gap:8px; align-items:center; }
+  .small { width:48%; }
+
   @media (max-width: 400px) {
     h2 { font-size: 1.2em; }
     button { font-size: 15px; padding: 10px; }
     input, select, textarea { font-size: 15px; padding: 8px; }
+    .row { flex-direction: column; }
+    .small { width:100%; }
   }
 </style>
 
@@ -171,330 +176,460 @@
   <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
 </div>
 
-<script>
-/* -------------------------
-   Foco inicial no Usuário
-   ------------------------- */
-window.addEventListener('load', () => {
-  const u = document.getElementById('loginUsuario');
-  if (u) { u.focus(); u.select && u.select(); }
-});
+<!-- FIREBASE + LÓGICA -->
+<script type="module">
+  // Firebase SDK imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* -------------------------
-   Enter: navegação e executar último botão
-   - Enter avança para próximo elemento visível (input/select/button)
-   - Quando estiver no último elemento visível, Enter aciona .click() nele
-   ------------------------- */
-document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const interactive = Array.from(document.querySelectorAll('input, select, button'))
-    .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-  // find the element that is target or contains target (for button text spans etc.)
-  const target = e.target;
-  const idx = interactive.indexOf(target);
-  if (idx === -1) return; // não processa se não for um desses
-  e.preventDefault();
-  const nextIndex = idx + 1;
-  if (nextIndex < interactive.length) {
-    const next = interactive[nextIndex];
-    // se próximo for botão, focar no botão (para visual) mas não disparar automaticamente aqui
-    next.focus();
-  } else {
-    // último elemento visível -> executar clique
-    const el = interactive[idx];
-    if (el && typeof el.click === 'function') el.click();
-  }
-});
+  // -------------------------
+  // Configuração do Firebase
+  // -------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+    authDomain: "funcionarios-7c778.firebaseapp.com",
+    projectId: "funcionarios-7c778",
+    storageBucket: "funcionarios-7c778.firebasestorage.app",
+    messagingSenderId: "632364021109",
+    appId: "1:632364021109:web:f140b97a8dbc36148b4f3c",
+    measurementId: "G-2JXX10SBVG"
+  };
 
-/* -------------------------
-   Maiúsculas automáticas (JS + CSS visual)
-   - Aplica para inputs de texto e textareas
-   - Não altera inputs type=number/date/password
-   ------------------------- */
-document.addEventListener('input', function(e) {
-  const el = e.target;
-  if (!el) return;
-  const tag = el.tagName.toLowerCase();
-  if (tag === 'input') {
-    const t = el.type;
-    if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // -------------------------
+  // Utilitários DOM
+  // -------------------------
+  const nomeInput = document.getElementById('nome');
+  const cargoInput = document.getElementById('cargo');
+  const idEditandoInput = document.getElementById('idEditando');
+
+  const nomeLanc = document.getElementById('nomeLanc');
+  const dataLanc = document.getElementById('dataLanc');
+  const tipoLanc = document.getElementById('tipoLanc');
+  const valorLanc = document.getElementById('valorLanc');
+  const idLancEditando = document.getElementById('idLancEditando');
+
+  // -------------------------
+  // Foco inicial no Usuário
+  // -------------------------
+  window.addEventListener('load', () => {
+    const u = document.getElementById('loginUsuario');
+    if (u) { u.focus(); u.select && u.select(); }
+    // carregar lista inicial (opcional)
+    // mostrarCadastros(); // só carrega quando abrir a tela de consultar
+  });
+
+  // -------------------------
+  // Enter navigation (mantido)
+  // -------------------------
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const interactive = Array.from(document.querySelectorAll('input, select, button'))
+      .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
+    const target = e.target;
+    const idx = interactive.indexOf(target);
+    if (idx === -1) return;
+    e.preventDefault();
+    const nextIndex = idx + 1;
+    if (nextIndex < interactive.length) {
+      const next = interactive[nextIndex];
+      next.focus();
+    } else {
+      const el = interactive[idx];
+      if (el && typeof el.click === 'function') el.click();
+    }
+  });
+
+  // -------------------------
+  // Maiúsculas automáticas
+  // -------------------------
+  document.addEventListener('input', function(e) {
+    const el = e.target;
+    if (!el) return;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'input') {
+      const t = el.type;
+      if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
+        const pos = el.selectionStart;
+        el.value = el.value.toUpperCase();
+        try { el.setSelectionRange(pos, pos); } catch(err){}
+      }
+    } else if (tag === 'textarea') {
       const pos = el.selectionStart;
       el.value = el.value.toUpperCase();
       try { el.setSelectionRange(pos, pos); } catch(err){}
     }
-  } else if (tag === 'textarea') {
-    const pos = el.selectionStart;
-    el.value = el.value.toUpperCase();
-    try { el.setSelectionRange(pos, pos); } catch(err){}
-  }
-});
-
-/* -------------------------
-   Navegação entre telas (sem alterar lógica)
-   ------------------------- */
-function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
-function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
-function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function sair(){ alert('Saindo do sistema...'); location.reload(); }
-
-/* -------------------------
-   LOGIN (ADMIN / 1234)
-   ------------------------- */
-function fazerLogin(){
-  const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
-  const senha = (document.getElementById('loginSenha').value || '').trim();
-  if (usuario === 'ADMIN' && senha === '1234') {
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('menu').classList.remove('hidden');
-    alert('Login bem-sucedido!');
-    // garantir foco no primeiro botão do menu
-    const btn = document.querySelector('#menu button');
-    if (btn) btn.focus();
-  } else {
-    alert('Usuário ou senha incorretos!');
-    // deixar foco em usuário para facilitar
-    const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
-  }
-}
-
-/* -------------------------
-   CADASTROS
-   ------------------------- */
-const nomeInput = document.getElementById('nome');
-const cargoInput = document.getElementById('cargo');
-const idEditandoInput = document.getElementById('idEditando');
-
-function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
-function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
-
-function salvarCadastro(){
-  const nome = (nomeInput.value || '').trim();
-  const cargo = (cargoInput.value || '').trim();
-  if(!nome || !cargo) return alert('Preencha todos os campos.');
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const idEditando = idEditandoInput.value;
-  if(idEditando){
-    const idx = cadastros.findIndex(c => c.id == idEditando);
-    if(idx > -1){ cadastros[idx].nome = nome; cadastros[idx].cargo = cargo; }
-  } else {
-    const novoId = cadastros.length ? (cadastros[cadastros.length-1].id + 1) : 1;
-    cadastros.push({ id: novoId, nome, cargo });
-  }
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  limparCamposCadastro();
-  voltarCadastro();
-}
-
-function mostrarCadastros(){
-  const lista = document.getElementById('listaCadastros');
-  const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
-  lista.innerHTML = '';
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
-  cadastros.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarCadastro(${c.id})"><strong>${c.nome}</strong> - ${c.cargo}</span>
-      <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
-    lista.appendChild(div);
-  });
-}
-
-function editarCadastro(id){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const c = cadastros.find(x => x.id === id);
-  if(!c) return;
-  esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
-  idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
-}
-
-function excluirCadastro(id){
-  if(!confirm('Excluir este cadastro?')) return;
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  cadastros = cadastros.filter(c => c.id !== id);
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  mostrarCadastros();
-}
-
-function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
-
-/* -------------------------
-   LANÇAMENTOS
-   ------------------------- */
-const nomeLanc = document.getElementById('nomeLanc');
-const dataLanc = document.getElementById('dataLanc');
-const tipoLanc = document.getElementById('tipoLanc');
-const valorLanc = document.getElementById('valorLanc');
-const idLancEditando = document.getElementById('idLancEditando');
-
-function abrirInserirLancamento(){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(cadastros.length === 0){
-    alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
-    abrirCadastro();
-    return;
-  }
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  limparCamposLancamento();
-  atualizarDatalistLanc();
-}
-
-function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
-
-function salvarLancamento(){
-  const nome = (nomeLanc.value || '').trim().toUpperCase();
-  const data = dataLanc.value;
-  const tipo = tipoLanc.value;
-  const valor = parseFloat(valorLanc.value);
-  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(!cadastros.find(c => c.nome === nome)) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const idEdit = idLancEditando.value;
-  if(idEdit){
-    const idx = lancamentos.findIndex(l => l.id == idEdit);
-    if(idx > -1){ lancamentos[idx] = { id: lancamentos[idx].id, nome, data, tipo, valor }; }
-  } else {
-    const novoId = lancamentos.length ? (lancamentos[lancamentos.length-1].id + 1) : 1;
-    lancamentos.push({ id: novoId, nome, data, tipo, valor });
-  }
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  limparCamposLancamento();
-  voltarLancamento();
-}
-
-function mostrarLancamentos(){
-  const lista = document.getElementById('listaLancamentos');
-  const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  lista.innerHTML = '';
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  if(filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-  if(filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
-  lancamentos.forEach(l => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarLancamento(${l.id})"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
-      <button class="btn-excluir" onclick="excluirLancamento(${l.id})">🗑️</button>`;
-    lista.appendChild(div);
-  });
-}
-
-function editarLancamento(id){
-  const lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const l = lancamentos.find(x => x.id === id);
-  if(!l) return;
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
-}
-
-function excluirLancamento(id){
-  if(!confirm('Excluir este lançamento?')) return;
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  lancamentos = lancamentos.filter(l => l.id !== id);
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  mostrarLancamentos();
-}
-
-function limparCamposLancamento(){
-  idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
-}
-
-function atualizarDatalistLanc(){
-  const datalist = document.getElementById('nomesCadastradosLanc');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  datalist.innerHTML = '';
-  cadastros.forEach(c => {
-    const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
-  });
-}
-
-/* -------------------------
-   GERAR PDF - com pontinhos e maiúsculas
-   ------------------------- */
-async function gerarPDFResumoLancamentos(){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-
-  // Cabeçalho
-  pdf.setFontSize(14);
-  pdf.setFont("helvetica", "bold");
-  const titulo = "SUPERMERCADO LEV +";
-  const tituloWidth = pdf.getTextWidth(titulo);
-  pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
-
-  const agora = new Date();
-  const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(dataHoraStr, 10, 22);
-
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  if (filtroMesAno) {
-    const [ano, mes] = filtroMesAno.split('-');
-    const periodoStr = `Período: ${mes}/${ano}`;
-    const periodoWidth = pdf.getTextWidth(periodoStr);
-    pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
-  }
-
-  pdf.line(10, 25, pageWidth - 10, 25);
-
-  // Corpo do relatório
-  let y = 35;
-  pdf.setFontSize(12);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
-  y += 10;
-
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
-  if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
-
-  const resumo = {};
-  lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + l.valor; });
-
-  pdf.setFont("helvetica", "normal");
-  const nomesOrdenados = Object.keys(resumo).sort();
-
-  nomesOrdenados.forEach(nome => {
-    const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
-    const leftX = 10;
-    const rightX = pageWidth - 10;
-    const nomeWidth = pdf.getTextWidth(nome);
-    const valorWidth = pdf.getTextWidth(valorFormatado);
-    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-    const dotWidth = pdf.getTextWidth('.');
-    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-    const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-    const linha = `${nome} ${dots} ${valorFormatado}`;
-    pdf.text(linha, leftX, y);
-    y += 8;
-    if (y > 280) { pdf.addPage(); y = 20; }
   });
 
-  // Total geral
-  const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
-  const totalNome = "TOTAL GERAL";
-  const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
-  const leftX = 10;
-  const rightX = pageWidth - 10;
-  const nomeWidth = pdf.getTextWidth(totalNome);
-  const valorWidth = pdf.getTextWidth(totalValor);
-  const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-  const dotWidth = pdf.getTextWidth('.');
-  const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-  const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
+  // -------------------------
+  // Navegação entre telas
+  // -------------------------
+  function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+  window.abrirCadastro = function(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+  window.abrirLancamento = function(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+  window.voltar = function(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+  window.voltarCadastro = function(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+  window.voltarLancamento = function(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+  window.sair = function(){ alert('Saindo do sistema...'); location.reload(); }
 
-  y += 10;
-  pdf.setFont("helvetica", "bold");
-  pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
+  // -------------------------
+  // LOGIN (ADMIN / 1234)
+  // -------------------------
+  window.fazerLogin = function(){
+    const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
+    const senha = (document.getElementById('loginSenha').value || '').trim();
+    if (usuario === 'ADMIN' && senha === '1234') {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+      alert('Login bem-sucedido!');
+      const btn = document.querySelector('#menu button');
+      if (btn) btn.focus();
+    } else {
+      alert('Usuário ou senha incorretos!');
+      const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+    }
+  }
 
-  pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
-}
+  // -------------------------
+  // CADASTROS (Firestore)
+  // -------------------------
+  window.abrirInserir = function(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+  window.abrirConsultar = function(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+
+  window.salvarCadastro = async function(){
+    const nome = (nomeInput.value || '').trim();
+    const cargo = (cargoInput.value || '').trim();
+    if(!nome || !cargo) return alert('Preencha todos os campos.');
+    try {
+      const idEditando = idEditandoInput.value;
+      if (idEditando) {
+        // atualizar doc
+        const d = doc(db, "cadastros", idEditando);
+        await updateDoc(d, { nome, cargo, atualizadoEm: new Date().toISOString() });
+      } else {
+        await addDoc(collection(db, "cadastros"), { nome, cargo, criadoEm: new Date().toISOString() });
+      }
+      limparCamposCadastro();
+      voltarCadastro();
+    } catch (err) {
+      console.error("Erro salvar cadastro:", err);
+      alert("Erro ao salvar no Firebase.");
+    }
+  }
+
+  window.mostrarCadastros = async function(){
+    const lista = document.getElementById('listaCadastros');
+    const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
+    lista.innerHTML = '';
+    try {
+      const q = collection(db, "cadastros");
+      const snap = await getDocs(q);
+      const docs = [];
+      snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+      let cadastros = docs.sort((a,b)=> (a.nome||'').localeCompare(b.nome||''));
+      if (filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
+      if (cadastros.length === 0) {
+        lista.innerHTML = '<div style="opacity:.7;padding:8px">Nenhum cadastro encontrado</div>';
+        return;
+      }
+      cadastros.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span ondblclick="editarCadastro('${c.id}')"><strong>${c.nome}</strong> - ${c.cargo}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-excluir" onclick="excluirCadastro('${c.id}')" title="Excluir">🗑️</button>
+          </div>`;
+        lista.appendChild(div);
+      });
+    } catch (err) {
+      console.error("Erro listar cadastros:", err);
+      lista.innerHTML = '<div style="color:red;padding:8px">Erro ao carregar cadastros</div>';
+    }
+  }
+
+  window.editarCadastro = async function(id){
+    try {
+      const dRef = doc(db, "cadastros", id);
+      const snap = await getDocs(collection(db, "cadastros")); // fallback to avoid extra getDoc import
+      // We'll find in bulk snap (we already load list in mostrarCadastros usually)
+      // But to be safe, try to read the specific doc by iterating loaded docs:
+      let found = null;
+      snap.forEach(s => { if (s.id === id) found = s.data(); });
+      if (!found) {
+        // try fetch single doc via getDocs of query
+        // (we already have all docs but if not found, show message)
+        alert('Cadastro não encontrado localmente.');
+        return;
+      }
+      esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+      idEditandoInput.value = id;
+      nomeInput.value = found.nome || '';
+      cargoInput.value = found.cargo || '';
+    } catch (err) {
+      console.error("Erro editar cadastro:", err);
+      alert('Erro ao carregar cadastro para edição.');
+    }
+  }
+
+  window.excluirCadastro = async function(id){
+    if(!confirm('Excluir este cadastro?')) return;
+    try {
+      await deleteDoc(doc(db, "cadastros", id));
+      // Também remover lançamentos relacionados? (não automático aqui)
+      mostrarCadastros();
+    } catch (err) {
+      console.error("Erro excluir cadastro:", err);
+      alert('Erro ao excluir cadastro.');
+    }
+  }
+
+  function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
+
+  // -------------------------
+  // LANÇAMENTOS (Firestore)
+  // -------------------------
+  window.abrirInserirLancamento = async function(){
+    // verificar se existem cadastros
+    try {
+      const snapCad = await getDocs(collection(db, "cadastros"));
+      if (snapCad.empty) {
+        alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
+        abrirCadastro();
+        return;
+      }
+      esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+      limparCamposLancamento();
+      atualizarDatalistLanc();
+    } catch (err) {
+      console.error("Erro abrir inserir lançamento:", err);
+      alert('Erro ao acessar cadastros.');
+    }
+  }
+
+  window.abrirConsultarLancamento = function(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
+
+  window.salvarLancamento = async function(){
+    const nome = (nomeLanc.value || '').trim().toUpperCase();
+    const data = dataLanc.value;
+    const tipo = tipoLanc.value;
+    const valor = parseFloat(valorLanc.value);
+    if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
+    try {
+      // verificar nome cadastrado
+      const snap = await getDocs(collection(db, "cadastros"));
+      const exists = [];
+      snap.forEach(s => { if ((s.data().nome || '').toUpperCase() === nome) exists.push(s.id); });
+      if (!exists.length) return alert('Nome não cadastrado. Cadastre antes de lançar.');
+
+      const idEdit = idLancEditando.value;
+      if (idEdit) {
+        await updateDoc(doc(db, "lancamentos", idEdit), { nome, data, tipo, valor, atualizadoEm: new Date().toISOString() });
+      } else {
+        await addDoc(collection(db, "lancamentos"), { nome, data, tipo, valor, criadoEm: new Date().toISOString() });
+      }
+      limparCamposLancamento();
+      voltarLancamento();
+    } catch (err) {
+      console.error("Erro salvar lançamento:", err);
+      alert('Erro ao salvar lançamento no Firebase.');
+    }
+  }
+
+  window.mostrarLancamentos = async function(){
+    const lista = document.getElementById('listaLancamentos');
+    const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
+    const filtroMesAno = document.getElementById('filtroMesAno').value; // formato yyyy-mm
+    lista.innerHTML = '';
+    try {
+      const snap = await getDocs(collection(db, "lancamentos"));
+      const docs = [];
+      snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+      let lancamentos = docs.sort((a,b)=> {
+        if (!a.data) return 1;
+        if (!b.data) return -1;
+        return (b.data || '').localeCompare(a.data || '');
+      });
+      if (filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
+      if (filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
+      if (lancamentos.length === 0) {
+        lista.innerHTML = '<div style="opacity:.7;padding:8px">Nenhum lançamento encontrado</div>';
+        return;
+      }
+      lancamentos.forEach(l => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        const valorFormat = (typeof l.valor === 'number') ? l.valor.toFixed(2).replace('.', ',') : (l.valor || '0,00');
+        div.innerHTML = `<span ondblclick="editarLancamento('${l.id}')"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${valorFormat}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-excluir" onclick="excluirLancamento('${l.id}')">🗑️</button>
+          </div>`;
+        lista.appendChild(div);
+      });
+    } catch (err) {
+      console.error("Erro listar lançamentos:", err);
+      lista.innerHTML = '<div style="color:red;padding:8px">Erro ao carregar lançamentos</div>';
+    }
+  }
+
+  window.editarLancamento = async function(id){
+    try {
+      const snap = await getDocs(collection(db, "lancamentos"));
+      let found = null;
+      snap.forEach(s => { if (s.id === id) found = s.data(); });
+      if (!found) { alert('Lançamento não encontrado'); return; }
+      esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+      idLancEditando.value = id;
+      nomeLanc.value = found.nome || '';
+      dataLanc.value = found.data || '';
+      tipoLanc.value = found.tipo || '';
+      valorLanc.value = found.valor || '';
+    } catch (err) {
+      console.error("Erro editar lançamento:", err);
+      alert('Erro ao carregar lançamento para edição.');
+    }
+  }
+
+  window.excluirLancamento = async function(id){
+    if(!confirm('Excluir este lançamento?')) return;
+    try {
+      await deleteDoc(doc(db, "lancamentos", id));
+      mostrarLancamentos();
+    } catch (err) {
+      console.error("Erro excluir lançamento:", err);
+      alert('Erro ao excluir lançamento.');
+    }
+  }
+
+  function limparCamposLancamento(){
+    idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
+  }
+
+  window.atualizarDatalistLanc = async function(){
+    const datalist = document.getElementById('nomesCadastradosLanc');
+    datalist.innerHTML = '';
+    try {
+      const snap = await getDocs(collection(db, "cadastros"));
+      const names = [];
+      snap.forEach(s => { const d = s.data(); if (d && d.nome) names.push(d.nome); });
+      names.sort();
+      names.forEach(n => {
+        const opt = document.createElement('option'); opt.value = n; datalist.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("Erro atualizar datalist:", err);
+    }
+  }
+
+  // -------------------------
+  // GERAR PDF - lendo Firestore
+  // -------------------------
+  window.gerarPDFResumoLancamentos = async function(){
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+
+      // Cabeçalho
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      const titulo = "RESUMO DE LANÇAMENTOS";
+      const tituloWidth = pdf.getTextWidth(titulo);
+      pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
+
+      const agora = new Date();
+      const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(dataHoraStr, 10, 22);
+
+      const filtroMesAno = document.getElementById('filtroMesAno').value;
+      if (filtroMesAno) {
+        const [ano, mes] = filtroMesAno.split('-');
+        const periodoStr = `Período: ${mes}/${ano}`;
+        const periodoWidth = pdf.getTextWidth(periodoStr);
+        pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
+      }
+
+      pdf.line(10, 25, pageWidth - 10, 25);
+
+      // Conteúdo
+      let y = 35;
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("DETALHE POR NOME", 10, y);
+      y += 10;
+
+      // Buscar lançamentos
+      const snap = await getDocs(collection(db, "lancamentos"));
+      const lanc = [];
+      snap.forEach(s => lanc.push(s.data()));
+      let lancamentos = lanc;
+      if (filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
+
+      const resumo = {};
+      lancamentos.forEach(l => {
+        const nomeUp = (l.nome || '').toUpperCase();
+        resumo[nomeUp] = (resumo[nomeUp] || 0) + (parseFloat(l.valor) || 0);
+      });
+
+      pdf.setFont("helvetica", "normal");
+      const nomesOrdenados = Object.keys(resumo).sort();
+
+      if (nomesOrdenados.length === 0) {
+        pdf.text("Nenhum lançamento para o período.", 10, y);
+      } else {
+        nomesOrdenados.forEach(nome => {
+          const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
+          const leftX = 10;
+          const rightX = pageWidth - 10;
+          const nomeWidth = pdf.getTextWidth(nome);
+          const valorWidth = pdf.getTextWidth(valorFormatado);
+          const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
+          const dotWidth = pdf.getTextWidth('.');
+          const dotsCount = Math.floor(totalDotsWidth / dotWidth);
+          const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
+
+          const linha = `${nome} ${dots} ${valorFormatado}`;
+          pdf.text(linha, leftX, y);
+          y += 8;
+          if (y > 280) { pdf.addPage(); y = 20; }
+        });
+      }
+
+      // Total geral
+      const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
+      const totalNome = "TOTAL GERAL";
+      const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
+      const leftX = 10;
+      const rightX = pageWidth - 10;
+      const nomeWidth = pdf.getTextWidth(totalNome);
+      const valorWidth = pdf.getTextWidth(totalValor);
+      const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
+      const dotWidth = pdf.getTextWidth('.');
+      const dotsCount = Math.floor(totalDotsWidth / dotWidth);
+      const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
+
+      y += 10;
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
+
+      pdf.save("RESUMO_LANCAMENTOS.pdf");
+    } catch (err) {
+      console.error("Erro gerar PDF:", err);
+      alert('Erro ao gerar PDF.');
+    }
+  }
+
+  // -------------------------
+  // Alguns atalhos úteis
+  // -------------------------
+  // Expor funções para uso no HTML (já feito via window.* onde necessário)
+  // Nenhuma ação contínua em background - apenas responde a cliques
+
 </script>
 
 </body>
