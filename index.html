@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários</title>
+<title>Sistema Simples - Funcionários (Firebase + PWA)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff"/>
 <style>
-  /* Visual igual ao seu, porém responsivo */
+  /* estilo simples e responsivo (uppercase visual) */
   body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
@@ -15,10 +17,9 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    text-transform: uppercase; /* mantem visual em maiúsculas */
+    text-transform: uppercase;
     box-sizing: border-box;
   }
-
   .container {
     background: white;
     padding: 25px;
@@ -29,77 +30,43 @@
     max-width: 380px;
     box-sizing: border-box;
   }
-
   h2 { margin-bottom: 20px; font-size: 1.4em; }
-
-  input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-    text-transform: uppercase; /* visual */
-  }
-
-  button {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 8px;
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
+  input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; text-transform: uppercase; }
+  button { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; transition: background 0.2s; }
   button:hover { background-color: #0056b3; }
   .btn-voltar { background-color: #6c757d; }
   .btn-voltar:hover { background-color: #565e64; }
-
   .hidden { display: none; }
-
   .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
-
-  .item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f3f5;
-    padding: 6px 8px;
-    border-radius: 6px;
-    margin: 4px 0;
-    transition: background 0.2s;
-  }
+  .item { display: flex; justify-content: space-between; align-items: center; background: #f1f3f5; padding: 6px 8px; border-radius: 6px; margin: 4px 0; transition: background 0.2s; }
   .item:hover { background-color: #e0e3e7; }
-  .btn-excluir {
-    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
-    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
-    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
-  }
+  .btn-excluir { width: 28px; height: 28px; display:flex; align-items:center; justify-content:center; background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer; font-size:14px; flex-shrink:0; transition: background .2s, transform .1s; }
   .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
-
   @media (max-width: 400px) {
     h2 { font-size: 1.2em; }
     button { font-size: 15px; padding: 10px; }
     input, select, textarea { font-size: 15px; padding: 8px; }
   }
+  .small { font-size: 0.85em; margin-top: 6px; color:#555; text-transform:none; }
 </style>
 
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Firebase (compat build - simples para inclusão via <script>) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div class="container" id="loginContainer">
   <h2>Login</h2>
-  <input type="text" id="loginUsuario" placeholder="Usuário" />
+  <input type="text" id="loginUsuario" placeholder="Usuário ou email" />
   <input type="password" id="loginSenha" placeholder="Senha" />
   <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+  <div class="small">Use email/senha do Firebase Auth. Fallback <strong>ADMIN / 1234</strong> disponível se Firebase não configurado.</div>
 </div>
 
 <!-- MENU PRINCIPAL -->
@@ -173,47 +140,140 @@
 
 <script>
 /* -------------------------
-   Foco inicial no Usuário
+   FIREBASE CONFIG (fornecido por você)
+   ------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+  authDomain: "funcionarios-7c778.firebaseapp.com",
+  databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+  projectId: "funcionarios-7c778",
+  storageBucket: "funcionarios-7c778.firebasestorage.app",
+  messagingSenderId: "632364021109",
+  appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+  measurementId: "G-46DKFS3LHV"
+};
+
+let useFirebase = true;
+try {
+  if (!firebaseConfig || !firebaseConfig.apiKey) throw new Error('No firebase config');
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db = firebase.firestore();
+  // try enable persistence (may fail in some browsers)
+  db.enablePersistence && db.enablePersistence().catch(function(err){
+    console.warn('Persistence not enabled:', err && err.message);
+  });
+} catch(err){
+  console.warn('Firebase not configured or failed to init. Falling back to localStorage. Error:', err && err.message);
+  useFirebase = false;
+  var auth = null, db = null;
+}
+
+/* -------------------------
+   Migração automática localStorage -> Firestore
+   - Executa automaticamente apenas se useFirebase === true
+   - Marca flag localStorage.migratedToFirestore = 'true' para não repetir
+   ------------------------- */
+async function migrateLocalToFirestoreIfNeeded(){
+  if(!useFirebase) return;
+  try {
+    // do not migrate if already migrated
+    if(localStorage.getItem('migratedToFirestore') === 'true') return;
+    // load from localStorage
+    const cadastrosLS = JSON.parse(localStorage.getItem('cadastros') || '[]');
+    const lancamentosLS = JSON.parse(localStorage.getItem('lancamentos') || '[]');
+    // if no data, just mark migrated
+    if(cadastrosLS.length === 0 && lancamentosLS.length === 0){
+      localStorage.setItem('migratedToFirestore', 'true');
+      return;
+    }
+    // perform migration (attempt): add only if not present in firestore (by exact nome+cargo for cadastros)
+    const cadCol = db.collection('cadastros');
+    const lancCol = db.collection('lancamentos');
+
+    // fetch existing cadastros names in firestore to reduce duplicates
+    const existingCadSnap = await cadCol.get();
+    const existingCad = {};
+    existingCadSnap.forEach(d => {
+      const data = d.data();
+      if(data && data.nome) existingCad[data.nome.toString().toUpperCase()] = true;
+    });
+
+    // migrate cadastros
+    for(const c of cadastrosLS){
+      const nomeUp = (c.nome || '').toString().toUpperCase();
+      if(!nomeUp) continue;
+      if(existingCad[nomeUp]) continue; // skip duplicate
+      await cadCol.add({ nome: c.nome.toString(), cargo: c.cargo || '', migratedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+
+    // fetch existing lancamentos minimal set to avoid duplicates (we won't be super strict)
+    const existingLancSnap = await lancCol.get();
+    const existingLanc = new Set();
+    existingLancSnap.forEach(d => {
+      const data = d.data();
+      if(data && data.nome && data.data && data.tipo && (typeof data.valor !== 'undefined')){
+        existingLanc.add(`${data.nome}||${data.data}||${data.tipo}||${data.valor}`);
+      }
+    });
+
+    // migrate lancamentos
+    for(const l of lancamentosLS){
+      const key = `${l.nome}||${l.data}||${l.tipo}||${l.valor}`;
+      if(existingLanc.has(key)) continue; // skip exact duplicate
+      // ensure date stored as YYYY-MM-DD (keeps same format)
+      await lancCol.add({ nome: l.nome, data: l.data, tipo: l.tipo, valor: parseFloat(l.valor || 0), migratedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+
+    // mark migrated locally to avoid repeating
+    localStorage.setItem('migratedToFirestore', 'true');
+    console.log('Migração localStorage → Firestore concluída.');
+  } catch(err){
+    console.warn('Erro na migração automática:', err && err.message);
+  }
+}
+
+/* -------------------------
+   Foco inicial no Usuário e SW reg
    ------------------------- */
 window.addEventListener('load', () => {
   const u = document.getElementById('loginUsuario');
   if (u) { u.focus(); u.select && u.select(); }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').then(() => {
+      console.log('Service Worker registrado.');
+    }).catch(e => console.warn('SW registration failed:', e));
+  }
+  // start migration if firebase active
+  migrateLocalToFirestoreIfNeeded();
 });
 
 /* -------------------------
    Enter: navegação e executar último botão
-   - Enter avança para próximo elemento visível (input/select/button)
-   - Quando estiver no último elemento visível, Enter aciona .click() nele
    ------------------------- */
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter') return;
   const interactive = Array.from(document.querySelectorAll('input, select, button'))
     .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-  // find the element that is target or contains target (for button text spans etc.)
   const target = e.target;
   const idx = interactive.indexOf(target);
-  if (idx === -1) return; // não processa se não for um desses
+  if (idx === -1) return;
   e.preventDefault();
   const nextIndex = idx + 1;
   if (nextIndex < interactive.length) {
     const next = interactive[nextIndex];
-    // se próximo for botão, focar no botão (para visual) mas não disparar automaticamente aqui
     next.focus();
   } else {
-    // último elemento visível -> executar clique
     const el = interactive[idx];
     if (el && typeof el.click === 'function') el.click();
   }
 });
 
 /* -------------------------
-   Maiúsculas automáticas (JS + CSS visual)
-   - Aplica para inputs de texto e textareas
-   - Não altera inputs type=number/date/password
+   Maiúsculas automáticas
    ------------------------- */
 document.addEventListener('input', function(e) {
-  const el = e.target;
-  if (!el) return;
+  const el = e.target; if (!el) return;
   const tag = el.tagName.toLowerCase();
   if (tag === 'input') {
     const t = el.type;
@@ -230,7 +290,7 @@ document.addEventListener('input', function(e) {
 });
 
 /* -------------------------
-   Navegação entre telas (sem alterar lógica)
+   Navegação entre telas
    ------------------------- */
 function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
 function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
@@ -238,91 +298,160 @@ function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancame
 function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
 function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
 function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function sair(){ alert('Saindo do sistema...'); location.reload(); }
+function sair(){ if(useFirebase){ firebase.auth().signOut(); } alert('Saindo do sistema...'); location.reload(); }
 
 /* -------------------------
-   LOGIN (ADMIN / 1234)
+   LOGIN
+   - Uses Firebase Auth (email/password)
+   - Fallback to local ADMIN/1234 if Firebase not configured
    ------------------------- */
 function fazerLogin(){
-  const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
+  const usuario = (document.getElementById('loginUsuario').value || '').trim();
   const senha = (document.getElementById('loginSenha').value || '').trim();
-  if (usuario === 'ADMIN' && senha === '1234') {
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('menu').classList.remove('hidden');
-    alert('Login bem-sucedido!');
-    // garantir foco no primeiro botão do menu
-    const btn = document.querySelector('#menu button');
-    if (btn) btn.focus();
+  if(useFirebase){
+    // If user typed ADMIN with password 1234, allow local fallback even when Firebase enabled.
+    if(usuario.toUpperCase() === 'ADMIN' && senha === '1234'){
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+      alert('Login bem-sucedido (fallback local)!');
+      const btn = document.querySelector('#menu button'); if (btn) btn.focus();
+      return;
+    }
+    // assume they provide full email; if they typed a short name without '@', require full email
+    const email = usuario.includes('@') ? usuario : usuario;
+    firebase.auth().signInWithEmailAndPassword(email, senha)
+      .then(() => {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('menu').classList.remove('hidden');
+        alert('Login bem-sucedido!');
+        const btn = document.querySelector('#menu button'); if (btn) btn.focus();
+      })
+      .catch(err => {
+        alert('Erro no login: ' + (err && err.message ? err.message : err));
+        const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+      });
   } else {
-    alert('Usuário ou senha incorretos!');
-    // deixar foco em usuário para facilitar
-    const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+    // local fallback
+    if (usuario.toUpperCase() === 'ADMIN' && senha === '1234') {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+      alert('Login bem-sucedido (local)!');
+      const btn = document.querySelector('#menu button'); if (btn) btn.focus();
+    } else {
+      alert('Usuário ou senha incorretos!');
+      const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+    }
   }
 }
 
 /* -------------------------
-   CADASTROS
+   CADASTROS (Firestore or localStorage)
    ------------------------- */
 const nomeInput = document.getElementById('nome');
 const cargoInput = document.getElementById('cargo');
 const idEditandoInput = document.getElementById('idEditando');
 
-function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+async function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
 function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
 
-function salvarCadastro(){
+async function salvarCadastro(){
   const nome = (nomeInput.value || '').trim();
   const cargo = (cargoInput.value || '').trim();
   if(!nome || !cargo) return alert('Preencha todos os campos.');
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const idEditando = idEditandoInput.value;
-  if(idEditando){
-    const idx = cadastros.findIndex(c => c.id == idEditando);
-    if(idx > -1){ cadastros[idx].nome = nome; cadastros[idx].cargo = cargo; }
+  if(useFirebase){
+    const idEditando = idEditandoInput.value;
+    try {
+      if(idEditando){
+        await db.collection('cadastros').doc(idEditando).set({ nome, cargo, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      } else {
+        await db.collection('cadastros').add({ nome, cargo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      limparCamposCadastro();
+      voltarCadastro();
+    } catch(err){ alert('Erro ao salvar no Firebase: ' + (err && err.message)); }
   } else {
-    const novoId = cadastros.length ? (cadastros[cadastros.length-1].id + 1) : 1;
-    cadastros.push({ id: novoId, nome, cargo });
+    let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    const idEditando = idEditandoInput.value;
+    if(idEditando){
+      const idx = cadastros.findIndex(c => c.id == idEditando);
+      if(idx > -1){ cadastros[idx].nome = nome; cadastros[idx].cargo = cargo; }
+    } else {
+      const novoId = cadastros.length ? (cadastros[cadastros.length-1].id + 1) : 1;
+      cadastros.push({ id: novoId, nome, cargo });
+    }
+    localStorage.setItem('cadastros', JSON.stringify(cadastros));
+    limparCamposCadastro();
+    voltarCadastro();
   }
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  limparCamposCadastro();
-  voltarCadastro();
 }
 
-function mostrarCadastros(){
+async function mostrarCadastros(){
   const lista = document.getElementById('listaCadastros');
   const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
   lista.innerHTML = '';
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
-  cadastros.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarCadastro(${c.id})"><strong>${c.nome}</strong> - ${c.cargo}</span>
-      <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
-    lista.appendChild(div);
-  });
+  if(useFirebase){
+    try {
+      const snapshot = await db.collection('cadastros').orderBy('nome').get();
+      snapshot.forEach(doc => {
+        const c = Object.assign({ id: doc.id }, doc.data());
+        if(filtro && !(c.nome||'').toUpperCase().includes(filtro)) return;
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span ondblclick="editarCadastro('${c.id}')"><strong>${c.nome}</strong> - ${c.cargo}</span>
+          <button class="btn-excluir" onclick="excluirCadastro('${c.id}')" title="Excluir">🗑️</button>`;
+        lista.appendChild(div);
+      });
+    } catch(err){ console.warn('Erro listando cadastros:', err); }
+  } else {
+    let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
+    cadastros.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span ondblclick="editarCadastro(${c.id})"><strong>${c.nome}</strong> - ${c.cargo}</span>
+        <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  }
 }
 
-function editarCadastro(id){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const c = cadastros.find(x => x.id === id);
-  if(!c) return;
-  esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
-  idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
+async function editarCadastro(id){
+  if(useFirebase){
+    try {
+      const doc = await db.collection('cadastros').doc(id).get();
+      if(!doc.exists) return;
+      const c = Object.assign({ id: doc.id }, doc.data());
+      esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+      idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
+    } catch(err){ console.warn(err); }
+  } else {
+    const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    const c = cadastros.find(x => x.id === id);
+    if(!c) return;
+    esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+    idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
+  }
 }
 
-function excluirCadastro(id){
+async function excluirCadastro(id){
   if(!confirm('Excluir este cadastro?')) return;
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  cadastros = cadastros.filter(c => c.id !== id);
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  mostrarCadastros();
+  if(useFirebase){
+    try {
+      await db.collection('cadastros').doc(id).delete();
+      mostrarCadastros();
+    } catch(err){ alert('Erro ao excluir: ' + (err && err.message)); }
+  } else {
+    let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    cadastros = cadastros.filter(c => c.id !== id);
+    localStorage.setItem('cadastros', JSON.stringify(cadastros));
+    mostrarCadastros();
+  }
 }
 
 function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
 
 /* -------------------------
-   LANÇAMENTOS
+   LANÇAMENTOS (Firestore or localStorage)
    ------------------------- */
 const nomeLanc = document.getElementById('nomeLanc');
 const dataLanc = document.getElementById('dataLanc');
@@ -330,12 +459,13 @@ const tipoLanc = document.getElementById('tipoLanc');
 const valorLanc = document.getElementById('valorLanc');
 const idLancEditando = document.getElementById('idLancEditando');
 
-function abrirInserirLancamento(){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(cadastros.length === 0){
-    alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
-    abrirCadastro();
-    return;
+async function abrirInserirLancamento(){
+  if(useFirebase){
+    const snap = await db.collection('cadastros').limit(1).get();
+    if(snap.empty){ alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.'); abrirCadastro(); return; }
+  } else {
+    const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    if(cadastros.length === 0){ alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.'); abrirCadastro(); return; }
   }
   esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
   limparCamposLancamento();
@@ -344,83 +474,133 @@ function abrirInserirLancamento(){
 
 function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
 
-function salvarLancamento(){
+async function salvarLancamento(){
   const nome = (nomeLanc.value || '').trim().toUpperCase();
   const data = dataLanc.value;
   const tipo = tipoLanc.value;
   const valor = parseFloat(valorLanc.value);
   if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(!cadastros.find(c => c.nome === nome)) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const idEdit = idLancEditando.value;
-  if(idEdit){
-    const idx = lancamentos.findIndex(l => l.id == idEdit);
-    if(idx > -1){ lancamentos[idx] = { id: lancamentos[idx].id, nome, data, tipo, valor }; }
+  if(useFirebase){
+    // verify name exists
+    const snap = await db.collection('cadastros').where('nome', '==', nome).limit(1).get();
+    if(snap.empty) return alert('Nome não cadastrado. Cadastre antes de lançar.');
+    try {
+      const idEdit = idLancEditando.value;
+      if(idEdit){
+        await db.collection('lancamentos').doc(idEdit).set({ nome, data, tipo, valor, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      } else {
+        await db.collection('lancamentos').add({ nome, data, tipo, valor, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      limparCamposLancamento();
+      voltarLancamento();
+    } catch(err){ alert('Erro ao salvar lançamento: ' + (err && err.message)); }
   } else {
-    const novoId = lancamentos.length ? (lancamentos[lancamentos.length-1].id + 1) : 1;
-    lancamentos.push({ id: novoId, nome, data, tipo, valor });
+    let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
+    const idEdit = idLancEditando.value;
+    if(idEdit){
+      const idx = lancamentos.findIndex(l => l.id == idEdit);
+      if(idx > -1){ lancamentos[idx] = { id: lancamentos[idx].id, nome, data, tipo, valor }; }
+    } else {
+      const novoId = lancamentos.length ? (lancamentos[lancamentos.length-1].id + 1) : 1;
+      lancamentos.push({ id: novoId, nome, data, tipo, valor });
+    }
+    localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
+    limparCamposLancamento();
+    voltarLancamento();
   }
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  limparCamposLancamento();
-  voltarLancamento();
 }
 
-function mostrarLancamentos(){
+async function mostrarLancamentos(){
   const lista = document.getElementById('listaLancamentos');
   const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
   const filtroMesAno = document.getElementById('filtroMesAno').value;
   lista.innerHTML = '';
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  if(filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-  if(filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
-  lancamentos.forEach(l => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarLancamento(${l.id})"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
-      <button class="btn-excluir" onclick="excluirLancamento(${l.id})">🗑️</button>`;
-    lista.appendChild(div);
-  });
+  if(useFirebase){
+    let query = db.collection('lancamentos').orderBy('data', 'desc').limit(500);
+    try {
+      const snap = await query.get();
+      snap.forEach(doc => {
+        const l = Object.assign({ id: doc.id }, doc.data());
+        if(filtroNome && !(l.nome||'').toUpperCase().includes(filtroNome)) return;
+        if(filtroMesAno && !(l.data||'').startsWith(filtroMesAno)) return;
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span ondblclick="editarLancamento('${l.id}')"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${parseFloat(l.valor).toFixed(2).replace('.', ',')}</span>
+          <button class="btn-excluir" onclick="excluirLancamento('${l.id}')">🗑️</button>`;
+        lista.appendChild(div);
+      });
+    } catch(err){ console.warn('Erro listando lançamentos:', err); }
+  } else {
+    let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
+    if(filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
+    if(filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
+    lancamentos.forEach(l => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span ondblclick="editarLancamento(${l.id})"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
+        <button class="btn-excluir" onclick="excluirLancamento(${l.id})">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  }
 }
 
-function editarLancamento(id){
-  const lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const l = lancamentos.find(x => x.id === id);
-  if(!l) return;
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
+async function editarLancamento(id){
+  if(useFirebase){
+    const doc = await db.collection('lancamentos').doc(id).get();
+    if(!doc.exists) return;
+    const l = Object.assign({ id: doc.id }, doc.data());
+    esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+    idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
+  } else {
+    const lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
+    const l = lancamentos.find(x => x.id === id);
+    if(!l) return;
+    esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+    idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
+  }
 }
 
-function excluirLancamento(id){
+async function excluirLancamento(id){
   if(!confirm('Excluir este lançamento?')) return;
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  lancamentos = lancamentos.filter(l => l.id !== id);
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  mostrarLancamentos();
+  if(useFirebase){
+    try {
+      await db.collection('lancamentos').doc(id).delete();
+      mostrarLancamentos();
+    } catch(err){ alert('Erro ao excluir: ' + (err && err.message)); }
+  } else {
+    let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
+    lancamentos = lancamentos.filter(l => l.id !== id);
+    localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
+    mostrarLancamentos();
+  }
 }
 
 function limparCamposLancamento(){
   idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
 }
 
-function atualizarDatalistLanc(){
-  const datalist = document.getElementById('nomesCadastradosLanc');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  datalist.innerHTML = '';
-  cadastros.forEach(c => {
-    const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
-  });
+async function atualizarDatalistLanc(){
+  const datalist = document.getElementById('nomesCadastradosLanc'); datalist.innerHTML = '';
+  if(useFirebase){
+    const snap = await db.collection('cadastros').orderBy('nome').get();
+    snap.forEach(doc => {
+      const c = Object.assign({ id: doc.id }, doc.data());
+      const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
+    });
+  } else {
+    const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
+    cadastros.forEach(c => { const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt); });
+  }
 }
 
 /* -------------------------
-   GERAR PDF - com pontinhos e maiúsculas
+   GERAR PDF - usa dados atuais filtrados do Firestore ou localStorage
    ------------------------- */
 async function gerarPDFResumoLancamentos(){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
 
-  // Cabeçalho
   pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
   const titulo = "SUPERMERCADO LEV +";
@@ -440,21 +620,26 @@ async function gerarPDFResumoLancamentos(){
     const periodoWidth = pdf.getTextWidth(periodoStr);
     pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
   }
-
   pdf.line(10, 25, pageWidth - 10, 25);
 
-  // Corpo do relatório
   let y = 35;
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
   pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
   y += 10;
 
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
-  if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
+  let lancamentos = [];
+  if(useFirebase){
+    const snap = await db.collection('lancamentos').get();
+    snap.forEach(doc => lancamentos.push(Object.assign({ id: doc.id }, doc.data())));
+    if(filtroMesAno) lancamentos = lancamentos.filter(l => l.data && l.data.startsWith(filtroMesAno));
+  } else {
+    lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
+    if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data && l.data.startsWith(filtroMesAno));
+  }
 
   const resumo = {};
-  lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + l.valor; });
+  lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + parseFloat(l.valor || 0); });
 
   pdf.setFont("helvetica", "normal");
   const nomesOrdenados = Object.keys(resumo).sort();
@@ -476,7 +661,6 @@ async function gerarPDFResumoLancamentos(){
     if (y > 280) { pdf.addPage(); y = 20; }
   });
 
-  // Total geral
   const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
   const totalNome = "TOTAL GERAL";
   const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
