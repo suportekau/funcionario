@@ -3,99 +3,176 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login - Sistema Funcionários</title>
+<title>Cadastro de Funcionários</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-  .login-container {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    width: 100%;
-    max-width: 420px;
-    box-sizing: border-box;
-    text-align: center;
+    padding: 20px;
   }
   h2 {
-    margin-bottom: 25px;
+    text-align: center;
     color: #333;
-    text-transform: uppercase;
   }
-  input {
+  .container {
+    background: white;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  input, button {
     width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    padding: 10px;
+    margin: 8px 0;
     font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
     box-sizing: border-box;
   }
   button {
-    width: 100%;
-    padding: 12px;
     background-color: #007bff;
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
     cursor: pointer;
-    margin-top: 10px;
   }
   button:hover {
     background-color: #0056b3;
   }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  tr:hover {
+    background-color: #f0f8ff;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" required />
-      <input type="password" id="senha" placeholder="Senha" required />
-      <button type="submit">Entrar</button>
-    </form>
+  <div class="container">
+    <h2>Cadastro de Funcionários</h2>
+    <input type="hidden" id="idFuncionario">
+    <input type="text" id="nome" placeholder="Nome do Funcionário" required>
+    <input type="text" id="cargo" placeholder="Cargo" required>
+    <button id="btnSalvar">Salvar</button>
+    <button id="btnExcluir">Excluir</button>
+
+    <h3>Consulta de Funcionários</h3>
+    <table id="tabelaFuncionarios">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Cargo</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
-<script>
-  // Foco automático no campo "Usuário"
-  document.getElementById("usuario").focus();
+  <!-- Firebase -->
+  <script type="module">
+    // Importar SDK Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  // Enter muda de campo e no final faz login
-  const inputs = document.querySelectorAll("#loginForm input");
-  inputs.forEach((input, index) => {
-    input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (index < inputs.length - 1) {
-          inputs[index + 1].focus();
-        } else {
-          document.getElementById("loginForm").requestSubmit();
+    // Configuração do seu Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+      authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+      projectId: "funcionarios-7c778",
+      storageBucket: "funcionarios-7c778.firebasestorage.app",
+      messagingSenderId: "632364021109",
+      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+      measurementId: "G-46DKFS3LHV"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const funcionariosRef = ref(db, "funcionarios");
+
+    const nome = document.getElementById("nome");
+    const cargo = document.getElementById("cargo");
+    const idFuncionario = document.getElementById("idFuncionario");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const btnExcluir = document.getElementById("btnExcluir");
+    const tabela = document.querySelector("#tabelaFuncionarios tbody");
+
+    // Salvar ou Atualizar funcionário
+    btnSalvar.addEventListener("click", () => {
+      const dados = {
+        nome: nome.value.trim(),
+        cargo: cargo.value.trim()
+      };
+
+      if (dados.nome === "" || dados.cargo === "") {
+        alert("Preencha todos os campos!");
+        return;
+      }
+
+      if (idFuncionario.value) {
+        // Atualizar funcionário existente
+        const funcRef = ref(db, "funcionarios/" + idFuncionario.value);
+        update(funcRef, dados);
+        alert("Funcionário atualizado com sucesso!");
+      } else {
+        // Adicionar novo funcionário
+        const novoRef = push(funcionariosRef);
+        set(novoRef, dados);
+        alert("Funcionário cadastrado com sucesso!");
+      }
+
+      limparCampos();
+    });
+
+    // Excluir funcionário
+    btnExcluir.addEventListener("click", () => {
+      if (idFuncionario.value) {
+        if (confirm("Deseja realmente excluir este funcionário?")) {
+          remove(ref(db, "funcionarios/" + idFuncionario.value));
+          alert("Funcionário excluído!");
+          limparCampos();
         }
+      } else {
+        alert("Selecione um funcionário para excluir!");
       }
     });
-  });
 
-  // Simples validação local (pode conectar depois ao Firebase)
-  document.getElementById("loginForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const usuario = document.getElementById("usuario").value.trim();
-    const senha = document.getElementById("senha").value.trim();
+    // Listar funcionários em tempo real
+    onValue(funcionariosRef, (snapshot) => {
+      tabela.innerHTML = "";
+      snapshot.forEach((child) => {
+        const dados = child.val();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${dados.nome}</td>
+          <td>${dados.cargo}</td>
+        `;
+        tr.addEventListener("dblclick", () => {
+          idFuncionario.value = child.key;
+          nome.value = dados.nome;
+          cargo.value = dados.cargo;
+        });
+        tabela.appendChild(tr);
+      });
+    });
 
-    if (usuario === "ADMIN" && senha === "1234") {
-      window.location.href = "menu.html"; // abre o menu principal
-    } else {
-      alert("Usuário ou senha incorretos!");
+    function limparCampos() {
+      idFuncionario.value = "";
+      nome.value = "";
+      cargo.value = "";
+      nome.focus();
     }
-  });
-</script>
+  </script>
 </body>
 </html>
