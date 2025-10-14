@@ -170,6 +170,36 @@
   <button id="btnGerarPDF" onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
   <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
 </div>
+<!-- CONSULTAR LANÇAMENTO -->
+<div class="container hidden" id="consultarLancamento">
+  ...
+</div>
+
+<!-- 🔥 INÍCIO DO FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, push, set, get, onValue, update, remove } 
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+    authDomain: "funcionarios-7c778.firebaseapp.com",
+    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
+    projectId: "funcionarios-7c778",
+    storageBucket: "funcionarios-7c778.firebasestorage.app",
+    messagingSenderId: "632364021109",
+    appId: "1:632364021109:web:f140b97a8dbc36148b4f3c",
+    measurementId: "G-2JXX10SBVG"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Deixa o Firebase acessível pro script normal
+  window.__firebase = { app, db, ref, push, set, get, onValue, update, remove };
+  console.log("✅ Firebase conectado com sucesso!");
+</script>
+<!-- 🔥 FIM DO FIREBASE -->
 
 <script>
 /* -------------------------
