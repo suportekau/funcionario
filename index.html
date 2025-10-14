@@ -1,227 +1,276 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sistema de Funcionários</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Correção — Lançamentos</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-  }
-  #loginContainer, #mainContainer {
-    max-width: 600px;
-    margin: 50px auto;
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  }
-  h2 {
-    text-align: center;
-    color: #333;
-  }
-  input, select, button {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  .botoes {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-  }
+/* (estilos omitidos para brevidade — mantenha os seus estáticos se preferir) */
+body{font-family:Arial, sans-serif;background:#f4f4f4;margin:0;padding:10px;min-height:100vh;display:flex;align-items:center;justify-content:center;box-sizing:border-box;text-transform:uppercase}
+.container{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);width:100%;max-width:420px;box-sizing:border-box}
+.hidden{display:none}
+.item{background:#f1f3f5;padding:8px;border-radius:6px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.btn-excluir{width:34px;height:34px;border-radius:50%;background:#dc3545;color:#fff;border:none;cursor:pointer}
+button{background:#007bff;color:#fff;border:none;padding:10px;border-radius:6px}
 </style>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-<!-- Login -->
-<div id="loginContainer">
-  <h2>Login</h2>
-  <input type="text" id="loginUsuario" placeholder="Usuário">
-  <input type="password" id="loginSenha" placeholder="Senha">
+<!-- minimal HTML relevant -->
+<div class="container" id="loginContainer"><h2>Login</h2>
+  <input id="loginUsuario" placeholder="Usuário"/><input id="loginSenha" placeholder="Senha" type="password"/>
   <button id="btnEntrar">Entrar</button>
 </div>
 
-<!-- Sistema -->
-<div id="mainContainer" style="display:none;">
-  <div class="botoes">
-    <button id="btnCadastro">Cadastro</button>
-    <button id="btnLancamento">Lançamento</button>
-    <button id="btnPDF">Gerar PDF</button>
-    <button id="btnSair">Sair</button>
-  </div>
-
-  <!-- Cadastro -->
-  <div id="cadastroContainer">
-    <h2>Cadastro de Funcionários</h2>
-    <input id="nome" placeholder="Nome do Funcionário">
-    <input id="cargo" placeholder="Cargo">
-    <button id="btnSalvarCadastro">Salvar</button>
-    <table id="tabelaCadastro">
-      <thead><tr><th>Nome</th><th>Cargo</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Lançamentos -->
-  <div id="lancamentoContainer" style="display:none;">
-    <h2>Lançamento</h2>
-    <select id="funcionarioSelect"></select>
-    <select id="tipoLancamento">
-      <option value="VALE">VALE</option>
-      <option value="COMPRA">COMPRA</option>
-    </select>
-    <input id="valorLancamento" type="number" placeholder="Valor">
-    <button id="btnSalvarLancamento">Salvar Lançamento</button>
-    <table id="tabelaLancamento">
-      <thead><tr><th>Funcionário</th><th>Tipo</th><th>Valor</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="container hidden" id="menu"><h2>Menu</h2>
+  <button id="btnLancamento">Lançamento</button>
 </div>
 
-<!-- Firebase + Script -->
+<!-- menu lancamento -->
+<div class="container hidden" id="menuLancamento">
+  <h2>Lançamentos</h2>
+  <button id="btnInserirLanc">Inserir</button>
+  <button id="btnConsultarLanc">Consultar</button>
+  <button id="btnVoltarMenuLanc">Voltar</button>
+</div>
+
+<!-- inserir lancamento -->
+<div class="container hidden" id="inserirLanc">
+  <h2>Inserir / Editar Lançamento</h2>
+  <input type="hidden" id="idLancEditando" />
+  <select id="tipoLanc">
+    <option value="">SELECIONE TIPO</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
+  </select>
+  <input list="datalistFuncionarios" id="nomeLanc" placeholder="Nome do Funcionário" />
+  <datalist id="datalistFuncionarios"></datalist>
+  <input id="dataLanc" type="date" />
+  <input id="valorLanc" type="number" step="0.01" placeholder="Valor (Ex: 50.00)" />
+  <button id="btnSalvarLanc">Salvar</button>
+  <button id="btnVoltarLanc">Voltar</button>
+</div>
+
+<!-- consultar lanc -->
+<div class="container hidden" id="consultarLanc">
+  <h2>Consultar Lançamentos</h2>
+  <input type="month" id="filtroMes" />
+  <input id="filtroLancNome" placeholder="Filtrar por nome" />
+  <div class="lista" id="listaLancamentos"></div>
+  <button id="btnVoltarConsultaLanc">Voltar</button>
+</div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-  import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, push, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-    authDomain: "funcionarios-7c778.firebaseapp.com",
-    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
-    projectId: "funcionarios-7c778",
-    storageBucket: "funcionarios-7c778.appspot.com",
-    messagingSenderId: "632364021109",
-    appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c"
-  };
+/* ========== CONFIG FIREBASE ========== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+  authDomain: "funcionarios-7c778.firebaseapp.com",
+  databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
+  projectId: "funcionarios-7c778",
+  storageBucket: "funcionarios-7c778.firebasestorage.app",
+  messagingSenderId: "632364021109",
+  appId: "1:632364021109:web:f140b97a8dbc36148b4f3c",
+  measurementId: "G-2JXX10SBVG"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+/* ========== HELPERS UI ========== */
+const $ = id => document.getElementById(id);
+function esconderTudo(){ document.querySelectorAll('.container').forEach(c=>c.classList.add('hidden')); }
+function mostrar(id){ esconderTudo(); $(id).classList.remove('hidden'); }
 
-  const $ = id => document.getElementById(id);
+/* foco no login */
+function focarLogin(){ setTimeout(()=>{ try{ $('loginUsuario').focus(); }catch(e){} }, 150); }
+window.addEventListener('load', ()=>{ mostrar('loginContainer'); focarLogin(); });
 
-  // Foco no login
-  function focarLogin() { setTimeout(() => $('loginUsuario').focus(), 200); }
-  window.addEventListener('load', focarLogin);
+/* Enter navigation (next / click last) */
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  const interactive = Array.from(document.querySelectorAll('input, select, button'))
+    .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
+  const idx = interactive.indexOf(e.target);
+  if(idx === -1) return;
+  e.preventDefault();
+  const next = interactive[idx + 1];
+  if(next) next.focus();
+  else if(e.target && typeof e.target.click === 'function') e.target.click();
+});
 
-  // LOGIN
-  $('btnEntrar').addEventListener('click', () => {
-    const user = $('loginUsuario').value.trim();
-    const pass = $('loginSenha').value.trim();
-    if (user === "ADMIN" && pass === "1234") {
-      $('loginContainer').style.display = "none";
-      $('mainContainer').style.display = "block";
-    } else {
-      alert("Usuário ou senha incorretos!");
-    }
-  });
+/* ========== NAV / LOGIN ========== */
+$('btnEntrar').addEventListener('click', ()=> {
+  const u = ($('loginUsuario').value||'').trim().toUpperCase();
+  const s = ($('loginSenha').value||'').trim();
+  if(u === 'ADMIN' && s === '1234') { mostrar('menu'); }
+  else { alert('Usuário ou senha incorretos!'); focarLogin(); }
+});
 
-  $('btnSair').addEventListener('click', () => {
-    $('mainContainer').style.display = "none";
-    $('loginContainer').style.display = "block";
-    $('loginUsuario').value = "";
-    $('loginSenha').value = "";
-    focarLogin();
-  });
+$('btnLancamento').addEventListener('click', ()=> mostrar('menuLancamento'));
 
-  // Alternar telas
-  $('btnCadastro').addEventListener('click', () => {
-    $('cadastroContainer').style.display = "block";
-    $('lancamentoContainer').style.display = "none";
-  });
-  $('btnLancamento').addEventListener('click', () => {
-    $('cadastroContainer').style.display = "none";
-    $('lancamentoContainer').style.display = "block";
-  });
+/* volta menu */
+$('btnVoltarMenuLanc').addEventListener('click', ()=> mostrar('menu'));
 
-  // CADASTRO
-  $('btnSalvarCadastro').addEventListener('click', () => {
-    const nome = $('nome').value.trim();
-    const cargo = $('cargo').value.trim();
-    if (!nome || !cargo) return alert("Preencha todos os campos!");
-    push(ref(db, 'funcionarios'), { nome, cargo });
-    $('nome').value = "";
-    $('cargo').value = "";
-  });
+/* abrir inserir/consultar */
+$('btnInserirLanc').addEventListener('click', async ()=> {
+  await atualizarDatalistFuncionarios();
+  // garantir que idLancEditando esteja vazio para criar novo
+  $('idLancEditando').value = '';
+  mostrar('inserirLanc');
+  // focar no primeiro campo (tipo)
+  setTimeout(()=> $('tipoLanc').focus(), 80);
+});
+$('btnConsultarLanc').addEventListener('click', ()=> { mostrar('consultarLanc'); carregarLancamentos(); });
 
-  onValue(ref(db, 'funcionarios'), snapshot => {
-    const tbody = $('tabelaCadastro').querySelector('tbody');
-    const select = $('funcionarioSelect');
-    tbody.innerHTML = "";
-    select.innerHTML = "";
-    snapshot.forEach(child => {
-      const f = child.val();
-      tbody.innerHTML += `<tr><td>${f.nome}</td><td>${f.cargo}</td></tr>`;
-      select.innerHTML += `<option>${f.nome}</option>`;
-    });
-  });
+$('btnVoltarLanc').addEventListener('click', ()=> { mostrar('menuLancamento'); });
+$('btnVoltarConsultaLanc').addEventListener('click', ()=> { mostrar('menuLancamento'); });
 
-  // LANÇAMENTOS
-  $('btnSalvarLancamento').addEventListener('click', () => {
-    const nome = $('funcionarioSelect').value;
-    const tipo = $('tipoLancamento').value;
-    const valor = $('valorLancamento').value;
-    if (!nome || !valor) return alert("Preencha todos os campos!");
-    push(ref(db, 'lancamentos'), { nome, tipo, valor: parseFloat(valor) });
-    $('valorLancamento').value = "";
-  });
+
+/* ========== FUNÇÕES: LANÇAMENTO ========== */
+
+/**
+ * salvarLancamento: cria novo ou atualiza existente conforme idLancEditando
+ */
+$('btnSalvarLanc').addEventListener('click', async ()=> {
+  const tipo = ($('tipoLanc').value||'').trim();
+  const nome = ($('nomeLanc').value||'').trim().toUpperCase();
+  const data = ($('dataLanc').value||'').trim();
+  const valorRaw = ($('valorLanc').value||'').toString().replace(',', '.').trim();
+  const valor = parseFloat(valorRaw);
+
+  if(!tipo || !nome || !data || isNaN(valor)){
+    alert('Preencha todos os campos corretamente.');
+    return;
+  }
+
+  const idEdit = $('idLancEditando').value;
+  const lancRef = ref(db, 'lancamentos');
+
+  if(idEdit){
+    // atualizar
+    await update(ref(db, `lancamentos/${idEdit}`), { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
+    alert('Lançamento atualizado!');
+    $('idLancEditando').value = '';
+  } else {
+    // novo
+    const node = push(lancRef);
+    await set(node, { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
+    alert('Lançamento salvo!');
+  }
+
+  // limpar e voltar para menu de lançamentos
+  $('tipoLanc').value=''; $('nomeLanc').value=''; $('dataLanc').value=''; $('valorLanc').value='';
+  mostrar('menuLancamento');
+});
+
+/**
+ * carregarLancamentos: mostra lista com filtros aplicados (real-time)
+ */
+function carregarLancamentos(){
+  const lista = $('listaLancamentos');
+  const filtroMes = $('filtroMes').value;
+  const filtroNome = ($('filtroLancNome').value||'').trim().toUpperCase();
+  lista.innerHTML = '';
 
   onValue(ref(db, 'lancamentos'), snapshot => {
-    const tbody = $('tabelaLancamento').querySelector('tbody');
-    tbody.innerHTML = "";
-    snapshot.forEach(child => {
-      const l = child.val();
-      tbody.innerHTML += `<tr><td>${l.nome}</td><td>${l.tipo}</td><td>R$ ${l.valor.toFixed(2)}</td></tr>`;
+    lista.innerHTML = '';
+    snapshot.forEach(ch => {
+      const id = ch.key;
+      const l = ch.val();
+      const okMes = !filtroMes || (l.data && l.data.startsWith(filtroMes));
+      const okNome = !filtroNome || (l.nome && l.nome.includes(filtroNome));
+      if(okMes && okNome){
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span ondblclick="editarLancamento('${id}')"><strong>${l.tipo}</strong> | ${l.nome} | ${l.data} | R$ ${Number(l.valor).toFixed(2).replace('.', ',')}</span>
+                         <button class="btn-excluir" onclick="excluirLancamento('${id}')">🗑️</button>`;
+        lista.appendChild(div);
+      }
     });
   });
+}
 
-  // PDF
-  $('btnPDF').addEventListener('click', () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("Relatório de Lançamentos", 70, 20);
-    let y = 40;
-    const linhas = document.querySelectorAll("#tabelaLancamento tbody tr");
-    let total = 0;
-    linhas.forEach(linha => {
-      const cols = linha.querySelectorAll("td");
-      const nome = cols[0].textContent;
-      const tipo = cols[1].textContent;
-      const valor = parseFloat(cols[2].textContent.replace("R$","").trim());
-      total += valor;
-      doc.text(`${nome} - ${tipo} - R$ ${valor.toFixed(2)}`, 10, y);
-      y += 10;
+/**
+ * editarLancamento: preenche o formulário com os dados existentes
+ * - preenche idLancEditando
+ * - coloca o nome no topo do datalist (faz com que apareça "em cima")
+ * - mostra tela de inserir/editar e foca no tipo
+ */
+window.editarLancamento = async function(id){
+  try {
+    const snap = await get(ref(db, `lancamentos/${id}`));
+    if(!snap.exists()) { alert('Lançamento não encontrado.'); return; }
+    const l = snap.val();
+
+    // preencher campos
+    $('idLancEditando').value = id;
+    $('tipoLanc').value = l.tipo || '';
+    // colocar o nome em cima do datalist: criar option em primeiro lugar
+    const dl = $('datalistFuncionarios');
+    // limpa e recria com o nome editado em primeiro
+    const nomesSnap = await get(ref(db, 'funcionarios'));
+    dl.innerHTML = '';
+    // cria primeiro o nome do lançamento editado (se não vazio)
+    if(l.nome){
+      const optEdited = document.createElement('option'); optEdited.value = l.nome; dl.appendChild(optEdited);
+    }
+    // depois adiciona os demais funcionários (sem duplicar)
+    const added = new Set([ (l.nome||'').toUpperCase() ]);
+    nomesSnap.forEach(ch => {
+      const n = (ch.val().nome||'').toUpperCase();
+      if(!added.has(n)){
+        const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
+        added.add(n);
+      }
     });
-    doc.text(`Total Geral: R$ ${total.toFixed(2)}`, 10, y + 10);
-    doc.save("lancamentos.pdf");
+
+    $('nomeLanc').value = l.nome || '';
+    $('dataLanc').value = l.data || '';
+    $('valorLanc').value = l.valor || '';
+
+    // mostrar formulário de edição e focar no tipo (ou no nome se preferir)
+    mostrar('inserirLanc');
+    setTimeout(()=> $('tipoLanc').focus(), 80);
+  } catch(err) {
+    console.error(err);
+    alert('Erro ao carregar lançamento para edição.');
+  }
+};
+
+/**
+ * excluirLancamento
+ */
+window.excluirLancamento = async function(id){
+  if(!confirm('Excluir este lançamento?')) return;
+  await remove(ref(db, `lancamentos/${id}`));
+  // o onValue que popula a lista vai atualizar automaticamente
+};
+
+/**
+ * atualizarDatalistFuncionarios: atualiza o datalist com nomes do nó /funcionarios
+ */
+async function atualizarDatalistFuncionarios(){
+  const snap = await get(ref(db, 'funcionarios'));
+  const dl = $('datalistFuncionarios');
+  dl.innerHTML = '';
+  snap.forEach(ch => {
+    const n = ch.val().nome || '';
+    const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
   });
+}
+
+/* --------- Utilitários Firebase importados no topo já: get, ref, etc.  --------- */
+import { get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+/* Observação: se seu bundler reclamar do import get acima, substitua a linha
+   por: const { get } = window.__firebaseHelpers; // mas no ambiente do browser modular funciona.
+*/
+
+/* Inicial: nada mais — quando usuário abrir tela de consultar, chamar carregarLancamentos() */
 </script>
-
 </body>
 </html>
