@@ -7,53 +7,92 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f2f2f2;
+      margin: 0;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    .container {
+
+    .card {
       background: white;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+      width: 90%;
+      max-width: 380px;
+      text-align: center;
     }
-    input, select, button {
-      margin: 5px 0;
-      padding: 8px;
+
+    h2 { margin-bottom: 20px; }
+    input, button, select {
       width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
     }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #telaPrincipal {
+      display: none;
+      width: 95%;
+      max-width: 800px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 6px;
       text-align: left;
     }
-    th { background: #eee; }
-    .hidden { display: none; }
+
+    th {
+      background: #f8f8f8;
+    }
   </style>
 </head>
 <body>
-  <div id="telaLogin" class="container">
+  <!-- TELA DE LOGIN -->
+  <div id="telaLogin" class="card">
     <h2>Login</h2>
     <input type="text" id="usuario" placeholder="Usuário">
     <input type="password" id="senha" placeholder="Senha">
-    <button onclick="entrar()">Entrar</button>
+    <button id="btnEntrar">Entrar</button>
   </div>
 
-  <div id="telaPrincipal" class="container hidden">
+  <!-- TELA PRINCIPAL -->
+  <div id="telaPrincipal">
     <h1>Sistema de Funcionários</h1>
-    <button onclick="sair()">Sair</button>
+    <button id="btnSair">Sair</button>
     <hr>
 
     <h2>Cadastro de Funcionário</h2>
     <input id="nomeFuncionario" placeholder="Nome do Funcionário">
     <input id="cargoFuncionario" placeholder="Cargo">
-    <button onclick="salvarFuncionario()">Salvar Funcionário</button>
+    <button id="btnSalvarFunc">Salvar Funcionário</button>
 
     <table id="tabelaFuncionarios">
       <thead><tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr></thead>
@@ -65,7 +104,7 @@
     <select id="funcionarioSelect"></select>
     <input id="descricaoLanc" placeholder="Descrição do Lançamento">
     <input id="valorLanc" type="number" placeholder="Valor">
-    <button onclick="salvarLancamento()">Salvar Lançamento</button>
+    <button id="btnSalvarLanc">Salvar Lançamento</button>
 
     <table id="tabelaLanc">
       <thead><tr><th>Funcionário</th><th>Descrição</th><th>Valor</th></tr></thead>
@@ -73,10 +112,10 @@
     </table>
 
     <hr>
-    <button onclick="gerarPDF()">Gerar PDF</button>
+    <button id="btnPDF">Gerar PDF</button>
   </div>
 
-  <!-- Firebase + Script principal -->
+  <!-- FIREBASE + SISTEMA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -96,26 +135,35 @@
     const db = getFirestore(app);
 
     // === LOGIN LOCAL ===
-    window.entrar = function() {
+    const btnEntrar = document.getElementById("btnEntrar");
+    const telaLogin = document.getElementById("telaLogin");
+    const telaPrincipal = document.getElementById("telaPrincipal");
+    const btnSair = document.getElementById("btnSair");
+
+    btnEntrar.addEventListener("click", () => {
       const usuario = document.getElementById("usuario").value;
       const senha = document.getElementById("senha").value;
+
       if (usuario === "admin" && senha === "123") {
-        document.getElementById("telaLogin").classList.add("hidden");
-        document.getElementById("telaPrincipal").classList.remove("hidden");
+        telaLogin.style.display = "none";
+        telaPrincipal.style.display = "block";
         carregarFuncionarios();
         carregarLancamentos();
       } else {
         alert("Usuário ou senha incorretos!");
       }
-    }
+    });
 
-    window.sair = function() {
-      document.getElementById("telaLogin").classList.remove("hidden");
-      document.getElementById("telaPrincipal").classList.add("hidden");
-    }
+    btnSair.addEventListener("click", () => {
+      telaPrincipal.style.display = "none";
+      telaLogin.style.display = "flex";
+      document.getElementById("usuario").value = "";
+      document.getElementById("senha").value = "";
+    });
 
     // === FUNCIONÁRIOS ===
-    window.salvarFuncionario = async function() {
+    const btnSalvarFunc = document.getElementById("btnSalvarFunc");
+    btnSalvarFunc.addEventListener("click", async () => {
       const nome = document.getElementById("nomeFuncionario").value.trim();
       const cargo = document.getElementById("cargoFuncionario").value.trim();
       if (!nome || !cargo) return alert("Preencha todos os campos!");
@@ -125,28 +173,28 @@
       document.getElementById("nomeFuncionario").value = "";
       document.getElementById("cargoFuncionario").value = "";
       carregarFuncionarios();
-    }
+    });
 
     async function carregarFuncionarios() {
-      const tabela = document.getElementById("tabelaFuncionarios").querySelector("tbody");
+      const tabela = document.querySelector("#tabelaFuncionarios tbody");
       tabela.innerHTML = "";
       const select = document.getElementById("funcionarioSelect");
       select.innerHTML = "";
 
-      const querySnapshot = await getDocs(collection(db, "funcionarios"));
-      querySnapshot.forEach((docu) => {
-        const dados = docu.data();
+      const snapshot = await getDocs(collection(db, "funcionarios"));
+      snapshot.forEach((docu) => {
+        const d = docu.data();
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${dados.nome}</td>
-          <td>${dados.cargo}</td>
+          <td>${d.nome}</td>
+          <td>${d.cargo}</td>
           <td><button onclick="excluirFuncionario('${docu.id}')">Excluir</button></td>
         `;
         tabela.appendChild(tr);
 
         const opt = document.createElement("option");
-        opt.value = dados.nome;
-        opt.textContent = dados.nome;
+        opt.value = d.nome;
+        opt.textContent = d.nome;
         select.appendChild(opt);
       });
     }
@@ -155,10 +203,11 @@
       await deleteDoc(doc(db, "funcionarios", id));
       alert("Funcionário excluído!");
       carregarFuncionarios();
-    }
+    };
 
     // === LANÇAMENTOS ===
-    window.salvarLancamento = async function() {
+    const btnSalvarLanc = document.getElementById("btnSalvarLanc");
+    btnSalvarLanc.addEventListener("click", async () => {
       const funcionario = document.getElementById("funcionarioSelect").value;
       const descricao = document.getElementById("descricaoLanc").value.trim();
       const valor = parseFloat(document.getElementById("valorLanc").value);
@@ -169,33 +218,33 @@
       document.getElementById("descricaoLanc").value = "";
       document.getElementById("valorLanc").value = "";
       carregarLancamentos();
-    }
+    });
 
     async function carregarLancamentos() {
-      const tabela = document.getElementById("tabelaLanc").querySelector("tbody");
+      const tabela = document.querySelector("#tabelaLanc tbody");
       tabela.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "lancamentos"));
-      querySnapshot.forEach((docu) => {
-        const dados = docu.data();
+      const snapshot = await getDocs(collection(db, "lancamentos"));
+      snapshot.forEach((docu) => {
+        const d = docu.data();
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${dados.funcionario}</td>
-          <td>${dados.descricao}</td>
-          <td>R$ ${dados.valor.toFixed(2)}</td>
+          <td>${d.funcionario}</td>
+          <td>${d.descricao}</td>
+          <td>R$ ${d.valor.toFixed(2)}</td>
         `;
         tabela.appendChild(tr);
       });
     }
 
     // === GERAR PDF ===
-    window.gerarPDF = async function() {
+    const btnPDF = document.getElementById("btnPDF");
+    btnPDF.addEventListener("click", async () => {
       const docPdf = new jsPDF();
       docPdf.text("Relatório de Funcionários e Lançamentos", 10, 10);
-
       let y = 20;
+
       docPdf.text("Funcionários:", 10, y);
       y += 6;
-
       const funcSnap = await getDocs(collection(db, "funcionarios"));
       funcSnap.forEach(f => {
         const d = f.data();
@@ -214,7 +263,7 @@
       });
 
       docPdf.save("relatorio.pdf");
-    }
+    });
   </script>
 </body>
 </html>
