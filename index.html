@@ -1,502 +1,489 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários</title>
-<style>
-  /* Visual igual ao seu, porém responsivo */
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    text-transform: uppercase; /* mantem visual em maiúsculas */
-    box-sizing: border-box;
-  }
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sistema Simples - Funcionários</title>
+  <meta http-equiv="Cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-  .container {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    text-align: center;
-    width: 100%;
-    max-width: 380px;
-    box-sizing: border-box;
-  }
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --accent:#2b7cff; --muted:#6b7280;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:Inter, system-ui, Arial, sans-serif;
+      background:var(--bg);
+      margin:0; padding:16px;
+      color:#111;
+    }
+    header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    h1{font-size:20px;margin:0}
+    .wrap{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:900px){ .wrap{grid-template-columns:360px 1fr} }
 
-  h2 { margin-bottom: 20px; font-size: 1.4em; }
+    .card{
+      background:var(--card);
+      border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(20,30,60,0.06);
+    }
 
-  input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-    text-transform: uppercase; /* visual */
-  }
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input, select{width:100%;padding:9px;border-radius:8px;border:1px solid #e6e9ef;font-size:15px}
+    .row{display:flex;gap:8px}
+    .row .col{flex:1}
+    button{background:var(--accent);color:#fff;border:0;padding:9px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid #e6e9ef}
+    .small{font-size:13px;padding:7px 10px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #f0f2f5;font-size:14px}
+    th{color:var(--muted);font-weight:600}
+    .muted{color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:6px}
+    .right{display:flex;gap:8px;justify-content:flex-end;align-items:center}
 
-  button {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 8px;
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
+    /* modal simples */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .modal .card{max-width:560px;width:100%}
 
-  button:hover { background-color: #0056b3; }
-  .btn-voltar { background-color: #6c757d; }
-  .btn-voltar:hover { background-color: #565e64; }
-
-  .hidden { display: none; }
-
-  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
-
-  .item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f3f5;
-    padding: 6px 8px;
-    border-radius: 6px;
-    margin: 4px 0;
-    transition: background 0.2s;
-  }
-  .item:hover { background-color: #e0e3e7; }
-  .btn-excluir {
-    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
-    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
-    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
-  }
-  .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
-
-  @media (max-width: 400px) {
-    h2 { font-size: 1.2em; }
-    button { font-size: 15px; padding: 10px; }
-    input, select, textarea { font-size: 15px; padding: 8px; }
-  }
-</style>
-
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    footer{margin-top:14px;color:var(--muted);font-size:13px}
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Sistema Simples — Funcionários</h1>
+    <div class="right" style="margin-left:auto">
+      <button id="btn-open-cad" class="small">Cadastro</button>
+      <button id="btn-open-lanc" class="small ghost">Lançamento</button>
+      <button id="btn-refresh" title="Forçar atualização" class="small">⟳</button>
+    </div>
+  </header>
 
-<!-- LOGIN -->
-<div class="container" id="loginContainer">
-  <h2>Login</h2>
-  <input type="text" id="loginUsuario" placeholder="Usuário" />
-  <input type="password" id="loginSenha" placeholder="Senha" />
-  <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
-</div>
+  <div class="wrap">
+    <!-- painel esquerdo: formulário / controles -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <strong>Controles</strong>
+        <span class="muted" style="margin-left:auto" id="status">Conectando...</span>
+      </div>
 
-<!-- MENU PRINCIPAL -->
-<div class="container hidden" id="menu">
-  <h2>Menu Principal</h2>
-  <button onclick="abrirCadastro()">Cadastro</button>
-  <button onclick="abrirLancamento()">Lançamento</button>
-  <button onclick="sair()">Sair</button>
-</div>
+      <div style="margin-bottom:12px">
+        <label for="search">Pesquisar (nome ou cargo)</label>
+        <input id="search" placeholder="Procure um funcionário..." />
+      </div>
 
-<!-- MENU CADASTRO -->
-<div class="container hidden" id="menuCadastro">
-  <h2>Cadastro</h2>
-  <button onclick="abrirInserir()">Inserir</button>
-  <button onclick="abrirConsultar()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
+      <div>
+        <label>Funcionários</label>
+        <div id="func-list" style="max-height:380px;overflow:auto"></div>
+      </div>
+    </div>
 
-<!-- INSERIR CADASTRO -->
-<div class="container hidden" id="inserir">
-  <h2>Inserir / Editar Funcionário</h2>
-  <input type="hidden" id="idEditando" />
-  <input type="text" id="nome" placeholder="Nome" />
-  <input type="text" id="cargo" placeholder="Cargo" />
-  <button id="btnSalvarCadastro" onclick="salvarCadastro()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
+    <!-- painel direito: tabelas -->
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong>Últimos Lançamentos</strong>
+          <div class="muted" id="lcount">0</div>
+        </div>
+        <div id="lanc-table-container"></div>
+      </div>
 
-<!-- CONSULTAR CADASTRO -->
-<div class="container hidden" id="consultar">
-  <h2>Consultar Funcionários</h2>
-  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
-  <div class="lista" id="listaCadastros"></div>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
+      <div class="card">
+        <strong>Todos Funcionários</strong>
+        <div id="func-table-container"></div>
+      </div>
+    </div>
+  </div>
 
-<!-- MENU LANÇAMENTO -->
-<div class="container hidden" id="menuLancamento">
-  <h2>Lançamento</h2>
-  <button onclick="abrirInserirLancamento()">Inserir</button>
-  <button onclick="abrirConsultarLancamento()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
+  <!-- modal cadastro -->
+  <div id="modal-cad" class="modal" aria-hidden="true">
+    <div class="card">
+      <h3>Novo Funcionário</h3>
+      <div style="margin-top:8px">
+        <label for="nome">Nome</label>
+        <input id="nome" autocomplete="off" />
+      </div>
+      <div style="margin-top:8px">
+        <label for="cargo">Cargo</label>
+        <input id="cargo" autocomplete="off" />
+      </div>
 
-<!-- INSERIR LANÇAMENTO -->
-<div class="container hidden" id="inserirLancamento">
-  <h2>Inserir / Editar Lançamento</h2>
-  <input type="hidden" id="idLancEditando" />
-  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
-  <datalist id="nomesCadastradosLanc"></datalist>
-  <input type="date" id="dataLanc" />
-  <select id="tipoLanc">
-    <option value="">Selecione Tipo</option>
-    <option value="VALE">VALE</option>
-    <option value="COMPRA">COMPRA</option>
-  </select>
-  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
-  <button id="btnSalvarLanc" onclick="salvarLancamento()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button id="btn-cad-cancel" class="ghost">Cancelar</button>
+        <button id="btn-cad-save">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-<!-- CONSULTAR LANÇAMENTO -->
-<div class="container hidden" id="consultarLancamento">
-  <h2>Consultar Lançamentos</h2>
-  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
-  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
-  <div class="lista" id="listaLancamentos"></div>
-  <button id="btnGerarPDF" onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
+  <!-- modal lançamento -->
+  <div id="modal-lanc" class="modal" aria-hidden="true">
+    <div class="card">
+      <h3>Novo Lançamento</h3>
+
+      <div style="margin-top:8px">
+        <label for="sel-func">Funcionário</label>
+        <select id="sel-func"></select>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="col">
+          <label for="data">Data</label>
+          <input id="data" type="date" />
+        </div>
+        <div class="col">
+          <label for="tipo">Tipo</label>
+          <select id="tipo">
+            <option value="salario">Salário</option>
+            <option value="despesa">Despesa</option>
+            <option value="bonus">Bônus</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:8px">
+        <label for="valor">Valor</label>
+        <input id="valor" type="number" step="0.01" />
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button id="btn-lanc-cancel" class="ghost">Cancelar</button>
+        <button id="btn-lanc-save">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="muted">Hospedado no GitHub Pages • Realtime via Firebase Realtime DB</footer>
 
 <script>
-/* -------------------------
-   Foco inicial no Usuário
-   ------------------------- */
-window.addEventListener('load', () => {
-  const u = document.getElementById('loginUsuario');
-  if (u) { u.focus(); u.select && u.select(); }
-});
+/*
+  SISTEMA SIMPLES - Funcionários (client-only)
+  - Usa Firebase Realtime Database via REST + EventSource para ouvir mudanças.
+  - EDITAR: se necessário, altere BASE_URL para o seu DB.
+*/
 
-/* -------------------------
-   Enter: navegação e executar último botão
-   - Enter avança para próximo elemento visível (input/select/button)
-   - Quando estiver no último elemento visível, Enter aciona .click() nele
-   ------------------------- */
-document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const interactive = Array.from(document.querySelectorAll('input, select, button'))
-    .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-  // find the element that is target or contains target (for button text spans etc.)
-  const target = e.target;
-  const idx = interactive.indexOf(target);
-  if (idx === -1) return; // não processa se não for um desses
-  e.preventDefault();
-  const nextIndex = idx + 1;
-  if (nextIndex < interactive.length) {
-    const next = interactive[nextIndex];
-    // se próximo for botão, focar no botão (para visual) mas não disparar automaticamente aqui
-    next.focus();
-  } else {
-    // último elemento visível -> executar clique
-    const el = interactive[idx];
-    if (el && typeof el.click === 'function') el.click();
+const BASE_URL = 'https://funcionarios-7c778-default-rtdb.firebaseio.com'; // já fornecido
+// paths
+const PATH_FUNC = '/funcionarios';
+const PATH_LANC = '/lancamentos';
+
+// elementos
+const modalCad = document.getElementById('modal-cad');
+const modalLanc = document.getElementById('modal-lanc');
+const btnOpenCad = document.getElementById('btn-open-cad');
+const btnOpenLanc = document.getElementById('btn-open-lanc');
+const btnRefresh = document.getElementById('btn-refresh');
+const statusEl = document.getElementById('status');
+
+const nomeIn = document.getElementById('nome');
+const cargoIn = document.getElementById('cargo');
+const btnCadSave = document.getElementById('btn-cad-save');
+const btnCadCancel = document.getElementById('btn-cad-cancel');
+
+const selFunc = document.getElementById('sel-func');
+const dataIn = document.getElementById('data');
+const tipoIn = document.getElementById('tipo');
+const valorIn = document.getElementById('valor');
+const btnLancSave = document.getElementById('btn-lanc-save');
+const btnLancCancel = document.getElementById('btn-lanc-cancel');
+
+const funcList = document.getElementById('func-list');
+const funcTableContainer = document.getElementById('func-table-container');
+const lancTableContainer = document.getElementById('lanc-table-container');
+const lcount = document.getElementById('lcount');
+const searchInput = document.getElementById('search');
+
+// estado local
+let funcionarios = {}; // {id: {nome,cargo}}
+let lancamentos = {};  // {id: {funcId,data,tipo,valor}}
+let esFunc = null, esLanc = null;
+
+// util
+function url(path){ return `${BASE_URL}${path}.json`; }
+function nowDateISO(){ return new Date().toISOString(); }
+function formatDate(d){
+  if(!d) return '';
+  const D = new Date(d);
+  if(isNaN(D)) return d;
+  return D.toLocaleDateString();
+}
+
+// CRUD usando REST
+async function addFuncionario(obj){
+  const res = await fetch(url(PATH_FUNC), {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(obj)
+  });
+  return res.json();
+}
+async function addLancamento(obj){
+  const res = await fetch(url(PATH_LANC), {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(obj)
+  });
+  return res.json();
+}
+async function deleteFuncionario(id){
+  await fetch(url(PATH_FUNC + '/' + id), { method:'DELETE' });
+}
+async function deleteLanc(id){
+  await fetch(url(PATH_LANC + '/' + id), { method:'DELETE' });
+}
+
+// render
+function renderFuncionariosList(filter=''){
+  funcList.innerHTML = '';
+  const keys = Object.keys(funcionarios).sort((a,b)=>{
+    const A = (funcionarios[a]?.nome||'').toLowerCase();
+    const B = (funcionarios[b]?.nome||'').toLowerCase();
+    return A.localeCompare(B);
+  });
+  const f = filter.trim().toLowerCase();
+  for(const k of keys){
+    const it = funcionarios[k];
+    if(f && !(it.nome.toLowerCase().includes(f) || (it.cargo||'').toLowerCase().includes(f))) continue;
+    const div = document.createElement('div');
+    div.style.padding='8px';
+    div.style.borderBottom='1px solid #f0f2f5';
+    div.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-weight:600">${escapeHtml(it.nome)}</div>
+        <div class="muted" style="font-size:13px">${escapeHtml(it.cargo||'')}</div>
+      </div>
+      <div class="actions">
+        <button class="ghost small" onclick="handleDelFunc('${k}')">Excluir</button>
+      </div>
+    </div>`;
+    funcList.appendChild(div);
   }
+}
+
+function renderFuncTable(){
+  const keys = Object.keys(funcionarios);
+  let html = `<table><thead><tr><th>Nome</th><th>Cargo</th><th></th></tr></thead><tbody>`;
+  for(const k of keys){
+    const it = funcionarios[k];
+    html += `<tr>
+      <td>${escapeHtml(it.nome)}</td>
+      <td>${escapeHtml(it.cargo||'')}</td>
+      <td class="right"><button class="ghost small" onclick="handleDelFunc('${k}')">Excluir</button></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  funcTableContainer.innerHTML = html;
+  // repopula select para lançamento
+  selFunc.innerHTML = '<option value="">-- selecione --</option>';
+  for(const k of keys){
+    const it = funcionarios[k];
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = it.nome;
+    selFunc.appendChild(opt);
+  }
+}
+
+function renderLancTable(){
+  const keys = Object.keys(lancamentos).sort((a,b)=>{
+    return (lancamentos[b]?.data||'').localeCompare(lancamentos[a]?.data||'');
+  });
+  lcount.textContent = keys.length;
+  let html = `<table><thead><tr><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Valor</th><th></th></tr></thead><tbody>`;
+  for(const k of keys){
+    const it = lancamentos[k];
+    const fn = funcionarios[it.funcId]?.nome || '[ex-func]';
+    html += `<tr>
+      <td>${escapeHtml(formatDate(it.data))}</td>
+      <td>${escapeHtml(fn)}</td>
+      <td>${escapeHtml(it.tipo)}</td>
+      <td>R$ ${Number(it.valor||0).toFixed(2)}</td>
+      <td class="right"><button class="ghost small" onclick="handleDelLanc('${k}')">Excluir</button></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+  lancTableContainer.innerHTML = html;
+}
+
+// helpers
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// handlers expostos para botões inline no HTML
+window.handleDelFunc = async function(id){
+  if(!confirm('Excluir funcionário? Isso não apagará lançamentos já feitos (mas ficará sem referência).')) return;
+  try{
+    await deleteFuncionario(id);
+    // UI será atualizada via SSE; força atualização imediata também
+    fetchSnapshot();
+  }catch(e){ alert('Erro ao excluir'); console.error(e) }
+}
+window.handleDelLanc = async function(id){
+  if(!confirm('Excluir lançamento?')) return;
+  try{
+    await deleteLanc(id);
+    fetchSnapshot();
+  }catch(e){ alert('Erro ao excluir lançamento'); console.error(e) }
+}
+
+// modais
+function openModal(m){
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+}
+function closeModal(m){
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
+
+// event listeners
+btnOpenCad.addEventListener('click', ()=>{
+  nomeIn.value=''; cargoIn.value='';
+  openModal(modalCad);
+  setTimeout(()=> nomeIn.focus(), 60); // foco automático no primeiro campo
+});
+btnOpenLanc.addEventListener('click', ()=>{
+  valorIn.value=''; dataIn.value = new Date().toISOString().slice(0,10);
+  tipoIn.value='salario';
+  openModal(modalLanc);
+  setTimeout(()=> selFunc.focus(), 60);
+});
+btnCadCancel.addEventListener('click', ()=> closeModal(modalCad));
+btnLancCancel.addEventListener('click', ()=> closeModal(modalLanc));
+
+btnCadSave.addEventListener('click', async ()=>{
+  const nome = nomeIn.value.trim();
+  const cargo = cargoIn.value.trim();
+  if(!nome){ alert('Preencha o nome'); nomeIn.focus(); return; }
+  btnCadSave.disabled = true;
+  try{
+    await addFuncionario({ nome, cargo, criadoEm: nowDateISO() });
+    closeModal(modalCad);
+    // força snapshot curto
+    fetchSnapshot();
+  }catch(e){
+    alert('Erro ao salvar'); console.error(e);
+  }finally{ btnCadSave.disabled = false; }
 });
 
-/* -------------------------
-   Maiúsculas automáticas (JS + CSS visual)
-   - Aplica para inputs de texto e textareas
-   - Não altera inputs type=number/date/password
-   ------------------------- */
-document.addEventListener('input', function(e) {
-  const el = e.target;
-  if (!el) return;
-  const tag = el.tagName.toLowerCase();
-  if (tag === 'input') {
-    const t = el.type;
-    if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
-      const pos = el.selectionStart;
-      el.value = el.value.toUpperCase();
-      try { el.setSelectionRange(pos, pos); } catch(err){}
+btnLancSave.addEventListener('click', async ()=>{
+  const funcId = selFunc.value;
+  const data = dataIn.value || new Date().toISOString();
+  const tipo = tipoIn.value;
+  const valor = parseFloat(valorIn.value || 0);
+  if(!funcId){ alert('Selecione um funcionário'); selFunc.focus(); return; }
+  btnLancSave.disabled = true;
+  try{
+    await addLancamento({ funcId, data, tipo, valor, criadoEm: nowDateISO() });
+    closeModal(modalLanc);
+    fetchSnapshot();
+  }catch(e){
+    alert('Erro ao salvar lançamento'); console.error(e);
+  }finally{ btnLancSave.disabled = false; }
+});
+
+btnRefresh.addEventListener('click', ()=> fetchSnapshot());
+
+// enter navigation: Enter em inputs move para próximo campo
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){
+    const tag = e.target.tagName.toLowerCase();
+    if(tag === 'input' || tag === 'select'){
+      e.preventDefault();
+      // navega para o próximo focusable
+      const focusables = Array.from(document.querySelectorAll('input,select,button')).filter(el => !el.disabled);
+      const idx = focusables.indexOf(e.target);
+      const next = focusables[idx+1] || focusables[0];
+      next.focus();
     }
-  } else if (tag === 'textarea') {
-    const pos = el.selectionStart;
-    el.value = el.value.toUpperCase();
-    try { el.setSelectionRange(pos, pos); } catch(err){}
   }
 });
 
-/* -------------------------
-   Navegação entre telas (sem alterar lógica)
-   ------------------------- */
-function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
-function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
-function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function sair(){ alert('Saindo do sistema...'); location.reload(); }
-
-/* -------------------------
-   LOGIN (ADMIN / 1234)
-   ------------------------- */
-function fazerLogin(){
-  const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
-  const senha = (document.getElementById('loginSenha').value || '').trim();
-  if (usuario === 'ADMIN' && senha === '1234') {
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('menu').classList.remove('hidden');
-    alert('Login bem-sucedido!');
-    // garantir foco no primeiro botão do menu
-    const btn = document.querySelector('#menu button');
-    if (btn) btn.focus();
-  } else {
-    alert('Usuário ou senha incorretos!');
-    // deixar foco em usuário para facilitar
-    const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+// busca inicial
+async function fetchSnapshot(){
+  // busca rápido snapshot (não bloqueante)
+  try{
+    const [rf, rl] = await Promise.all([
+      fetch(url(PATH_FUNC)).then(r=>r.json()).catch(()=>{}),
+      fetch(url(PATH_LANC)).then(r=>r.json()).catch(()=>{})
+    ]);
+    funcionarios = rf || {};
+    lancamentos = rl || {};
+    renderFuncionariosList(searchInput.value || '');
+    renderFuncTable();
+    renderLancTable();
+    statusEl.textContent = 'Atualizado ' + new Date().toLocaleTimeString();
+  }catch(e){
+    console.error('fetchSnapshot', e);
+    statusEl.textContent = 'Erro ao atualizar';
   }
 }
 
-/* -------------------------
-   CADASTROS
-   ------------------------- */
-const nomeInput = document.getElementById('nome');
-const cargoInput = document.getElementById('cargo');
-const idEditandoInput = document.getElementById('idEditando');
+// conectar via EventSource (SSE) para updates em tempo real
+function connectSSE(){
+  // fecha conexões antigas
+  try{ if(esFunc) esFunc.close(); }catch(e){}
+  try{ if(esLanc) esLanc.close(); }catch(e){}
 
-function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
-function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+  // Eventos para path de funcionarios
+  try{
+    esFunc = new EventSource(`${BASE_URL}${PATH_FUNC}.json`);
+    esFunc.onopen = ()=> {
+      statusEl.textContent = 'Conectado (funcionários)';
+    };
+    esFunc.onerror = (e)=>{
+      statusEl.textContent = 'Reconectando...';
+      console.warn('esFunc erro', e);
+    };
+    esFunc.onmessage = (evt)=>{
+      // evt.data pode vir como "null" ou JSON
+      try{
+        const data = JSON.parse(evt.data);
+        // firebase SSE retorna todo o nó; ao atualizar, data é o mapa atual.
+        funcionarios = data || {};
+        renderFuncionariosList(searchInput.value || '');
+        renderFuncTable();
+      }catch(e){ console.error('parse esFunc', e); }
+    };
+  }catch(e){ console.error('Erro EventSource func', e); statusEl.textContent='SSE não suportado'; }
 
-function salvarCadastro(){
-  const nome = (nomeInput.value || '').trim();
-  const cargo = (cargoInput.value || '').trim();
-  if(!nome || !cargo) return alert('Preencha todos os campos.');
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const idEditando = idEditandoInput.value;
-  if(idEditando){
-    const idx = cadastros.findIndex(c => c.id == idEditando);
-    if(idx > -1){ cadastros[idx].nome = nome; cadastros[idx].cargo = cargo; }
-  } else {
-    const novoId = cadastros.length ? (cadastros[cadastros.length-1].id + 1) : 1;
-    cadastros.push({ id: novoId, nome, cargo });
-  }
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  limparCamposCadastro();
-  voltarCadastro();
+  // Eventos para path de lancamentos
+  try{
+    esLanc = new EventSource(`${BASE_URL}${PATH_LANC}.json`);
+    esLanc.onopen = ()=> {
+      statusEl.textContent = 'Conectado (lançamentos)';
+    };
+    esLanc.onerror = (e)=>{
+      statusEl.textContent = 'Reconectando...';
+      console.warn('esLanc erro', e);
+    };
+    esLanc.onmessage = (evt)=>{
+      try{
+        const data = JSON.parse(evt.data);
+        lancamentos = data || {};
+        renderLancTable();
+      }catch(e){ console.error('parse esLanc', e); }
+    };
+  }catch(e){ console.error('Erro EventSource lanc', e); statusEl.textContent='SSE não suportado'; }
 }
 
-function mostrarCadastros(){
-  const lista = document.getElementById('listaCadastros');
-  const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
-  lista.innerHTML = '';
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
-  cadastros.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarCadastro(${c.id})"><strong>${c.nome}</strong> - ${c.cargo}</span>
-      <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
-    lista.appendChild(div);
+// busca inicial + sse
+fetchSnapshot();
+connectSSE();
+
+// busca quando o usuário pesquisa
+searchInput.addEventListener('input', ()=> renderFuncionariosList(searchInput.value||''));
+
+// instruções simples: fechar modais ao clicar fora
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click', (ev)=>{
+    if(ev.target === m) closeModal(m);
   });
-}
+});
 
-function editarCadastro(id){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const c = cadastros.find(x => x.id === id);
-  if(!c) return;
-  esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
-  idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
-}
+// dica: para forçar ignorar cache do GitHub Pages ao abrir no celular, adicione ?v=NUM no final da URL do site
+// ex: https://suportekau.github.io/funcionario/?v=2
 
-function excluirCadastro(id){
-  if(!confirm('Excluir este cadastro?')) return;
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  cadastros = cadastros.filter(c => c.id !== id);
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  mostrarCadastros();
-}
-
-function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
-
-/* -------------------------
-   LANÇAMENTOS
-   ------------------------- */
-const nomeLanc = document.getElementById('nomeLanc');
-const dataLanc = document.getElementById('dataLanc');
-const tipoLanc = document.getElementById('tipoLanc');
-const valorLanc = document.getElementById('valorLanc');
-const idLancEditando = document.getElementById('idLancEditando');
-
-function abrirInserirLancamento(){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(cadastros.length === 0){
-    alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
-    abrirCadastro();
-    return;
-  }
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  limparCamposLancamento();
-  atualizarDatalistLanc();
-}
-
-function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
-
-function salvarLancamento(){
-  const nome = (nomeLanc.value || '').trim().toUpperCase();
-  const data = dataLanc.value;
-  const tipo = tipoLanc.value;
-  const valor = parseFloat(valorLanc.value);
-  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(!cadastros.find(c => c.nome === nome)) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const idEdit = idLancEditando.value;
-  if(idEdit){
-    const idx = lancamentos.findIndex(l => l.id == idEdit);
-    if(idx > -1){ lancamentos[idx] = { id: lancamentos[idx].id, nome, data, tipo, valor }; }
-  } else {
-    const novoId = lancamentos.length ? (lancamentos[lancamentos.length-1].id + 1) : 1;
-    lancamentos.push({ id: novoId, nome, data, tipo, valor });
-  }
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  limparCamposLancamento();
-  voltarLancamento();
-}
-
-function mostrarLancamentos(){
-  const lista = document.getElementById('listaLancamentos');
-  const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  lista.innerHTML = '';
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  if(filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-  if(filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
-  lancamentos.forEach(l => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarLancamento(${l.id})"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
-      <button class="btn-excluir" onclick="excluirLancamento(${l.id})">🗑️</button>`;
-    lista.appendChild(div);
-  });
-}
-
-function editarLancamento(id){
-  const lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const l = lancamentos.find(x => x.id === id);
-  if(!l) return;
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
-}
-
-function excluirLancamento(id){
-  if(!confirm('Excluir este lançamento?')) return;
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  lancamentos = lancamentos.filter(l => l.id !== id);
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  mostrarLancamentos();
-}
-
-function limparCamposLancamento(){
-  idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
-}
-
-function atualizarDatalistLanc(){
-  const datalist = document.getElementById('nomesCadastradosLanc');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  datalist.innerHTML = '';
-  cadastros.forEach(c => {
-    const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
-  });
-}
-
-/* -------------------------
-   GERAR PDF - com pontinhos e maiúsculas
-   ------------------------- */
-async function gerarPDFResumoLancamentos(){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-
-  // Cabeçalho
-  pdf.setFontSize(14);
-  pdf.setFont("helvetica", "bold");
-  const titulo = "SUPERMERCADO LEV +";
-  const tituloWidth = pdf.getTextWidth(titulo);
-  pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
-
-  const agora = new Date();
-  const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(dataHoraStr, 10, 22);
-
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  if (filtroMesAno) {
-    const [ano, mes] = filtroMesAno.split('-');
-    const periodoStr = `Período: ${mes}/${ano}`;
-    const periodoWidth = pdf.getTextWidth(periodoStr);
-    pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
-  }
-
-  pdf.line(10, 25, pageWidth - 10, 25);
-
-  // Corpo do relatório
-  let y = 35;
-  pdf.setFontSize(12);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
-  y += 10;
-
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
-  if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
-
-  const resumo = {};
-  lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + l.valor; });
-
-  pdf.setFont("helvetica", "normal");
-  const nomesOrdenados = Object.keys(resumo).sort();
-
-  nomesOrdenados.forEach(nome => {
-    const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
-    const leftX = 10;
-    const rightX = pageWidth - 10;
-    const nomeWidth = pdf.getTextWidth(nome);
-    const valorWidth = pdf.getTextWidth(valorFormatado);
-    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-    const dotWidth = pdf.getTextWidth('.');
-    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-    const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-    const linha = `${nome} ${dots} ${valorFormatado}`;
-    pdf.text(linha, leftX, y);
-    y += 8;
-    if (y > 280) { pdf.addPage(); y = 20; }
-  });
-
-  // Total geral
-  const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
-  const totalNome = "TOTAL GERAL";
-  const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
-  const leftX = 10;
-  const rightX = pageWidth - 10;
-  const nomeWidth = pdf.getTextWidth(totalNome);
-  const valorWidth = pdf.getTextWidth(totalValor);
-  const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-  const dotWidth = pdf.getTextWidth('.');
-  const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-  const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-  y += 10;
-  pdf.setFont("helvetica", "bold");
-  pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
-
-  pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
-}
 </script>
-
 </body>
 </html>
-
