@@ -14,7 +14,6 @@
   h2 {
     text-align: center;
     color: #333;
-    text-transform: uppercase;
   }
   .container {
     background: white;
@@ -32,7 +31,6 @@
     border: 1px solid #ccc;
     border-radius: 6px;
     box-sizing: border-box;
-    text-transform: uppercase; /* deixa tudo maiúsculo */
   }
   button {
     background-color: #007bff;
@@ -52,7 +50,6 @@
     border: 1px solid #ccc;
     padding: 8px;
     text-align: left;
-    text-transform: uppercase; /* tabela também em maiúsculo */
   }
   tr:hover {
     background-color: #f0f8ff;
@@ -110,18 +107,11 @@
     const btnExcluir = document.getElementById("btnExcluir");
     const tabela = document.querySelector("#tabelaFuncionarios tbody");
 
-    // Converter automaticamente em maiúsculas enquanto digita
-    [nome, cargo].forEach(input => {
-      input.addEventListener("input", () => {
-        input.value = input.value.toUpperCase();
-      });
-    });
-
     // Salvar ou Atualizar funcionário
     btnSalvar.addEventListener("click", () => {
       const dados = {
-        nome: nome.value.trim().toUpperCase(),
-        cargo: cargo.value.trim().toUpperCase()
+        nome: nome.value.trim(),
+        cargo: cargo.value.trim()
       };
 
       if (dados.nome === "" || dados.cargo === "") {
