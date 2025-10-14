@@ -2,7 +2,9 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Simples com Menu</title>
+  <title>Login Firebase com Menu</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
@@ -24,13 +26,14 @@
 
   <div id="loginDiv">
     <h2>Login</h2>
-    <label>Usuário: <input type="text" id="usuarioLogin" /></label>
+    <label>Email (usuário): <input type="email" id="emailLogin" /></label>
     <label>Senha: <input type="password" id="senhaLogin" /></label>
     <button onclick="fazerLogin()">Entrar</button>
   </div>
 
   <div id="conteudo" class="hidden">
-    <h2>Bem-vindo, ADMIN!</h2>
+    <h2>Bem-vindo!</h2>
+    <p id="userEmailDisplay"></p>
 
     <!-- Menu -->
     <nav>
@@ -52,61 +55,81 @@
       <h3>Consultar dados</h3>
       <p>Aqui será exibido o resultado da consulta.</p>
     </div>
+
+    <br>
+    <!-- Alterar usuário e senha -->
+    <h3>Alterar usuário (email) e senha</h3>
+    <label>Novo email: <input type="email" id="novoEmail" /></label>
+    <label>Nova senha: <input type="password" id="novaSenha" /></label>
+    <button onclick="alterarCredenciais()">Salvar alterações</button>
   </div>
 
 <script>
-  // Login fixo
-  const USUARIO_FIXO = 'ADMIN';
-  const SENHA_FIXA = '1234';
+  // Configurações do Firebase
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_AUTH_DOMAIN",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_STORAGE_BUCKET",
+    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+    appId: "SEU_APP_ID"
+  };
 
-  // Fazer login
+  // Inicializa Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  // Login
   function fazerLogin() {
-    const usuario = document.getElementById('usuarioLogin').value.trim();
+    const email = document.getElementById('emailLogin').value.trim();
     const senha = document.getElementById('senhaLogin').value.trim();
 
-    if (usuario === USUARIO_FIXO && senha === SENHA_FIXA) {
-      alert('Login efetuado com sucesso!');
-      mostrarConteudo();
-    } else {
-      alert('Usuário ou senha incorretos!');
+    if (!email || !senha) {
+      alert('Preencha email e senha.');
+      return;
     }
+
+    auth.signInWithEmailAndPassword(email, senha)
+      .then((userCredential) => {
+        alert('Login efetuado com sucesso!');
+        mostrarConteudo(userCredential.user);
+      })
+      .catch((error) => {
+        alert('Erro no login: ' + error.message);
+      });
   }
 
-  // Mostrar conteúdo
-  function mostrarConteudo() {
+  // Mostrar conteúdo e menu
+  function mostrarConteudo(user) {
     document.getElementById('loginDiv').classList.add('hidden');
     document.getElementById('conteudo').classList.remove('hidden');
+    document.getElementById('userEmailDisplay').innerText = `Usuário logado: ${user.email}`;
+
+    document.getElementById('novoEmail').value = user.email;
+    document.getElementById('novaSenha').value = '';
+
     esconderTodosMenus();
   }
 
-  // Esconde incluir e consultar
+  // Esconde as seções de incluir e consultar
   function esconderTodosMenus() {
     document.getElementById('incluirForm').classList.add('hidden');
     document.getElementById('consultarDiv').classList.add('hidden');
   }
 
-  // Mostrar incluir
+  // Mostrar formulário Incluir
   function mostrarIncluir() {
     esconderTodosMenus();
     document.getElementById('incluirForm').classList.remove('hidden');
   }
 
-  // Mostrar consultar
+  // Mostrar consulta
   function mostrarConsultar() {
     esconderTodosMenus();
     document.getElementById('consultarDiv').classList.remove('hidden');
   }
 
-  // Logout
-  function fazerLogout() {
-    alert('Logout efetuado.');
-    document.getElementById('conteudo').classList.add('hidden');
-    document.getElementById('loginDiv').classList.remove('hidden');
-    document.getElementById('usuarioLogin').value = '';
-    document.getElementById('senhaLogin').value = '';
-  }
-
-  // Incluir cadastro (só mostra alerta e limpa campos)
+  // Função simples para "incluir" cadastro — aqui você pode integrar Firebase Firestore ou Realtime Database
   function incluirCadastro() {
     const nome = document.getElementById('nomeIncluir').value.trim();
     const email = document.getElementById('emailIncluir').value.trim();
@@ -116,25 +139,79 @@
       return;
     }
 
+    // Aqui você pode adicionar a lógica para salvar no Firebase Database
     alert(`Cadastro incluído:\nNome: ${nome}\nEmail: ${email}`);
 
+    // Limpar campos após salvar
     document.getElementById('nomeIncluir').value = '';
     document.getElementById('emailIncluir').value = '';
   }
 
-  // Navegar com Enter: de usuário para senha, depois botão Entrar
-  document.getElementById('usuarioLogin').addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('senhaLogin').focus();
+  // Alterar email e senha
+  function alterarCredenciais() {
+    const user = auth.currentUser;
+    const novoEmail = document.getElementById('novoEmail').value.trim();
+    const novaSenha = document.getElementById('novaSenha').value.trim();
+
+    if (!user) {
+      alert('Nenhum usuário logado.');
+      return;
+    }
+
+    if (novoEmail && novoEmail !== user.email) {
+      user.updateEmail(novoEmail)
+        .then(() => {
+          alert('Email atualizado com sucesso!');
+          document.getElementById('userEmailDisplay').innerText = `Usuário logado: ${novoEmail}`;
+        })
+        .catch(error => {
+          alert('Erro ao atualizar email: ' + error.message);
+        });
+    }
+
+    if (novaSenha) {
+      if (novaSenha.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+      user.updatePassword(novaSenha)
+        .then(() => {
+          alert('Senha atualizada com sucesso!');
+          document.getElementById('novaSenha').value = '';
+        })
+        .catch(error => {
+          alert('Erro ao atualizar senha: ' + error.message);
+        });
+    }
+  }
+
+  // Logout
+  function fazerLogout() {
+    auth.signOut().then(() => {
+      alert('Logout efetuado.');
+      document.getElementById('conteudo').classList.add('hidden');
+      document.getElementById('loginDiv').classList.remove('hidden');
+      document.getElementById('emailLogin').value = '';
+      document.getElementById('senhaLogin').value = '';
+      esconderTodosMenus();
+    });
+  }
+
+  // Verificar estado de autenticação
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      mostrarConteudo(user);
+    } else {
+      document.getElementById('conteudo').classList.add('hidden');
+      document.getElementById('loginDiv').classList.remove('hidden');
     }
   });
 
-  document.getElementById('senhaLogin').addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      fazerLogin();
-    }
+  // Enter no formulário de login
+  ['emailLogin', 'senhaLogin'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', e => {
+      if (e.key === 'Enter') fazerLogin();
+    });
   });
 </script>
 
