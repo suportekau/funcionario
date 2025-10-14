@@ -2,9 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Firebase - Admin 1234</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <title>Login Simples com Menu</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
@@ -25,21 +23,23 @@
 <body>
 
   <div id="loginDiv">
-    <h2>Login Firebase</h2>
-    <label>Email (admin@exemplo.com): <input type="email" id="emailLogin" /></label>
-    <label>Senha (1234): <input type="password" id="senhaLogin" /></label>
+    <h2>Login</h2>
+    <label>Usuário: <input type="text" id="usuarioLogin" /></label>
+    <label>Senha: <input type="password" id="senhaLogin" /></label>
     <button onclick="fazerLogin()">Entrar</button>
   </div>
 
   <div id="conteudo" class="hidden">
     <h2>Bem-vindo, ADMIN!</h2>
 
+    <!-- Menu -->
     <nav>
       <button onclick="mostrarIncluir()">Incluir</button>
       <button onclick="mostrarConsultar()">Consultar</button>
       <button onclick="fazerLogout()">Sair</button>
     </nav>
 
+    <!-- Formulário Incluir -->
     <div id="incluirForm" class="hidden">
       <h3>Incluir novo cadastro</h3>
       <label>Nome: <input type="text" id="nomeIncluir" /></label>
@@ -47,6 +47,7 @@
       <button onclick="incluirCadastro()">Salvar</button>
     </div>
 
+    <!-- Consulta -->
     <div id="consultarDiv" class="hidden">
       <h3>Consultar dados</h3>
       <p>Aqui será exibido o resultado da consulta.</p>
@@ -54,75 +55,58 @@
   </div>
 
 <script>
-  // Configurações Firebase - substitua pelos seus dados
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
+  // Login fixo
+  const USUARIO_FIXO = 'ADMIN';
+  const SENHA_FIXA = '1234';
 
-  // Inicializa Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  // Email e senha fixos para aceitar no login
-  const EMAIL_ADMIN = 'admin@exemplo.com';
-  const SENHA_ADMIN = '1234';
-
+  // Fazer login
   function fazerLogin() {
-    const email = document.getElementById('emailLogin').value.trim();
+    const usuario = document.getElementById('usuarioLogin').value.trim();
     const senha = document.getElementById('senhaLogin').value.trim();
 
-    if (email !== EMAIL_ADMIN || senha !== SENHA_ADMIN) {
-      alert('Só é permitido login com admin@exemplo.com / 1234');
-      return;
+    if (usuario === USUARIO_FIXO && senha === SENHA_FIXA) {
+      alert('Login efetuado com sucesso!');
+      mostrarConteudo();
+    } else {
+      alert('Usuário ou senha incorretos!');
     }
-
-    // Tenta logar no Firebase com esses dados
-    auth.signInWithEmailAndPassword(email, senha)
-      .then(() => {
-        alert('Login efetuado com sucesso!');
-        mostrarConteudo();
-      })
-      .catch((error) => {
-        alert('Erro no login: ' + error.message);
-      });
   }
 
+  // Mostrar conteúdo
   function mostrarConteudo() {
     document.getElementById('loginDiv').classList.add('hidden');
     document.getElementById('conteudo').classList.remove('hidden');
     esconderTodosMenus();
   }
 
+  // Esconde incluir e consultar
   function esconderTodosMenus() {
     document.getElementById('incluirForm').classList.add('hidden');
     document.getElementById('consultarDiv').classList.add('hidden');
   }
 
+  // Mostrar incluir
   function mostrarIncluir() {
     esconderTodosMenus();
     document.getElementById('incluirForm').classList.remove('hidden');
   }
 
+  // Mostrar consultar
   function mostrarConsultar() {
     esconderTodosMenus();
     document.getElementById('consultarDiv').classList.remove('hidden');
   }
 
+  // Logout
   function fazerLogout() {
-    auth.signOut().then(() => {
-      alert('Logout efetuado.');
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
-      document.getElementById('emailLogin').value = '';
-      document.getElementById('senhaLogin').value = '';
-    });
+    alert('Logout efetuado.');
+    document.getElementById('conteudo').classList.add('hidden');
+    document.getElementById('loginDiv').classList.remove('hidden');
+    document.getElementById('usuarioLogin').value = '';
+    document.getElementById('senhaLogin').value = '';
   }
 
+  // Incluir cadastro (só mostra alerta e limpa campos)
   function incluirCadastro() {
     const nome = document.getElementById('nomeIncluir').value.trim();
     const email = document.getElementById('emailIncluir').value.trim();
@@ -138,18 +122,8 @@
     document.getElementById('emailIncluir').value = '';
   }
 
-  // Se o usuário já estiver logado no Firebase, abre direto o conteúdo (mas só se for admin)
-  auth.onAuthStateChanged(user => {
-    if (user && user.email === EMAIL_ADMIN) {
-      mostrarConteudo();
-    } else {
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
-    }
-  });
-
-  // Navegação com Enter no login
-  document.getElementById('emailLogin').addEventListener('keypress', e => {
+  // Navegar com Enter: de usuário para senha, depois botão Entrar
+  document.getElementById('usuarioLogin').addEventListener('keypress', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
       document.getElementById('senhaLogin').focus();
