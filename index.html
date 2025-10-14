@@ -5,27 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sistema Funcionários — Enter Navegação</title>
 <style>
-  body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:10px;min-height:100vh;display:flex;align-items:center;justify-content:center;box-sizing:border-box;text-transform:uppercase;}
-  .container{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.12);width:100%;max-width:420px;box-sizing:border-box;}
-  h2{margin:0 0 12px 0;font-size:1.2rem;}
-  input,select,button{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;font-size:15px;text-transform:uppercase;}
-  button{background:#007bff;color:#fff;border:none;cursor:pointer;}
-  button:hover{background:#0056b3;}
-  .btn-voltar{background:#6c757d;}
-  .btn-voltar:hover{background:#565e64;}
-  .hidden{display:none;}
-  .lista{max-height:300px;overflow:auto;margin-top:8px;text-align:left;}
-  .item{background:#f1f3f5;padding:8px;border-radius:6px;margin:6px 0;display:flex;justify-content:space-between;align-items:center;}
-  .btn-excluir{width:34px;height:34px;border-radius:50%;background:#dc3545;color:#fff;border:none;cursor:pointer;}
-  .muted{font-size:12px;text-transform:none;color:#666;margin-top:6px;}
-  @media(max-width:420px){.container{padding:14px}h2{font-size:1rem}}
+  body{ font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:10px; min-height:100vh; display:flex; align-items:center; justify-content:center; box-sizing:border-box; text-transform:uppercase; }
+  .container{ background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.12); width:100%; max-width:420px; box-sizing:border-box; }
+  h2{ margin:0 0 12px 0; font-size:1.2rem; }
+  input, select, button{ width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; font-size:15px; text-transform:uppercase; }
+  button{ background:#007bff; color:#fff; border:none; cursor:pointer; }
+  button:hover{ background:#0056b3; }
+  .btn-voltar{ background:#6c757d; }
+  .btn-voltar:hover{ background:#565e64; }
+  .hidden{ display:none; }
+  .lista{ max-height:300px; overflow:auto; margin-top:8px; text-align:left; }
+  .item{ background:#f1f3f5; padding:8px; border-radius:6px; margin:6px 0; display:flex; justify-content:space-between; align-items:center; }
+  .btn-excluir{ width:34px; height:34px; border-radius:50%; background:#dc3545; color:#fff; border:none; cursor:pointer; }
+  .muted{ font-size:12px; text-transform:none; color:#666; margin-top:6px; }
+  @media(max-width:420px){ .container{padding:14px} h2{font-size:1rem} }
 </style>
 
+<!-- jsPDF (CDN) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="container" id="loginContainer">
   <h2>Login</h2>
   <input id="loginUsuario" placeholder="Usuário" autocomplete="off" />
@@ -34,7 +34,6 @@
   <p class="muted">Digite suas credenciais</p>
 </div>
 
-<!-- MENU PRINCIPAL -->
 <div class="container hidden" id="menu">
   <h2>Menu Principal</h2>
   <button id="btnCadastro">Cadastro</button>
@@ -43,7 +42,7 @@
   <button class="btn-voltar" id="btnSair">Sair</button>
 </div>
 
-<!-- MENU CADASTRO -->
+<!-- Cadastro -->
 <div class="container hidden" id="menuCadastro">
   <h2>Cadastro</h2>
   <button id="btnInserir">Inserir</button>
@@ -51,7 +50,6 @@
   <button class="btn-voltar" id="btnVoltarMenu">Voltar</button>
 </div>
 
-<!-- INSERIR FUNCIONÁRIO -->
 <div class="container hidden" id="inserir">
   <h2>Inserir / Editar Funcionário</h2>
   <input type="hidden" id="idEditando" />
@@ -61,7 +59,6 @@
   <button class="btn-voltar" id="btnVoltarCadastro">Voltar</button>
 </div>
 
-<!-- CONSULTAR FUNCIONÁRIOS -->
 <div class="container hidden" id="consultar">
   <h2>Consultar Funcionários</h2>
   <input id="filtroFuncionarios" placeholder="Filtrar por nome" />
@@ -69,7 +66,7 @@
   <button class="btn-voltar" id="btnVoltarConsulta">Voltar</button>
 </div>
 
-<!-- MENU LANÇAMENTO -->
+<!-- Lançamentos -->
 <div class="container hidden" id="menuLancamento">
   <h2>Lançamentos</h2>
   <button id="btnInserirLanc">Inserir</button>
@@ -77,7 +74,6 @@
   <button class="btn-voltar" id="btnVoltarMenuLanc">Voltar</button>
 </div>
 
-<!-- INSERIR LANÇAMENTO -->
 <div class="container hidden" id="inserirLanc">
   <h2>Inserir / Editar Lançamento</h2>
   <input type="hidden" id="idLancEditando" />
@@ -94,7 +90,6 @@
   <button class="btn-voltar" id="btnVoltarLanc">Voltar</button>
 </div>
 
-<!-- CONSULTAR LANÇAMENTOS -->
 <div class="container hidden" id="consultarLanc">
   <h2>Consultar Lançamentos</h2>
   <input type="month" id="filtroMes" />
@@ -103,11 +98,12 @@
   <button class="btn-voltar" id="btnVoltarConsultaLanc">Voltar</button>
 </div>
 
-<!-- SCRIPT PRINCIPAL -->
+<!-- Firebase + logic -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getDatabase, ref, push, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+  // ---- config (seu projeto) ----
   const firebaseConfig = {
     apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
     authDomain: "funcionarios-7c778.firebaseapp.com",
@@ -122,56 +118,245 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  // ---- helpers ----
   const $ = id => document.getElementById(id);
   function esconderTudo(){ document.querySelectorAll('.container').forEach(c=>c.classList.add('hidden')); }
   function mostrar(id){ esconderTudo(); $(id).classList.remove('hidden'); }
 
-  function focarLogin(){ setTimeout(()=>{ $('loginUsuario').focus(); },150); }
+  // foco no login ao carregar
+  function focarLogin(){ setTimeout(()=>{ try{ $('loginUsuario').focus(); }catch(e){} }, 150); }
   window.addEventListener('load', focarLogin);
 
-  // --- Enter navegação
-  document.addEventListener('keydown', e=>{
+  // ---- ENTER navigation (centralizado) ----
+  // Ao apertar Enter, ir para próximo elemento visível; se for último, dispara .click()
+  document.addEventListener('keydown', function(e){
     if(e.key !== 'Enter') return;
-    const visiveis = [...document.querySelectorAll('input,select,button')]
-      .filter(el=>el.offsetParent!==null && !el.disabled && el.type!=='hidden');
-    const i = visiveis.indexOf(e.target);
-    if(i===-1) return;
+    const interactive = Array.from(document.querySelectorAll('input, select, button'))
+      .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
+
+    // se o alvo não for parte da lista (ex: clicar em área vazia), ignora
+    const idx = interactive.indexOf(e.target);
+    if(idx === -1) return;
+
     e.preventDefault();
-    const prox = visiveis[i+1];
-    if(prox) prox.focus();
-    else if(typeof e.target.click==='function') e.target.click();
+
+    const next = interactive[idx + 1];
+    if(next){
+      // se próximo é botão, focar nele (visual). Se for input/select, focar
+      try { next.focus(); } catch(err){}
+    } else {
+      // último -> executar click se existir
+      const cur = interactive[idx];
+      if(cur && typeof cur.click === 'function') cur.click();
+    }
   });
 
-  // --- Login ---
+  // ---- LOGIN ----
   $('btnEntrar').addEventListener('click', ()=>{
-    const u = $('loginUsuario').value.trim().toUpperCase();
-    const s = $('loginSenha').value.trim();
-    if(u==='ADMIN' && s==='1234'){ mostrar('menu'); }
-    else { alert('Usuário ou senha incorretos!'); focarLogin(); }
+    const usuario = ($('loginUsuario').value||'').trim().toUpperCase();
+    const senha = ($('loginSenha').value||'').trim();
+    if(usuario === 'ADMIN' && senha === '1234'){
+      mostrar('menu');
+    } else {
+      alert('Usuário ou senha incorretos!');
+      focarLogin();
+    }
   });
+
   $('btnSair').addEventListener('click', ()=>{ mostrar('loginContainer'); focarLogin(); });
 
-  // --- Menus ---
-  $('btnCadastro').onclick=()=>mostrar('menuCadastro');
-  $('btnLancamento').onclick=()=>mostrar('menuLancamento');
-  $('btnGerarPDF').onclick=()=>gerarPDFRelatorio();
+  // ---- MENU NAV ----
+  $('btnCadastro').addEventListener('click', ()=> mostrar('menuCadastro'));
+  $('btnLancamento').addEventListener('click', ()=> mostrar('menuLancamento'));
+  $('btnGerarPDF').addEventListener('click', gerarPDFRelatorio);
 
-  // --- Cadastro ---
-  $('btnInserir').onclick=()=>{ mostrar('inserir'); $('nome').focus(); };
-  $('btnConsultar').onclick=()=>{ mostrar('consultar'); carregarFuncionarios(); };
-  $('btnVoltarMenu').onclick=()=>mostrar('menu');
-  $('btnVoltarCadastro').onclick=()=>mostrar('menuCadastro');
-  $('btnVoltarConsulta').onclick=()=>mostrar('menuCadastro');
+  // ---- CADASTRO ----
+  $('btnInserir').addEventListener('click', ()=> { mostrar('inserir'); $('nome').focus(); });
+  $('btnConsultar').addEventListener('click', ()=> { mostrar('consultar'); carregarFuncionarios(); });
+  $('btnVoltarMenu').addEventListener('click', ()=> mostrar('menu'));
+  $('btnVoltarCadastro').addEventListener('click', ()=> mostrar('menuCadastro'));
+  $('btnVoltarConsulta').addEventListener('click', ()=> mostrar('menuCadastro'));
 
-  // --- Lançamentos ---
-  $('btnInserirLanc').onclick=()=>{ atualizarDatalistFuncionarios(); mostrar('inserirLanc'); $('tipoLanc').focus(); };
-  $('btnConsultarLanc').onclick=()=>{ mostrar('consultarLanc'); carregarLancamentos(); };
-  $('btnVoltarMenuLanc').onclick=()=>mostrar('menu');
-  $('btnVoltarLanc').onclick=()=>mostrar('menuLancamento');
-  $('btnVoltarConsultaLanc').onclick=()=>mostrar('menuLancamento');
+  $('btnSalvarFuncionario').addEventListener('click', async ()=>{
+    const nome = ($('nome').value||'').trim().toUpperCase();
+    const cargo = ($('cargo').value||'').trim().toUpperCase();
+    if(!nome || !cargo) return alert('Preencha todos os campos.');
+    const idEdit = $('idEditando').value;
+    if(idEdit){
+      await update(ref(db, `funcionarios/${idEdit}`), { nome, cargo });
+      $('idEditando').value = '';
+    } else {
+      const node = push(ref(db, 'funcionarios'));
+      await set(node, { nome, cargo });
+    }
+    $('nome').value = ''; $('cargo').value = '';
+    alert('Funcionário salvo!');
+  });
 
-  // (Restante igual: salvar funcionário, carregar, excluir, salvar lançamentos etc.)
-  // --- FUNÇÕES DE SALVAR/EXCLUIR/CONSULTAR continuam as mesmas da versão anterior ---
+  function carregarFuncionarios(){
+    const lista = $('listaFuncionarios');
+    const filtro = ($('filtroFuncionarios').value||'').trim().toUpperCase();
+    lista.innerHTML = '';
+    onValue(ref(db, 'funcionarios'), snapshot=>{
+      lista.innerHTML = '';
+      const dl = $('datalistFuncionarios'); dl.innerHTML = '';
+      snapshot.forEach(ch=>{
+        const id = ch.key;
+        const d = ch.val();
+        const nome = (d.nome||'').toUpperCase();
+        const cargo = d.cargo||'';
+        if(!filtro || nome.includes(filtro)){
+          const div = document.createElement('div'); div.className = 'item';
+          div.innerHTML = `<span ondblclick="editarFuncionario('${id}')"><strong>${nome}</strong> - ${cargo}</span>
+            <button class="btn-excluir" onclick="excluirFuncionario('${id}')">🗑️</button>`;
+          lista.appendChild(div);
+        }
+        const opt = document.createElement('option'); opt.value = nome; dl.appendChild(opt);
+      });
+    });
+  }
+
+  window.editarFuncionario = async function(id){
+    const snap = await get(ref(db, `funcionarios/${id}`));
+    if(!snap.exists()) return alert('Funcionário não encontrado.');
+    const d = snap.val();
+    $('idEditando').value = id; $('nome').value = d.nome||''; $('cargo').value = d.cargo||'';
+    mostrar('inserir');
+  };
+
+  window.excluirFuncionario = async function(id){
+    if(!confirm('Excluir este funcionário?')) return;
+    await remove(ref(db, `funcionarios/${id}`));
+  };
+
+  // ---- LANÇAMENTOS ----
+  $('btnInserirLanc').addEventListener('click', ()=> { atualizarDatalistFuncionarios(); mostrar('inserirLanc'); $('tipoLanc').focus(); });
+  $('btnConsultarLanc').addEventListener('click', ()=> { mostrar('consultarLanc'); carregarLancamentos(); });
+  $('btnVoltarMenuLanc').addEventListener('click', ()=> mostrar('menu'));
+
+  $('btnSalvarLanc').addEventListener('click', async ()=>{
+    const tipo = ($('tipoLanc').value||'').trim();
+    const nome = ($('nomeLanc').value||'').trim().toUpperCase();
+    const data = ($('dataLanc').value||'').trim();
+    const valor = parseFloat((($('valorLanc').value||'') + '').replace(',', '.'));
+    if(!tipo || !nome || !data || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
+    const idEdit = $('idLancEditando').value;
+    if(idEdit){
+      await update(ref(db, `lancamentos/${idEdit}`), { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
+      $('idLancEditando').value = '';
+    } else {
+      const node = push(ref(db, 'lancamentos'));
+      await set(node, { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
+    }
+    $('tipoLanc').value=''; $('nomeLanc').value=''; $('dataLanc').value=''; $('valorLanc').value='';
+    alert('Lançamento salvo!');
+  });
+
+  function carregarLancamentos(){
+    const lista = $('listaLancamentos');
+    const filtroMes = $('filtroMes').value;
+    const filtroNome = ($('filtroLancNome').value||'').trim().toUpperCase();
+    lista.innerHTML = '';
+    onValue(ref(db, 'lancamentos'), snapshot=>{
+      lista.innerHTML = '';
+      snapshot.forEach(ch=>{
+        const l = ch.val();
+        const okMes = !filtroMes || (l.data && l.data.startsWith(filtroMes));
+        const okNome = !filtroNome || (l.nome && l.nome.includes(filtroNome));
+        if(okMes && okNome){
+          const div = document.createElement('div'); div.className='item';
+          div.innerHTML = `<span ondblclick="editarLancamento('${ch.key}')"><strong>${l.tipo}</strong> | ${l.nome} | ${l.data} | R$ ${Number(l.valor).toFixed(2).replace('.', ',')}</span>
+            <button class="btn-excluir" onclick="excluirLancamento('${ch.key}')">🗑️</button>`;
+          lista.appendChild(div);
+        }
+      });
+    });
+  }
+
+  window.editarLancamento = async function(id){
+    const snap = await get(ref(db, `lancamentos/${id}`));
+    if(!snap.exists()) return alert('Lançamento não encontrado.');
+    const l = snap.val();
+    $('idLancEditando').value = id; $('tipoLanc').value = l.tipo||''; $('nomeLanc').value = l.nome||''; $('dataLanc').value = l.data||''; $('valorLanc').value = l.valor||'';
+    mostrar('inserirLanc');
+  };
+
+  window.excluirLancamento = async function(id){
+    if(!confirm('Excluir este lançamento?')) return;
+    await remove(ref(db, `lancamentos/${id}`));
+  };
+
+  async function atualizarDatalistFuncionarios(){
+    const snap = await get(ref(db, 'funcionarios'));
+    const dl = $('datalistFuncionarios'); dl.innerHTML = '';
+    snap.forEach(ch => {
+      const n = ch.val().nome || '';
+      const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
+    });
+  }
+
+  // ---- GERAR PDF ----
+  $('btnGerarPDF').addEventListener('click', gerarPDFRelatorio);
+
+  async function gerarPDFRelatorio(){
+    const snap = await get(ref(db, 'lancamentos'));
+    const dados = snap.exists() ? snap.val() : {};
+    const arr = Object.values(dados || {});
+    if(arr.length === 0){ alert('Nenhum lançamento encontrado.'); return; }
+
+    const resumo = {};
+    arr.forEach(l => {
+      const nome = (l.nome||'---').toUpperCase();
+      resumo[nome] = (resumo[nome] || 0) + Number(l.valor || 0);
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const pageW = pdf.internal.pageSize.getWidth();
+
+    pdf.setFontSize(14); pdf.setFont("helvetica","bold");
+    const title = "RESUMO DE LANÇAMENTOS";
+    const titleW = pdf.getTextWidth(title);
+    pdf.text(title, (pageW - titleW)/2, 14);
+
+    pdf.setFontSize(10); pdf.setFont("helvetica","normal");
+    pdf.text(new Date().toLocaleString('pt-BR'), 10, 20);
+    pdf.line(10,22,pageW-10,22);
+
+    let y = 30;
+    pdf.setFontSize(12); pdf.setFont("helvetica","bold");
+    pdf.text("TOTAL POR FUNCIONÁRIO", 10, y); y += 8;
+    pdf.setFont("helvetica","normal");
+
+    const nomes = Object.keys(resumo).sort();
+    nomes.forEach(nome => {
+      const valorStr = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
+      const leftX = 10; const rightX = pageW - 10;
+      const nomeW = pdf.getTextWidth(nome); const valW = pdf.getTextWidth(valorStr);
+      const dotsW = rightX - leftX - nomeW - valW - 8;
+      const dotW = pdf.getTextWidth('.');
+      const countDots = Math.max(3, Math.floor(dotsW / dotW));
+      const dots = '.'.repeat(countDots);
+      pdf.text(`${nome} ${dots} ${valorStr}`, leftX, y);
+      y += 8;
+      if(y > 280){ pdf.addPage(); y = 20; }
+    });
+
+    const total = nomes.reduce((s,n) => s + resumo[n], 0);
+    y += 8;
+    pdf.setFont("helvetica","bold");
+    const totalTxt = "TOTAL GERAL"; const totalVal = "R$ " + total.toFixed(2).replace('.', ',');
+    const totalTxtW = pdf.getTextWidth(totalTxt); const totalValW = pdf.getTextWidth(totalVal);
+    const dotsW = (pageW - 10) - 10 - totalTxtW - totalValW - 8;
+    const dotW = pdf.getTextWidth('.');
+    const countDots = Math.max(3, Math.floor(dotsW / dotW));
+    pdf.text(`${totalTxt} ${'.'.repeat(countDots)} ${totalVal}`, 10, y);
+
+    pdf.save('RESUMO_LANCAMENTOS.pdf');
+  }
+
+  // Inicial: mostrar login
+  mostrar('loginContainer');
 </script>
 
 </body>
