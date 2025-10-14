@@ -1,88 +1,195 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Exemplo Completo Firebase Realtime Database</title>
+  <title>Sistema Simples – Funcionários com Firestore</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-transform: uppercase;
+      box-sizing: border-box;
+    }
+    .container {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+      box-sizing: border-box;
+    }
+    h2 { margin-bottom: 20px; font-size: 1.4em; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+      text-transform: uppercase;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #0056b3; }
+    .btn-voltar { background-color: #6c757d; }
+    .btn-voltar:hover { background-color: #565e64; }
+    .hidden { display: none; }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
 </head>
+
 <body>
-  <h1>Cadastro de Funcionários</h1>
+  <!-- LOGIN -->
+  <div class="container" id="loginContainer">
+    <h2>Login</h2>
+    <input type="text" id="loginUsuario" placeholder="Usuário" />
+    <input type="password" id="loginSenha" placeholder="Senha" />
+    <button type="button" id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+  </div>
 
-  <form id="formFuncionario">
-    <input type="text" id="nome" placeholder="Nome" required />
-    <input type="text" id="cargo" placeholder="Cargo" required />
-    <button type="submit">Adicionar Funcionário</button>
-  </form>
+  <!-- MENU PRINCIPAL -->
+  <div class="container hidden" id="menu">
+    <h2>Menu Principal</h2>
+    <button onclick="abrirCadastro()">Cadastro</button>
+    <button class="btn-voltar" onclick="sair()">Sair</button>
+  </div>
 
-  <h2>Lista de Funcionários</h2>
-  <ul id="listaFuncionarios"></ul>
+  <!-- CADASTRO DE FUNCIONÁRIO -->
+  <div class="container hidden" id="cadastro">
+    <h2>Inserir / Editar Funcionário</h2>
+    <input type="hidden" id="idEditando" />
+    <input type="text" id="nome" placeholder="Nome" />
+    <input type="text" id="cargo" placeholder="Cargo" />
+    <button type="button" id="btnSalvarCadastro" onclick="salvarCadastroFirestore()">Salvar</button>
+    <button class="btn-voltar" onclick="voltar()">Voltar</button>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-    // Configuração do Firebase
+  <script>
+    // Configuração Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-      authDomain: "funcionarios-7c778.firebaseapp.com",
-      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
-      projectId: "funcionarios-7c778",
-      storageBucket: "funcionarios-7c778.firebasestorage.app",
-      messagingSenderId: "632364021109",
-      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
-      measurementId: "G-46DKFS3LHV"
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_PROJETO"
     };
 
-    // Inicializa o app Firebase
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // Referência ao nó "funcionarios"
-    const funcionariosRef = ref(database, "funcionarios");
+    // =========================
+    // ======= LOGIN ===========
+    // =========================
+    function fazerLogin() {
+      const usuario = document.getElementById('loginUsuario').value.trim().toUpperCase();
+      const senha = document.getElementById('loginSenha').value.trim();
 
-    const form = document.getElementById("formFuncionario");
-    const listaFuncionarios = document.getElementById("listaFuncionarios");
-
-    // Função para adicionar funcionário
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      const nome = document.getElementById("nome").value.trim();
-      const cargo = document.getElementById("cargo").value.trim();
-
-      if (nome && cargo) {
-        const novoFuncionarioRef = push(funcionariosRef);
-
-        set(novoFuncionarioRef, {
-          nome: nome,
-          cargo: cargo,
-        })
-          .then(() => {
-            alert("Funcionário adicionado com sucesso!");
-            form.reset();
-          })
-          .catch((error) => {
-            alert("Erro ao adicionar funcionário: " + error);
-          });
-      }
-    });
-
-    // Escuta mudanças no Realtime Database e atualiza a lista
-    onValue(funcionariosRef, (snapshot) => {
-      listaFuncionarios.innerHTML = ""; // limpa a lista
-
-      const funcionarios = snapshot.val();
-
-      if (funcionarios) {
-        Object.entries(funcionarios).forEach(([id, func]) => {
-          const li = document.createElement("li");
-          li.textContent = `${func.nome} - ${func.cargo}`;
-          listaFuncionarios.appendChild(li);
-        });
+      if (usuario === "ADMIN" && senha === "1234") {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('menu').classList.remove('hidden');
+        alert("Login bem-sucedido!");
       } else {
-        listaFuncionarios.textContent = "Nenhum funcionário cadastrado.";
+        alert("Usuário ou senha incorretos!");
       }
-    });
+    }
+
+    function sair() {
+      alert("Saindo do sistema...");
+      location.reload();
+    }
+
+    // =========================
+    // ======= NAVEGAÇÃO =======
+    // =========================
+    function abrirCadastro() {
+      document.getElementById('menu').classList.add('hidden');
+      document.getElementById('cadastro').classList.remove('hidden');
+      document.getElementById('nome').focus();
+    }
+
+    function voltar() {
+      document.getElementById('cadastro').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+    }
+
+    // =========================
+    // ======= FIRESTORE =======
+    // =========================
+    async function salvarCadastroFirestore() {
+      const nome = document.getElementById('nome').value.trim().toUpperCase();
+      const cargo = document.getElementById('cargo').value.trim().toUpperCase();
+      const idEditando = document.getElementById('idEditando').value;
+
+      if (!nome || !cargo) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      try {
+        if (idEditando) {
+          await db.collection("funcionarios").doc(idEditando).update({ nome, cargo });
+          alert("Cadastro atualizado!");
+        } else {
+          await db.collection("funcionarios").add({ nome, cargo });
+          alert("Cadastro inserido!");
+        }
+        limparCamposCadastro();
+        voltar();
+      } catch (erro) {
+        console.error("Erro ao salvar:", erro);
+        alert("Erro ao salvar no Firestore.");
+      }
+    }
+
+    function limparCamposCadastro() {
+      document.getElementById('idEditando').value = '';
+      document.getElementById('nome').value = '';
+      document.getElementById('cargo').value = '';
+    }
+
+    // =========================
+    // ======= ENTER ===========
+    // =========================
+    function ativarEnterCadastro() {
+      const campos = [document.getElementById('nome'), document.getElementById('cargo')];
+      const botaoSalvar = document.getElementById('btnSalvarCadastro');
+
+      campos.forEach((campo, index) => {
+        campo.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (index < campos.length - 1) {
+              campos[index + 1].focus();
+            } else {
+              botaoSalvar.click();
+            }
+          }
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', ativarEnterCadastro);
   </script>
 </body>
 </html>
