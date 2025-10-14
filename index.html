@@ -2,181 +2,96 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Firebase - Menu Cadastro, Lançamento e Sair</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <title>Cadastro Funcionário - Incluir no Firebase</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
-    label { display: block; margin: 8px 0 4px; }
-    nav button {
-      margin-right: 10px;
-      padding: 8px 15px;
-      cursor: pointer;
-    }
-    #cadastroForm, #lancamentoForm {
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      padding: 15px;
-      max-width: 400px;
-    }
   </style>
 </head>
 <body>
 
-  <div id="loginDiv">
-    <h2>Login Firebase</h2>
-    <label>Email (admin@exemplo.com): <input type="email" id="emailLogin" /></label>
-    <label>Senha (1234): <input type="password" id="senhaLogin" /></label>
-    <button onclick="fazerLogin()">Entrar</button>
+  <h2>Cadastro de Funcionário</h2>
+
+  <button onclick="abrirInserir()">Incluir Funcionário</button>
+
+  <div id="inserir" class="hidden">
+    <h3>Inserir Funcionário</h3>
+    <input type="hidden" id="idEditando" />
+    <label>Nome: <input type="text" id="nome" /></label><br><br>
+    <label>Cargo: <input type="text" id="cargo" /></label><br><br>
+    <button onclick="salvarCadastro()">Salvar</button>
+    <button onclick="voltarCadastro()">Cancelar</button>
   </div>
 
-  <div id="conteudo" class="hidden">
-    <h2>Bem-vindo, ADMIN!</h2>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    <nav>
-      <button onclick="mostrarCadastro()">Cadastro</button>
-      <button onclick="mostrarLancamento()">Lançamento</button>
-      <button onclick="fazerLogout()">Sair</button>
-    </nav>
+    // Config do Firebase - use a sua
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+      authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+      projectId: "funcionarios-7c778",
+      storageBucket: "funcionarios-7c778.appspot.com",
+      messagingSenderId: "632364021109",
+      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+      measurementId: "G-46DKFS3LHV"
+    };
 
-    <div id="cadastroForm" class="hidden">
-      <h3>Cadastro</h3>
-      <label>Nome: <input type="text" id="nomeCadastro" /></label>
-      <label>Email: <input type="email" id="emailCadastro" /></label>
-      <button onclick="salvarCadastro()">Salvar Cadastro</button>
-    </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    <div id="lancamentoForm" class="hidden">
-      <h3>Lançamento</h3>
-      <label>Descrição: <input type="text" id="descricaoLancamento" /></label>
-      <label>Valor: <input type="number" id="valorLancamento" /></label>
-      <button onclick="salvarLancamento()">Salvar Lançamento</button>
-    </div>
-  </div>
+    // Elementos DOM
+    const inserirDiv = document.getElementById('inserir');
+    const idEditandoInput = document.getElementById('idEditando');
+    const nomeInput = document.getElementById('nome');
+    const cargoInput = document.getElementById('cargo');
 
-<script>
-  // Configurações Firebase - substitua pelos seus dados
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
-
-  // Inicializa Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  const EMAIL_ADMIN = 'admin@exemplo.com';
-  const SENHA_ADMIN = '1234';
-
-  function fazerLogin() {
-    const email = document.getElementById('emailLogin').value.trim();
-    const senha = document.getElementById('senhaLogin').value.trim();
-
-    if (email !== EMAIL_ADMIN || senha !== SENHA_ADMIN) {
-      alert('Só é permitido login com admin@exemplo.com / 1234');
-      return;
+    function abrirInserir() {
+      inserirDiv.classList.remove('hidden');
+      limparCamposCadastro();
+      nomeInput.focus();
     }
 
-    auth.signInWithEmailAndPassword(email, senha)
-      .then(() => {
-        alert('Login efetuado com sucesso!');
-        mostrarConteudo();
-      })
-      .catch(error => {
-        alert('Erro no login: ' + error.message);
-      });
-  }
-
-  function mostrarConteudo() {
-    document.getElementById('loginDiv').classList.add('hidden');
-    document.getElementById('conteudo').classList.remove('hidden');
-    esconderTodasTelas();
-  }
-
-  function esconderTodasTelas() {
-    document.getElementById('cadastroForm').classList.add('hidden');
-    document.getElementById('lancamentoForm').classList.add('hidden');
-  }
-
-  function mostrarCadastro() {
-    esconderTodasTelas();
-    document.getElementById('cadastroForm').classList.remove('hidden');
-  }
-
-  function mostrarLancamento() {
-    esconderTodasTelas();
-    document.getElementById('lancamentoForm').classList.remove('hidden');
-  }
-
-  function fazerLogout() {
-    auth.signOut().then(() => {
-      alert('Logout efetuado.');
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
-      document.getElementById('emailLogin').value = '';
-      document.getElementById('senhaLogin').value = '';
-    });
-  }
-
-  function salvarCadastro() {
-    const nome = document.getElementById('nomeCadastro').value.trim();
-    const email = document.getElementById('emailCadastro').value.trim();
-
-    if (!nome || !email) {
-      alert('Preencha nome e email para salvar cadastro.');
-      return;
+    function limparCamposCadastro() {
+      idEditandoInput.value = '';
+      nomeInput.value = '';
+      cargoInput.value = '';
     }
 
-    alert(`Cadastro salvo:\nNome: ${nome}\nEmail: ${email}`);
-
-    document.getElementById('nomeCadastro').value = '';
-    document.getElementById('emailCadastro').value = '';
-  }
-
-  function salvarLancamento() {
-    const descricao = document.getElementById('descricaoLancamento').value.trim();
-    const valor = document.getElementById('valorLancamento').value.trim();
-
-    if (!descricao || !valor) {
-      alert('Preencha descrição e valor para salvar lançamento.');
-      return;
+    function voltarCadastro() {
+      inserirDiv.classList.add('hidden');
+      limparCamposCadastro();
     }
 
-    alert(`Lançamento salvo:\nDescrição: ${descricao}\nValor: R$ ${valor}`);
+    async function salvarCadastro() {
+      const nome = nomeInput.value.trim();
+      const cargo = cargoInput.value.trim();
+      const idEditando = idEditandoInput.value;
 
-    document.getElementById('descricaoLancamento').value = '';
-    document.getElementById('valorLancamento').value = '';
-  }
+      if (!nome || !cargo) {
+        alert("Preencha todos os campos.");
+        return;
+      }
 
-  auth.onAuthStateChanged(user => {
-    if (user && user.email === EMAIL_ADMIN) {
-      mostrarConteudo();
-    } else {
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
+      const cadRef = ref(db, 'cadastros');
+
+      try {
+        if (idEditando) {
+          // Atualizar funcionário existente
+          await update(ref(db, `cadastros/${idEditando}`), { nome, cargo });
+          alert('Cadastro atualizado com sucesso!');
+        } else {
+          // Inserir novo funcionário
+          const novoRef = push(cadRef);
+          await set(novoRef, { nome, cargo });
+          alert('Funcionário incluído com sucesso!');
+        }
+        voltarCadastro();
+      } catch (error) {
+        alert('Erro ao salvar no Firebase: ' + error.message);
+      }
     }
-  });
-
-  // Navegação com Enter no login
-  document.getElementById('emailLogin').addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('senhaLogin').focus();
-    }
-  });
-
-  document.getElementById('senhaLogin').addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      fazerLogin();
-    }
-  });
-</script>
-
+  </script>
 </body>
 </html>
