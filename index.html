@@ -1,192 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro de Funcionários - Firebase Realtime DB</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-      text-align: center;
-    }
-    .form-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-    button {
-      cursor: pointer;
-      background-color: #1976d2;
-      color: white;
-      border: none;
-      transition: 0.3s;
-    }
-    button:hover {
-      background-color: #0d47a1;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      max-width: 600px;
-      margin: auto;
-    }
-    li {
-      background: white;
-      margin: 8px 0;
-      padding: 10px 15px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .editar {
-      background-color: #4CAF50;
-    }
-    .editar:hover {
-      background-color: #2e7d32;
-    }
-    .excluir {
-      background-color: #f44336;
-    }
-    .excluir:hover {
-      background-color: #b71c1c;
-    }
-    #status {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 15px;
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Firebase Funcionários</title>
 </head>
 <body>
-  <h1>🔥 Cadastro de Funcionários</h1>
-
-  <div class="form-container">
-    <input type="text" id="nome" placeholder="Nome do funcionário">
-    <input type="text" id="cargo" placeholder="Cargo">
-    <button id="salvar">Salvar</button>
-  </div>
-
-  <h2 style="text-align:center;">👥 Funcionários Cadastrados</h2>
-  <ul id="lista"></ul>
-
-  <p id="status"></p>
+  <h1>Firebase Funcionários</h1>
+  <p id="status">Conectando ao Firebase...</p>
 
   <script type="module">
-    // Importa APENAS os módulos do Realtime Database (sem Firestore)
+    // Importar módulos diretamente do CDN Firebase (versão 11)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
 
-    // Configuração do Firebase
+    // Sua configuração real (do Firebase Console)
     const firebaseConfig = {
-      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-      authDomain: "funcionarios-7c778.firebaseapp.com",
-      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
-      projectId: "funcionarios-7c778",
-      storageBucket: "funcionarios-7c778.appspot.com",
-      messagingSenderId: "632364021109",
-      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
-      measurementId: "G-46DKFS3LHV"
+      apiKey: "AIzaSyBQi6DKYqEmkMq19UpgXl1qYg8G3q8Id-w",
+      authDomain: "funcionarios-b75f8.firebaseapp.com",
+      projectId: "funcionarios-b75f8",
+      storageBucket: "funcionarios-b75f8.firebasestorage.app",
+      messagingSenderId: "486091546093",
+      appId: "1:486091546093:web:4cfa5518f209e5e68edbe4",
+      measurementId: "G-R2SYT938ZG"
     };
 
-    // Inicializa o Firebase
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const funcionariosRef = ref(db, "funcionarios");
+    const analytics = getAnalytics(app);
 
-    // Elementos da interface
-    const nomeInput = document.getElementById("nome");
-    const cargoInput = document.getElementById("cargo");
-    const salvarBtn = document.getElementById("salvar");
-    const lista = document.getElementById("lista");
-    const status = document.getElementById("status");
-
-    let editandoId = null;
-
-    // Função para salvar ou atualizar cadastro
-    salvarBtn.addEventListener("click", async () => {
-      const nome = nomeInput.value.trim();
-      const cargo = cargoInput.value.trim();
-
-      if (!nome || !cargo) {
-        status.textContent = "⚠️ Preencha todos os campos antes de salvar.";
-        return;
-      }
-
-      try {
-        if (editandoId) {
-          // Atualiza funcionário existente
-          const funcionarioRef = ref(db, `funcionarios/${editandoId}`);
-          await update(funcionarioRef, { nome, cargo });
-          status.textContent = "✅ Funcionário atualizado!";
-          salvarBtn.textContent = "Salvar";
-          editandoId = null;
-        } else {
-          // Adiciona novo funcionário
-          const novoFuncionarioRef = push(funcionariosRef);
-          await set(novoFuncionarioRef, { nome, cargo });
-          status.textContent = "✅ Funcionário adicionado com sucesso!";
-        }
-
-        nomeInput.value = "";
-        cargoInput.value = "";
-      } catch (error) {
-        status.textContent = "❌ Erro ao salvar no Firebase: " + error.message;
-      }
-    });
-
-    // Exibir funcionários em tempo real
-    onValue(funcionariosRef, (snapshot) => {
-      lista.innerHTML = "";
-      const dados = snapshot.val();
-
-      if (dados) {
-        Object.entries(dados).forEach(([id, funcionario]) => {
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <span><strong>${funcionario.nome}</strong> — ${funcionario.cargo}</span>
-            <div>
-              <button class="editar">Editar</button>
-              <button class="excluir">Excluir</button>
-            </div>
-          `;
-
-          // Editar funcionário
-          li.querySelector(".editar").addEventListener("click", () => {
-            nomeInput.value = funcionario.nome;
-            cargoInput.value = funcionario.cargo;
-            editandoId = id;
-            salvarBtn.textContent = "Atualizar";
-            status.textContent = "✏️ Editando cadastro de " + funcionario.nome;
-          });
-
-          // Excluir funcionário
-          li.querySelector(".excluir").addEventListener("click", async () => {
-            if (confirm(`Deseja excluir ${funcionario.nome}?`)) {
-              await remove(ref(db, `funcionarios/${id}`));
-              status.textContent = "🗑️ Funcionário excluído.";
-            }
-          });
-
-          lista.appendChild(li);
-        });
-      } else {
-        lista.innerHTML = "<li style='text-align:center;'>Nenhum funcionário cadastrado.</li>";
-      }
-    });
+    document.getElementById("status").textContent = "Firebase conectado com sucesso!";
   </script>
 </body>
 </html>
