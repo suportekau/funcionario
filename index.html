@@ -2,13 +2,24 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Firebase com Atualização de Usuário e Senha</title>
+  <title>Login Firebase com Menu</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
     label { display: block; margin: 8px 0 4px; }
+    nav button {
+      margin-right: 10px;
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+    #incluirForm, #consultarDiv {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 15px;
+      max-width: 400px;
+    }
   </style>
 </head>
 <body>
@@ -24,17 +35,37 @@
     <h2>Bem-vindo!</h2>
     <p id="userEmailDisplay"></p>
 
+    <!-- Menu -->
+    <nav>
+      <button onclick="mostrarIncluir()">Incluir</button>
+      <button onclick="mostrarConsultar()">Consultar</button>
+      <button onclick="fazerLogout()">Sair</button>
+    </nav>
+
+    <!-- Formulário Incluir -->
+    <div id="incluirForm" class="hidden">
+      <h3>Incluir novo cadastro</h3>
+      <label>Nome: <input type="text" id="nomeIncluir" /></label>
+      <label>Email: <input type="email" id="emailIncluir" /></label>
+      <button onclick="incluirCadastro()">Salvar</button>
+    </div>
+
+    <!-- Consulta -->
+    <div id="consultarDiv" class="hidden">
+      <h3>Consultar dados</h3>
+      <p>Aqui será exibido o resultado da consulta.</p>
+    </div>
+
+    <br>
+    <!-- Alterar usuário e senha -->
     <h3>Alterar usuário (email) e senha</h3>
     <label>Novo email: <input type="email" id="novoEmail" /></label>
     <label>Nova senha: <input type="password" id="novaSenha" /></label>
     <button onclick="alterarCredenciais()">Salvar alterações</button>
-
-    <br><br>
-    <button onclick="fazerLogout()">Sair</button>
   </div>
 
 <script>
-  // Coloque suas configurações do Firebase aqui (substitua pelos seus dados)
+  // Configurações do Firebase
   const firebaseConfig = {
     apiKey: "SUA_API_KEY",
     authDomain: "SEU_AUTH_DOMAIN",
@@ -48,7 +79,7 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
 
-  // Função para login
+  // Login
   function fazerLogin() {
     const email = document.getElementById('emailLogin').value.trim();
     const senha = document.getElementById('senhaLogin').value.trim();
@@ -68,15 +99,52 @@
       });
   }
 
-  // Mostra conteúdo após login
+  // Mostrar conteúdo e menu
   function mostrarConteudo(user) {
     document.getElementById('loginDiv').classList.add('hidden');
     document.getElementById('conteudo').classList.remove('hidden');
     document.getElementById('userEmailDisplay').innerText = `Usuário logado: ${user.email}`;
 
-    // Preencher campos para alterar com os dados atuais
     document.getElementById('novoEmail').value = user.email;
     document.getElementById('novaSenha').value = '';
+
+    esconderTodosMenus();
+  }
+
+  // Esconde as seções de incluir e consultar
+  function esconderTodosMenus() {
+    document.getElementById('incluirForm').classList.add('hidden');
+    document.getElementById('consultarDiv').classList.add('hidden');
+  }
+
+  // Mostrar formulário Incluir
+  function mostrarIncluir() {
+    esconderTodosMenus();
+    document.getElementById('incluirForm').classList.remove('hidden');
+  }
+
+  // Mostrar consulta
+  function mostrarConsultar() {
+    esconderTodosMenus();
+    document.getElementById('consultarDiv').classList.remove('hidden');
+  }
+
+  // Função simples para "incluir" cadastro — aqui você pode integrar Firebase Firestore ou Realtime Database
+  function incluirCadastro() {
+    const nome = document.getElementById('nomeIncluir').value.trim();
+    const email = document.getElementById('emailIncluir').value.trim();
+
+    if (!nome || !email) {
+      alert('Preencha nome e email para incluir.');
+      return;
+    }
+
+    // Aqui você pode adicionar a lógica para salvar no Firebase Database
+    alert(`Cadastro incluído:\nNome: ${nome}\nEmail: ${email}`);
+
+    // Limpar campos após salvar
+    document.getElementById('nomeIncluir').value = '';
+    document.getElementById('emailIncluir').value = '';
   }
 
   // Alterar email e senha
@@ -90,7 +158,6 @@
       return;
     }
 
-    // Atualizar email
     if (novoEmail && novoEmail !== user.email) {
       user.updateEmail(novoEmail)
         .then(() => {
@@ -102,7 +169,6 @@
         });
     }
 
-    // Atualizar senha
     if (novaSenha) {
       if (novaSenha.length < 6) {
         alert('A senha deve ter pelo menos 6 caracteres.');
@@ -127,10 +193,11 @@
       document.getElementById('loginDiv').classList.remove('hidden');
       document.getElementById('emailLogin').value = '';
       document.getElementById('senhaLogin').value = '';
+      esconderTodosMenus();
     });
   }
 
-  // Se o usuário já estiver logado, já mostra conteúdo
+  // Verificar estado de autenticação
   auth.onAuthStateChanged(user => {
     if (user) {
       mostrarConteudo(user);
