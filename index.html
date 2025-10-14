@@ -7,67 +7,87 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    background-color: #e3f2fd;
+    background-color: #f4f4f4;
+    margin: 0;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    margin: 0;
   }
-  .login-container {
-    background-color: white;
-    padding: 30px;
+
+  .container {
+    background-color: #fff;
+    padding: 30px 40px;
     border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    width: 320px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    width: 400px;
     text-align: center;
   }
+
   h2 {
     margin-bottom: 20px;
-    color: #007bff;
+    color: #333;
   }
+
   input {
     width: 100%;
     padding: 10px;
-    margin: 8px 0;
+    margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 16px;
     text-transform: uppercase;
     box-sizing: border-box;
   }
+
   button {
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
-    border: none;
-    color: white;
+    margin-top: 5px;
     font-size: 16px;
+    border: none;
     border-radius: 6px;
     cursor: pointer;
   }
-  button:hover {
+
+  #entrar {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  #entrar:hover {
     background-color: #0056b3;
+  }
+
+  #voltar {
+    background-color: #6c757d;
+    color: #fff;
+  }
+
+  #voltar:hover {
+    background-color: #555;
   }
 </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login</h2>
+  <div class="container">
+    <h2>LOGIN</h2>
     <input type="text" id="usuario" placeholder="Usuário" autofocus />
     <input type="password" id="senha" placeholder="Senha" />
-    <button id="btnEntrar">Entrar</button>
+    <button id="entrar">Entrar</button>
+    <button id="voltar">Voltar</button>
   </div>
 
 <script>
   const usuario = document.getElementById("usuario");
   const senha = document.getElementById("senha");
-  const btnEntrar = document.getElementById("btnEntrar");
+  const entrar = document.getElementById("entrar");
+  const voltar = document.getElementById("voltar");
 
-  // Foco automático no campo usuário ao carregar
+  // Foco no campo usuário ao carregar
   window.onload = () => usuario.focus();
 
-  // Pressionar Enter muda de campo ou entra
+  // Enter muda de campo e depois entra
   usuario.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -78,12 +98,12 @@
   senha.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      btnEntrar.click();
+      entrar.click();
     }
   });
 
-  // Simulação do login
-  btnEntrar.addEventListener("click", () => {
+  // Função Entrar
+  entrar.addEventListener("click", () => {
     const user = usuario.value.trim();
     const pass = senha.value.trim();
 
@@ -92,12 +112,16 @@
       return;
     }
 
-    // Exemplo simples (você pode mudar depois)
-    if (user === "ADMIN" && pass === "123") {
-      window.location.href = "cadastro.html"; // abre o sistema
+    if (user === "ADMIN" && pass === "1234") {
+      window.location.href = "cadastro.html"; // redireciona pro sistema
     } else {
       alert("Usuário ou senha incorretos!");
     }
+  });
+
+  // Função Voltar
+  voltar.addEventListener("click", () => {
+    window.history.back();
   });
 </script>
 </body>
