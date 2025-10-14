@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login - Sistema Funcionários</title>
+<title>Login</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #007bff;
     margin: 0;
     height: 100vh;
     display: flex;
@@ -15,18 +15,18 @@
     align-items: center;
   }
 
-  .container {
+  .login-container {
     background-color: #fff;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    width: 400px;
+    padding: 35px 45px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    width: 360px;
     text-align: center;
   }
 
   h2 {
     margin-bottom: 20px;
-    color: #333;
+    color: #007bff;
   }
 
   input {
@@ -43,48 +43,33 @@
   button {
     width: 100%;
     padding: 10px;
-    margin-top: 5px;
-    font-size: 16px;
+    background-color: #007bff;
     border: none;
+    color: white;
+    font-size: 16px;
     border-radius: 6px;
     cursor: pointer;
   }
 
-  #entrar {
-    background-color: #007bff;
-    color: #fff;
-  }
-
-  #entrar:hover {
+  button:hover {
     background-color: #0056b3;
-  }
-
-  #voltar {
-    background-color: #6c757d;
-    color: #fff;
-  }
-
-  #voltar:hover {
-    background-color: #555;
   }
 </style>
 </head>
 <body>
-  <div class="container">
+  <div class="login-container">
     <h2>LOGIN</h2>
     <input type="text" id="usuario" placeholder="Usuário" autofocus />
     <input type="password" id="senha" placeholder="Senha" />
     <button id="entrar">Entrar</button>
-    <button id="voltar">Voltar</button>
   </div>
 
 <script>
   const usuario = document.getElementById("usuario");
   const senha = document.getElementById("senha");
   const entrar = document.getElementById("entrar");
-  const voltar = document.getElementById("voltar");
 
-  // Foco no campo usuário ao carregar
+  // Foco automático no campo usuário ao carregar
   window.onload = () => usuario.focus();
 
   // Enter muda de campo e depois entra
@@ -102,7 +87,7 @@
     }
   });
 
-  // Função Entrar (corrigido)
+  // Função Entrar (corrigida)
   entrar.addEventListener("click", () => {
     const user = usuario.value.trim().toUpperCase();
     const pass = senha.value.trim();
@@ -117,11 +102,6 @@
     } else {
       alert("Usuário ou senha incorretos!");
     }
-  });
-
-  // Função Voltar
-  voltar.addEventListener("click", () => {
-    window.history.back();
   });
 </script>
 </body>
