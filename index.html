@@ -1,35 +1,628 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Firebase Funcionários</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sistema Simples - Funcionários (Firebase)</title>
+<style>
+  /* Visual igual ao seu, porém responsivo */
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-transform: uppercase; /* mantem visual em maiúsculas */
+    box-sizing: border-box;
+  }
+
+  .container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    box-sizing: border-box;
+  }
+
+  h2 { margin-bottom: 20px; font-size: 1.4em; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+    text-transform: uppercase; /* visual */
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:hover { background-color: #0056b3; }
+  .btn-voltar { background-color: #6c757d; }
+  .btn-voltar:hover { background-color: #565e64; }
+
+  .hidden { display: none; }
+
+  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+
+  .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f3f5;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin: 4px 0;
+    transition: background 0.2s;
+  }
+  .item:hover { background-color: #e0e3e7; }
+  .btn-excluir {
+    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
+    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
+    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
+  }
+  .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
+
+  @media (max-width: 400px) {
+    h2 { font-size: 1.2em; }
+    button { font-size: 15px; padding: 10px; }
+    input, select, textarea { font-size: 15px; padding: 8px; }
+  }
+</style>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <h1>Firebase Funcionários</h1>
-  <p id="status">Conectando ao Firebase...</p>
 
-  <script type="module">
-    // Importar módulos diretamente do CDN Firebase (versão 11)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+<!-- LOGIN -->
+<div class="container" id="loginContainer">
+  <h2>Login</h2>
+  <input type="text" id="loginUsuario" placeholder="Usuário" />
+  <input type="password" id="loginSenha" placeholder="Senha" />
+  <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+</div>
 
-    // Sua configuração real (do Firebase Console)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQi6DKYqEmkMq19UpgXl1qYg8G3q8Id-w",
-      authDomain: "funcionarios-b75f8.firebaseapp.com",
-      projectId: "funcionarios-b75f8",
-      storageBucket: "funcionarios-b75f8.firebasestorage.app",
-      messagingSenderId: "486091546093",
-      appId: "1:486091546093:web:4cfa5518f209e5e68edbe4",
-      measurementId: "G-R2SYT938ZG"
-    };
+<!-- MENU PRINCIPAL -->
+<div class="container hidden" id="menu">
+  <h2>Menu Principal</h2>
+  <button onclick="abrirCadastro()">Cadastro</button>
+  <button onclick="abrirLancamento()">Lançamento</button>
+  <button onclick="sair()">Sair</button>
+</div>
 
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+<!-- MENU CADASTRO -->
+<div class="container hidden" id="menuCadastro">
+  <h2>Cadastro</h2>
+  <button onclick="abrirInserir()">Inserir</button>
+  <button onclick="abrirConsultar()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
 
-    document.getElementById("status").textContent = "Firebase conectado com sucesso!";
-  </script>
+<!-- INSERIR CADASTRO -->
+<div class="container hidden" id="inserir">
+  <h2>Inserir / Editar Funcionário</h2>
+  <input type="hidden" id="idEditando" />
+  <input type="text" id="nome" placeholder="Nome" />
+  <input type="text" id="cargo" placeholder="Cargo" />
+  <button id="btnSalvarCadastro" onclick="salvarCadastro()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- CONSULTAR CADASTRO -->
+<div class="container hidden" id="consultar">
+  <h2>Consultar Funcionários</h2>
+  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
+  <div class="lista" id="listaCadastros"></div>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
+
+<!-- MENU LANÇAMENTO -->
+<div class="container hidden" id="menuLancamento">
+  <h2>Lançamento</h2>
+  <button onclick="abrirInserirLancamento()">Inserir</button>
+  <button onclick="abrirConsultarLancamento()">Consultar</button>
+  <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</div>
+
+<!-- INSERIR LANÇAMENTO -->
+<div class="container hidden" id="inserirLancamento">
+  <h2>Inserir / Editar Lançamento</h2>
+  <input type="hidden" id="idLancEditando" />
+  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
+  <datalist id="nomesCadastradosLanc"></datalist>
+  <input type="date" id="dataLanc" />
+  <select id="tipoLanc">
+    <option value="">Selecione Tipo</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
+  </select>
+  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
+  <button id="btnSalvarLanc" onclick="salvarLancamento()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<!-- CONSULTAR LANÇAMENTO -->
+<div class="container hidden" id="consultarLancamento">
+  <h2>Consultar Lançamentos</h2>
+  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
+  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
+  <div class="lista" id="listaLancamentos"></div>
+  <button id="btnGerarPDF" onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
+
+<!-- Código principal: usa Firebase Firestore -->
+<script type="module">
+/*
+  Sistema convertido para usar Firebase Firestore
+  - Um único arquivo HTML (como solicitado)
+  - Substitui localStorage por Firestore (coleções: 'cadastros' e 'lancamentos')
+  - Mantém login local (ADMIN / 1234)
+  - Observações: certifique-se de ajustar regras do Firestore no Console após testes.
+*/
+
+/* --------------------------
+   Import Firebase (modular)
+   -------------------------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  onSnapshot,
+  query,
+  where,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+/* --------------------------
+   Firebase config (seu projeto)
+   -------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyBQi6DKYqEmkMq19UpgXl1qYg8G3q8Id-w",
+  authDomain: "funcionarios-b75f8.firebaseapp.com",
+  projectId: "funcionarios-b75f8",
+  storageBucket: "funcionarios-b75f8.firebasestorage.app",
+  messagingSenderId: "486091546093",
+  appId: "1:486091546093:web:4cfa5518f209e5e68edbe4",
+  measurementId: "G-R2SYT938ZG"
+};
+
+/* Inicializa Firebase */
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* -------------------------
+   Foco inicial no Usuário
+   ------------------------- */
+window.addEventListener('load', () => {
+  const u = document.getElementById('loginUsuario');
+  if (u) { u.focus(); u.select && u.select(); }
+});
+
+/* -------------------------
+   Enter: navegação e executar último botão
+   ------------------------- */
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  const interactive = Array.from(document.querySelectorAll('input, select, button'))
+    .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
+  const target = e.target;
+  const idx = interactive.indexOf(target);
+  if (idx === -1) return;
+  e.preventDefault();
+  const nextIndex = idx + 1;
+  if (nextIndex < interactive.length) {
+    const next = interactive[nextIndex];
+    next.focus();
+  } else {
+    const el = interactive[idx];
+    if (el && typeof el.click === 'function') el.click();
+  }
+});
+
+/* -------------------------
+   Maiúsculas automáticas (JS + CSS visual)
+   ------------------------- */
+document.addEventListener('input', function(e) {
+  const el = e.target;
+  if (!el) return;
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'input') {
+    const t = el.type;
+    if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
+      const pos = el.selectionStart;
+      el.value = el.value.toUpperCase();
+      try { el.setSelectionRange(pos, pos); } catch(err){}
+    }
+  } else if (tag === 'textarea') {
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    try { el.setSelectionRange(pos, pos); } catch(err){}
+  }
+});
+
+/* -------------------------
+   Navegação entre telas
+   ------------------------- */
+function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+function sair(){ alert('Saindo do sistema...'); location.reload(); }
+
+/* -------------------------
+   LOGIN (ADMIN / 1234)
+   ------------------------- */
+function fazerLogin(){
+  const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
+  const senha = (document.getElementById('loginSenha').value || '').trim();
+  if (usuario === 'ADMIN' && senha === '1234') {
+    document.getElementById('loginContainer').classList.add('hidden');
+    document.getElementById('menu').classList.remove('hidden');
+    alert('Login bem-sucedido!');
+    const btn = document.querySelector('#menu button');
+    if (btn) btn.focus();
+  } else {
+    alert('Usuário ou senha incorretos!');
+    const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+  }
+}
+
+/* -------------------------
+   Elementos (cadastros)
+   ------------------------- */
+const nomeInput = document.getElementById('nome');
+const cargoInput = document.getElementById('cargo');
+const idEditandoInput = document.getElementById('idEditando');
+
+/* Coleção names */
+const cadastrosCol = collection(db, 'cadastros');
+const lancamentosCol = collection(db, 'lancamentos');
+
+/* -------------------------
+   CADASTROS (Firestore)
+   ------------------------- */
+function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+
+async function salvarCadastro(){
+  const nome = (nomeInput.value || '').trim();
+  const cargo = (cargoInput.value || '').trim();
+  if(!nome || !cargo) return alert('Preencha todos os campos.');
+  const idEditando = idEditandoInput.value;
+  try {
+    if (idEditando) {
+      // atualizar doc
+      const ref = doc(db, 'cadastros', idEditando);
+      await updateDoc(ref, { nome, cargo });
+    } else {
+      // criar novo
+      await addDoc(cadastrosCol, { nome, cargo });
+    }
+    limparCamposCadastro();
+    voltarCadastro();
+  } catch (err) {
+    console.error('Erro ao salvar cadastro:', err);
+    alert('Erro ao salvar cadastro: ' + (err.message || err));
+  }
+}
+
+async function mostrarCadastros(){
+  const lista = document.getElementById('listaCadastros');
+  const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
+  lista.innerHTML = '';
+
+  try {
+    // Ordenar por nome para consistência
+    const q = query(cadastrosCol, orderBy('nome'));
+    const snapshot = await getDocs(q);
+    const cadastros = [];
+    snapshot.forEach(d => cadastros.push({ id: d.id, ...d.data() }));
+
+    let filtrados = cadastros;
+    if (filtro) filtrados = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
+
+    filtrados.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      // Duplo clique na label abre edição
+      div.innerHTML = `<span ondblclick="editarCadastro('${c.id}')"><strong>${c.nome}</strong> - ${c.cargo}</span>
+        <button class="btn-excluir" onclick="excluirCadastro('${c.id}')" title="Excluir">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  } catch (err) {
+    console.error('Erro ao buscar cadastros:', err);
+    alert('Erro ao buscar cadastros: ' + (err.message || err));
+  }
+}
+
+async function editarCadastro(id){
+  try {
+    const d = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js")).getDoc(doc(db, 'cadastros', id));
+    // Se preferir não importar dinamicamente, pode reestruturar; aqui tentamos obter o documento diretamente:
+    // No entanto, para simplicidade: usaremos getDocs e filtrar:
+    const snapshot = await getDocs(query(cadastrosCol, orderBy('nome')));
+    const cadastros = [];
+    snapshot.forEach(s => cadastros.push({ id: s.id, ...s.data() }));
+    const c = cadastros.find(x => x.id === id);
+    if(!c) return alert('Cadastro não encontrado.');
+    esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+    idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
+  } catch (err) {
+    console.error('Erro ao editar cadastro:', err);
+    alert('Erro ao editar cadastro: ' + (err.message || err));
+  }
+}
+
+async function excluirCadastro(id){
+  if(!confirm('Excluir este cadastro?')) return;
+  try {
+    await deleteDoc(doc(db, 'cadastros', id));
+    mostrarCadastros();
+    atualizarDatalistLanc(); // atualizar nomes para lançamentos
+  } catch (err) {
+    console.error('Erro ao excluir cadastro:', err);
+    alert('Erro ao excluir cadastro: ' + (err.message || err));
+  }
+}
+
+function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
+
+/* -------------------------
+   LANÇAMENTOS (Firestore)
+   ------------------------- */
+const nomeLanc = document.getElementById('nomeLanc');
+const dataLanc = document.getElementById('dataLanc');
+const tipoLanc = document.getElementById('tipoLanc');
+const valorLanc = document.getElementById('valorLanc');
+const idLancEditando = document.getElementById('idLancEditando');
+
+function abrirInserirLancamento(){
+  atualizarDatalistLanc().then(() => {
+    // checar se existem cadastros
+    getDocs(cadastrosCol).then(snap => {
+      if (snap.empty) {
+        alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
+        abrirCadastro();
+        return;
+      }
+      esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+      limparCamposLancamento();
+    }).catch(err => {
+      console.error('Erro ao verificar cadastros:', err);
+      alert('Erro: ' + (err.message || err));
+    });
+  });
+}
+
+function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
+
+async function salvarLancamento(){
+  const nome = (nomeLanc.value || '').trim().toUpperCase();
+  const data = dataLanc.value;
+  const tipo = tipoLanc.value;
+  const valor = parseFloat(valorLanc.value);
+  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
+  try {
+    // verificar se nome cadastrado
+    const snapshot = await getDocs(query(cadastrosCol, where('nome', '==', nome)));
+    if (snapshot.empty) return alert('Nome não cadastrado. Cadastre antes de lançar.');
+
+    if (idLancEditando.value) {
+      await updateDoc(doc(db, 'lancamentos', idLancEditando.value), { nome, data, tipo, valor });
+    } else {
+      await addDoc(lancamentosCol, { nome, data, tipo, valor });
+    }
+    limparCamposLancamento();
+    voltarLancamento();
+  } catch (err) {
+    console.error('Erro ao salvar lançamento:', err);
+    alert('Erro ao salvar lançamento: ' + (err.message || err));
+  }
+}
+
+async function mostrarLancamentos(){
+  const lista = document.getElementById('listaLancamentos');
+  const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
+  const filtroMesAno = document.getElementById('filtroMesAno').value;
+  lista.innerHTML = '';
+
+  try {
+    const q = query(lancamentosCol, orderBy('data', 'desc'));
+    const snapshot = await getDocs(q);
+    let lancamentos = [];
+    snapshot.forEach(d => lancamentos.push({ id: d.id, ...d.data() }));
+
+    if (filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
+    if (filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
+
+    lancamentos.forEach(l => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span ondblclick="editarLancamento('${l.id}')"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${Number(l.valor).toFixed(2).replace('.', ',')}</span>
+        <button class="btn-excluir" onclick="excluirLancamento('${l.id}')">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  } catch (err) {
+    console.error('Erro ao listar lançamentos:', err);
+    alert('Erro ao listar lançamentos: ' + (err.message || err));
+  }
+}
+
+async function editarLancamento(id){
+  try {
+    const snapshot = await getDocs(query(lancamentosCol, where('__name__', '==', id)));
+    // se não encontrou por nome, buscar direto:
+    const docRef = doc(db, 'lancamentos', id);
+    // buscar documento
+    // para simplicidade, usamos getDocs na coleção
+    const s = await getDocs(query(lancamentosCol));
+    const l = s.docs.map(d => ({ id: d.id, ...d.data() })).find(x => x.id === id);
+    if(!l) return alert('Lançamento não encontrado.');
+    esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+    idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
+  } catch (err) {
+    console.error('Erro ao editar lançamento:', err);
+    alert('Erro ao editar lançamento: ' + (err.message || err));
+  }
+}
+
+async function excluirLancamento(id){
+  if(!confirm('Excluir este lançamento?')) return;
+  try {
+    await deleteDoc(doc(db, 'lancamentos', id));
+    mostrarLancamentos();
+  } catch (err) {
+    console.error('Erro ao excluir lançamento:', err);
+    alert('Erro ao excluir lançamento: ' + (err.message || err));
+  }
+}
+
+function limparCamposLancamento(){
+  idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
+}
+
+async function atualizarDatalistLanc(){
+  const datalist = document.getElementById('nomesCadastradosLanc');
+  datalist.innerHTML = '';
+  try {
+    const snapshot = await getDocs(query(cadastrosCol, orderBy('nome')));
+    snapshot.forEach(d => {
+      const data = d.data();
+      const opt = document.createElement('option');
+      opt.value = data.nome;
+      datalist.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Erro ao atualizar datalist:', err);
+  }
+}
+
+/* -------------------------
+   GERAR PDF - com pontinhos e maiúsculas
+   ------------------------- */
+async function gerarPDFResumoLancamentos(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  // Cabeçalho
+  pdf.setFontSize(14);
+  pdf.setFont("helvetica", "bold");
+  const titulo = "SUPERMERCADO LEV +";
+  const tituloWidth = pdf.getTextWidth(titulo);
+  pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
+
+  const agora = new Date();
+  const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(dataHoraStr, 10, 22);
+
+  const filtroMesAno = document.getElementById('filtroMesAno').value;
+  if (filtroMesAno) {
+    const [ano, mes] = filtroMesAno.split('-');
+    const periodoStr = `Período: ${mes}/${ano}`;
+    const periodoWidth = pdf.getTextWidth(periodoStr);
+    pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
+  }
+
+  pdf.line(10, 25, pageWidth - 10, 25);
+
+  // Corpo do relatório
+  let y = 35;
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
+  y += 10;
+
+  try {
+    let snapshot = await getDocs(query(lancamentosCol, orderBy('nome')));
+    let lancamentos = [];
+    snapshot.forEach(d => lancamentos.push({ id: d.id, ...d.data() }));
+
+    if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
+
+    const resumo = {};
+    lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + Number(l.valor); });
+
+    pdf.setFont("helvetica", "normal");
+    const nomesOrdenados = Object.keys(resumo).sort();
+
+    nomesOrdenados.forEach(nome => {
+      const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
+      const leftX = 10;
+      const rightX = pageWidth - 10;
+      const nomeWidth = pdf.getTextWidth(nome);
+      const valorWidth = pdf.getTextWidth(valorFormatado);
+      const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
+      const dotWidth = pdf.getTextWidth('.');
+      const dotsCount = Math.floor(totalDotsWidth / dotWidth);
+      const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
+
+      const linha = `${nome} ${dots} ${valorFormatado}`;
+      pdf.text(linha, leftX, y);
+      y += 8;
+      if (y > 280) { pdf.addPage(); y = 20; }
+    });
+
+    // Total geral
+    const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
+    const totalNome = "TOTAL GERAL";
+    const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
+    const leftX = 10;
+    const rightX = pageWidth - 10;
+    const nomeWidth = pdf.getTextWidth(totalNome);
+    const valorWidth = pdf.getTextWidth(totalValor);
+    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
+    const dotWidth = pdf.getTextWidth('.');
+    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
+    const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
+
+    y += 10;
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
+
+    pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    alert('Erro ao gerar PDF: ' + (err.message || err));
+  }
+}
+
+/* -------------------------
+   Inicializações: atualizar datalist automaticamente
+   ------------------------- */
+await atualizarDatalistLanc();
+
+</script>
+
 </body>
 </html>
