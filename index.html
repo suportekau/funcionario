@@ -3,562 +3,99 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários (Firebase)</title>
+<title>Login - Sistema Funcionários</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-    padding: 10px;
+    padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    text-transform: uppercase;
-    box-sizing: border-box;
   }
-  .container {
-    background: white;
-    padding: 25px;
+  .login-container {
+    background-color: #fff;
+    padding: 40px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    text-align: center;
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     box-sizing: border-box;
+    text-align: center;
   }
-  h2 { margin-bottom: 20px; font-size: 1.4em; }
-  input, select, textarea {
+  h2 {
+    margin-bottom: 25px;
+    color: #333;
+    text-transform: uppercase;
+  }
+  input {
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 6px;
+    padding: 12px;
+    margin: 10px 0;
     border: 1px solid #ccc;
+    border-radius: 8px;
     font-size: 16px;
     box-sizing: border-box;
-    text-transform: uppercase;
   }
   button {
     width: 100%;
     padding: 12px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 8px;
     background-color: #007bff;
     color: white;
+    border: none;
+    border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
-    transition: background 0.2s;
+    margin-top: 10px;
   }
-  button:hover { background-color: #0056b3; }
-  .btn-voltar { background-color: #6c757d; }
-  .btn-voltar:hover { background-color: #565e64; }
-  .hidden { display: none; }
-  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
-  .item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f3f5;
-    padding: 6px 8px;
-    border-radius: 6px;
-    margin: 4px 0;
-    transition: background 0.2s;
-  }
-  .item:hover { background-color: #e0e3e7; }
-  .btn-excluir {
-    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
-    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
-    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
-  }
-  .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
-  @media (max-width: 400px) {
-    h2 { font-size: 1.2em; }
-    button { font-size: 15px; padding: 10px; }
-    input, select, textarea { font-size: 15px; padding: 8px; }
+  button:hover {
+    background-color: #0056b3;
   }
 </style>
-
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+  <div class="login-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuário" autocomplete="off" required />
+      <input type="password" id="senha" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
 
-<!-- LOGIN -->
-<div class="container" id="loginContainer">
-  <h2>Login</h2>
-  <input type="text" id="loginUsuario" placeholder="Usuário" />
-  <input type="password" id="loginSenha" placeholder="Senha" />
-  <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
-</div>
+<script>
+  // Foco automático no campo "Usuário"
+  document.getElementById("usuario").focus();
 
-<!-- MENU PRINCIPAL -->
-<div class="container hidden" id="menu">
-  <h2>Menu Principal</h2>
-  <button onclick="abrirCadastro()">Cadastro</button>
-  <button onclick="abrirLancamento()">Lançamento</button>
-  <button onclick="sair()">Sair</button>
-</div>
-
-<!-- MENU CADASTRO -->
-<div class="container hidden" id="menuCadastro">
-  <h2>Cadastro</h2>
-  <button onclick="abrirInserir()">Inserir</button>
-  <button onclick="abrirConsultar()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
-
-<!-- INSERIR CADASTRO -->
-<div class="container hidden" id="inserir">
-  <h2>Inserir / Editar Funcionário</h2>
-  <input type="hidden" id="idEditando" />
-  <input type="text" id="nome" placeholder="Nome" />
-  <input type="text" id="cargo" placeholder="Cargo" />
-  <button id="btnSalvarCadastro" onclick="salvarCadastro()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
-
-<!-- CONSULTAR CADASTRO -->
-<div class="container hidden" id="consultar">
-  <h2>Consultar Funcionários</h2>
-  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
-  <div class="lista" id="listaCadastros"></div>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
-
-<!-- MENU LANÇAMENTO -->
-<div class="container hidden" id="menuLancamento">
-  <h2>Lançamento</h2>
-  <button onclick="abrirInserirLancamento()">Inserir</button>
-  <button onclick="abrirConsultarLancamento()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
-
-<!-- INSERIR LANÇAMENTO -->
-<div class="container hidden" id="inserirLancamento">
-  <h2>Inserir / Editar Lançamento</h2>
-  <input type="hidden" id="idLancEditando" />
-  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
-  <datalist id="nomesCadastradosLanc"></datalist>
-  <input type="date" id="dataLanc" />
-  <select id="tipoLanc">
-    <option value="">Selecione Tipo</option>
-    <option value="VALE">VALE</option>
-    <option value="COMPRA">COMPRA</option>
-  </select>
-  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
-  <button id="btnSalvarLanc" onclick="salvarLancamento()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
-
-<!-- CONSULTAR LANÇAMENTO -->
-<div class="container hidden" id="consultarLancamento">
-  <h2>Consultar Lançamentos</h2>
-  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
-  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
-  <div class="lista" id="listaLancamentos"></div>
-  <button id="btnGerarPDF" onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
-
-<!-- Firebase + app logic -->
-<script type="module">
-  // === Firebase SDK (modular) via CDN ===
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-  import { getDatabase, ref, push, set, onValue, update, remove, get, child } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-
-  // ====== Seu firebaseConfig (colado exatamente como você forneceu) ======
-  const firebaseConfig = {
-    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-    authDomain: "funcionarios-7c778.firebaseapp.com",
-    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
-    projectId: "funcionarios-7c778",
-    storageBucket: "funcionarios-7c778.firebasestorage.app",
-    messagingSenderId: "632364021109",
-    appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
-    measurementId: "G-46DKFS3LHV"
-  };
-  // ======================================================================
-
-  // Inicializa Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // Referências
-  const cadastrosRef = ref(db, 'cadastros');
-  const lancamentosRef = ref(db, 'lancamentos');
-
-  // Cache local (preenchido em tempo real por listeners)
-  let cadastrosData = {};   // objeto { id: {id, nome, cargo}, ... }
-  let lancamentosData = {}; // objeto { id: {id, nome, data, tipo, valor}, ... }
-
-  /* -------------------------
-     Foco inicial no Usuário
-     ------------------------- */
-  window.addEventListener('load', () => {
-    const u = document.getElementById('loginUsuario');
-    if (u) { u.focus(); u.select && u.select(); }
-
-    // Ativa listeners em tempo real para manter UI sincronizada
-    onValue(cadastrosRef, (snapshot) => {
-      cadastrosData = snapshot.val() || {};
-      atualizarDatalistLanc();
-      // atualizar telas se estiverem visíveis
-      mostrarCadastros();
-    });
-
-    onValue(lancamentosRef, (snapshot) => {
-      lancamentosData = snapshot.val() || {};
-      mostrarLancamentos();
-    });
-  });
-
-  /* -------------------------
-     Enter: navegação e executar último botão
-     ------------------------- */
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Enter') return;
-    const interactive = Array.from(document.querySelectorAll('input, select, button'))
-      .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-    const target = e.target;
-    const idx = interactive.indexOf(target);
-    if (idx === -1) return;
-    e.preventDefault();
-    const nextIndex = idx + 1;
-    if (nextIndex < interactive.length) {
-      const next = interactive[nextIndex];
-      next.focus();
-    } else {
-      const el = interactive[idx];
-      if (el && typeof el.click === 'function') el.click();
-    }
-  });
-
-  /* -------------------------
-     Maiúsculas automáticas (JS + CSS visual)
-     ------------------------- */
-  document.addEventListener('input', function(e) {
-    const el = e.target;
-    if (!el) return;
-    const tag = el.tagName.toLowerCase();
-    if (tag === 'input') {
-      const t = el.type;
-      if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
-        const pos = el.selectionStart;
-        el.value = el.value.toUpperCase();
-        try { el.setSelectionRange(pos, pos); } catch(err){}
+  // Enter muda de campo e no final faz login
+  const inputs = document.querySelectorAll("#loginForm input");
+  inputs.forEach((input, index) => {
+    input.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        } else {
+          document.getElementById("loginForm").requestSubmit();
+        }
       }
-    } else if (tag === 'textarea') {
-      const pos = el.selectionStart;
-      el.value = el.value.toUpperCase();
-      try { el.setSelectionRange(pos, pos); } catch(err){}
-    }
+    });
   });
 
-  /* -------------------------
-     Navegação entre telas
-     ------------------------- */
-  function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
-  function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-  function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-  function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
-  function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-  function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-  function sair(){ alert('Saindo do sistema...'); location.reload(); }
+  // Simples validação local (pode conectar depois ao Firebase)
+  document.getElementById("loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const usuario = document.getElementById("usuario").value.trim();
+    const senha = document.getElementById("senha").value.trim();
 
-  /* -------------------------
-     LOGIN (ADMIN / 1234)
-     ------------------------- */
-  function fazerLogin(){
-    const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
-    const senha = (document.getElementById('loginSenha').value || '').trim();
-    if (usuario === 'ADMIN' && senha === '1234') {
-      document.getElementById('loginContainer').classList.add('hidden');
-      document.getElementById('menu').classList.remove('hidden');
-      alert('Login bem-sucedido!');
-      const btn = document.querySelector('#menu button');
-      if (btn) btn.focus();
+    if (usuario === "ADMIN" && senha === "1234") {
+      window.location.href = "menu.html"; // abre o menu principal
     } else {
-      alert('Usuário ou senha incorretos!');
-      const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
+      alert("Usuário ou senha incorretos!");
     }
-  }
-
-  /* -------------------------
-     CADASTROS (Firebase)
-     ------------------------- */
-  const nomeInput = document.getElementById('nome');
-  const cargoInput = document.getElementById('cargo');
-  const idEditandoInput = document.getElementById('idEditando');
-
-  function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
-  function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
-
-  async function salvarCadastro(){
-    const nome = (nomeInput.value || '').trim();
-    const cargo = (cargoInput.value || '').trim();
-    if(!nome || !cargo) return alert('Preencha todos os campos.');
-
-    const idEditando = idEditandoInput.value;
-    if(idEditando){
-      // atualizar
-      const updates = { nome, cargo };
-      update(ref(db, `cadastros/${idEditando}`), updates)
-        .then(() => { limparCamposCadastro(); voltarCadastro(); })
-        .catch(err => alert('Erro ao atualizar: ' + err.message));
-    } else {
-      // novo push
-      const newRef = push(cadastrosRef);
-      const item = { id: newRef.key, nome, cargo };
-      set(newRef, item)
-        .then(()=> { limparCamposCadastro(); voltarCadastro(); })
-        .catch(err => alert('Erro ao salvar: ' + err.message));
-    }
-  }
-
-  function mostrarCadastros(){
-    const lista = document.getElementById('listaCadastros');
-    const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
-    lista.innerHTML = '';
-
-    const all = Object.values(cadastrosData || {});
-    let cadastros = all;
-    if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
-
-    cadastros.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'item';
-      const nomeCargo = `<strong>${c.nome}</strong> - ${c.cargo}`;
-      div.innerHTML = `<span ondblclick="editarCadastro('${c.id}')">${nomeCargo}</span>
-        <button class="btn-excluir" onclick="excluirCadastro('${c.id}')" title="Excluir">🗑️</button>`;
-      lista.appendChild(div);
-    });
-  }
-
-  function editarCadastro(id){
-    const c = cadastrosData[id];
-    if(!c) return;
-    esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
-    idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
-  }
-
-  function excluirCadastro(id){
-    if(!confirm('Excluir este cadastro?')) return;
-    remove(ref(db, `cadastros/${id}`))
-      .then(()=>{})
-      .catch(err => alert('Erro ao excluir: ' + err.message));
-  }
-
-  function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
-
-  /* -------------------------
-     LANÇAMENTOS (Firebase)
-     ------------------------- */
-  const nomeLanc = document.getElementById('nomeLanc');
-  const dataLanc = document.getElementById('dataLanc');
-  const tipoLanc = document.getElementById('tipoLanc');
-  const valorLanc = document.getElementById('valorLanc');
-  const idLancEditando = document.getElementById('idLancEditando');
-
-  function abrirInserirLancamento(){
-    const cad = Object.values(cadastrosData || {});
-    if(cad.length === 0){
-      alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
-      abrirCadastro();
-      return;
-    }
-    esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-    limparCamposLancamento();
-    atualizarDatalistLanc();
-  }
-
-  function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
-
-  async function salvarLancamento(){
-    const nome = (nomeLanc.value || '').trim().toUpperCase();
-    const data = dataLanc.value;
-    const tipo = tipoLanc.value;
-    const valor = parseFloat(valorLanc.value);
-    if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-
-    // Verifica se nome existe nos cadastros (comparação MAIÚSCULA)
-    const exists = Object.values(cadastrosData || {}).some(c => (c.nome||'').toUpperCase() === nome);
-    if(!exists) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-
-    const idEdit = idLancEditando.value;
-    if(idEdit){
-      update(ref(db, `lancamentos/${idEdit}`), { nome, data, tipo, valor })
-        .then(()=> { limparCamposLancamento(); voltarLancamento(); })
-        .catch(err => alert('Erro ao atualizar: ' + err.message));
-    } else {
-      const newRef = push(lancamentosRef);
-      const item = { id: newRef.key, nome, data, tipo, valor };
-      set(newRef, item)
-        .then(()=> { limparCamposLancamento(); voltarLancamento(); })
-        .catch(err => alert('Erro ao salvar: ' + err.message));
-    }
-  }
-
-  function mostrarLancamentos(){
-    const lista = document.getElementById('listaLancamentos');
-    const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
-    const filtroMesAno = document.getElementById('filtroMesAno').value;
-    lista.innerHTML = '';
-
-    let lancs = Object.values(lancamentosData || {});
-    if(filtroNome) lancs = lancs.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-    if(filtroMesAno) lancs = lancs.filter(l => (l.data||'').startsWith(filtroMesAno));
-
-    // Ordena por data (desc) para ficar mais lógico
-    lancs.sort((a,b) => (b.data || '').localeCompare(a.data || ''));
-
-    lancs.forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `<span ondblclick="editarLancamento('${l.id}')"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${Number(l.valor).toFixed(2).replace('.', ',')}</span>
-        <button class="btn-excluir" onclick="excluirLancamento('${l.id}')">🗑️</button>`;
-      lista.appendChild(div);
-    });
-  }
-
-  function editarLancamento(id){
-    const l = lancamentosData[id];
-    if(!l) return;
-    esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-    idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
-  }
-
-  function excluirLancamento(id){
-    if(!confirm('Excluir este lançamento?')) return;
-    remove(ref(db, `lancamentos/${id}`))
-      .then(()=>{})
-      .catch(err => alert('Erro ao excluir: ' + err.message));
-  }
-
-  function limparCamposLancamento(){
-    idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
-  }
-
-  function atualizarDatalistLanc(){
-    const datalist = document.getElementById('nomesCadastradosLanc');
-    datalist.innerHTML = '';
-    Object.values(cadastrosData || {}).forEach(c => {
-      const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
-    });
-  }
-
-  /* -------------------------
-     GERAR PDF - com pontinhos e maiúsculas (usa lancamentosData)
-     ------------------------- */
-  async function gerarPDFResumoLancamentos(){
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-
-    pdf.setFontSize(14);
-    pdf.setFont("helvetica", "bold");
-    const titulo = "SUPERMERCADO LEV +";
-    const tituloWidth = pdf.getTextWidth(titulo);
-    pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
-
-    const agora = new Date();
-    const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "normal");
-    pdf.text(dataHoraStr, 10, 22);
-
-    const filtroMesAno = document.getElementById('filtroMesAno').value;
-    if (filtroMesAno) {
-      const [ano, mes] = filtroMesAno.split('-');
-      const periodoStr = `Período: ${mes}/${ano}`;
-      const periodoWidth = pdf.getTextWidth(periodoStr);
-      pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
-    }
-
-    pdf.line(10, 25, pageWidth - 10, 25);
-
-    let y = 35;
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
-    y += 10;
-
-    // Filtra conforme seleção
-    let lancs = Object.values(lancamentosData || {});
-    if (filtroMesAno) lancs = lancs.filter(l => (l.data||'').startsWith(filtroMesAno));
-
-    // Resume por nome
-    const resumo = {};
-    lancs.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + Number(l.valor || 0); });
-
-    pdf.setFont("helvetica", "normal");
-    const nomesOrdenados = Object.keys(resumo).sort();
-
-    nomesOrdenados.forEach(nome => {
-      const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
-      const leftX = 10;
-      const rightX = pageWidth - 10;
-      const nomeWidth = pdf.getTextWidth(nome);
-      const valorWidth = pdf.getTextWidth(valorFormatado);
-      const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-      const dotWidth = pdf.getTextWidth('.');
-      const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-      const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-      const linha = `${nome} ${dots} ${valorFormatado}`;
-      pdf.text(linha, leftX, y);
-      y += 8;
-      if (y > 280) { pdf.addPage(); y = 20; }
-    });
-
-    // Total geral
-    const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
-    const totalNome = "TOTAL GERAL";
-    const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
-    const leftX = 10;
-    const rightX = pageWidth - 10;
-    const nomeWidth = pdf.getTextWidth(totalNome);
-    const valorWidth = pdf.getTextWidth(totalValor);
-    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-    const dotWidth = pdf.getTextWidth('.');
-    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-    const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-    y += 10;
-    pdf.setFont("helvetica", "bold");
-    pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
-
-    pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
-  }
-
-  // Expor funções que são chamadas via atributos HTML (onclick / ondblclick)
-  window.abrirCadastro = abrirCadastro;
-  window.abrirLancamento = abrirLancamento;
-  window.voltar = voltar;
-  window.voltarCadastro = voltarCadastro;
-  window.voltarLancamento = voltarLancamento;
-  window.sair = sair;
-
-  window.fazerLogin = fazerLogin;
-
-  window.abrirInserir = abrirInserir;
-  window.abrirConsultar = abrirConsultar;
-  window.salvarCadastro = salvarCadastro;
-  window.mostrarCadastros = mostrarCadastros;
-  window.editarCadastro = editarCadastro;
-  window.excluirCadastro = excluirCadastro;
-  window.limparCamposCadastro = limparCamposCadastro;
-
-  window.abrirInserirLancamento = abrirInserirLancamento;
-  window.abrirConsultarLancamento = abrirConsultarLancamento;
-  window.salvarLancamento = salvarLancamento;
-  window.mostrarLancamentos = mostrarLancamentos;
-  window.editarLancamento = editarLancamento;
-  window.excluirLancamento = excluirLancamento;
-  window.limparCamposLancamento = limparCamposLancamento;
-  window.atualizarDatalistLanc = atualizarDatalistLanc;
-  window.gerarPDFResumoLancamentos = gerarPDFResumoLancamentos;
-
+  });
 </script>
 </body>
 </html>
