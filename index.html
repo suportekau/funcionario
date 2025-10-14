@@ -625,4 +625,40 @@ await atualizarDatalistLanc();
 </script>
 
 </body>
+  <div id="telaLogin">
+  <h2>Login</h2>
+  <input type="text" id="usuario" placeholder="Usuário" /><br>
+  <input type="password" id="senha" placeholder="Senha" /><br>
+  <button onclick="entrar()">Entrar</button>
+</div>
+
+<div id="telaPrincipal" style="display: none;">
+  <h1>Bem-vindo ao Sistema de Funcionários!</h1>
+  <button onclick="sair()">Sair</button>
+  <!-- aqui fica o resto do seu sistema -->
+</div>
+
+<script>
+  function entrar() {
+    const usuario = document.getElementById("usuario").value;
+    const senha = document.getElementById("senha").value;
+
+    // Usuário e senha fixos (você pode mudar)
+    if (usuario === "admin" && senha === "123") {
+      document.getElementById("telaLogin").style.display = "none";
+      document.getElementById("telaPrincipal").style.display = "block";
+    } else {
+      alert("Usuário ou senha incorretos!");
+    }
+  }
+
+  function sair() {
+    document.getElementById("telaLogin").style.display = "block";
+    document.getElementById("telaPrincipal").style.display = "none";
+    document.getElementById("usuario").value = "";
+    document.getElementById("senha").value = "";
+  }
+</script>
+
 </html>
+
