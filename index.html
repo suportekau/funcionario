@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários (Firebase)</title>
+<title>Sistema Simples - Funcionários</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -17,387 +17,351 @@
     text-transform: uppercase;
     box-sizing: border-box;
   }
+
   .container {
     background: white;
-    padding: 22px;
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     text-align: center;
     width: 100%;
-    max-width: 420px;
+    max-width: 380px;
     box-sizing: border-box;
   }
-  h2 { margin-bottom: 14px; font-size: 1.25rem; }
-  input, select, textarea {
-    width:100%; padding:10px; margin:6px 0; border-radius:6px; border:1px solid #ccc;
-    font-size:15px; box-sizing:border-box; text-transform:uppercase;
+
+  h2 { margin-bottom: 20px; font-size: 1.4em; }
+
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    text-transform: uppercase;
   }
-  button { width:100%; padding:12px; margin:8px 0; border:none; border-radius:8px; background:#007bff; color:#fff; font-size:15px; cursor:pointer; }
-  button:hover{ background:#0056b3; }
-  .btn-voltar{ background:#6c757d; } .btn-voltar:hover{ background:#565e64; }
-  .hidden{ display:none; }
-  .lista{ text-align:left; margin-top:10px; max-height:300px; overflow:auto; }
-  .item{ display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:#f1f3f5; border-radius:6px; margin:6px 0; }
-  .btn-excluir{ width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#dc3545; color:#fff; border:none; cursor:pointer; }
-  .muted{ font-size:12px; color:#666; text-transform:none; margin-top:6px; }
-  @media(max-width:420px){ .container{padding:16px} h2{font-size:1.1rem} }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:hover { background-color: #0056b3; }
+  .btn-voltar { background-color: #6c757d; }
+  .btn-voltar:hover { background-color: #565e64; }
+
+  .hidden { display: none; }
+  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+
+  .item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f1f3f5; padding: 6px 8px; border-radius: 6px; margin: 4px 0;
+  }
+
+  .btn-excluir {
+    width: 28px; height: 28px; border-radius: 50%;
+    background-color:#dc3545; color:white; border:none; cursor:pointer;
+  }
+
+  @media (max-width: 400px) {
+    h2 { font-size: 1.2em; }
+    button { font-size: 15px; padding: 10px; }
+  }
 </style>
 
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, push, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+// Configuração Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+  authDomain: "funcionarios-7c778.firebaseapp.com",
+  databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
+  projectId: "funcionarios-7c778",
+  storageBucket: "funcionarios-7c778.firebasestorage.app",
+  messagingSenderId: "632364021109",
+  appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+  measurementId: "G-46DKFS3LHV"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Funções auxiliares
+function $(id){ return document.getElementById(id); }
+function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+function mostrar(id){ esconderTudo(); $(id).classList.remove('hidden'); }
+
+/* ---------------- LOGIN ---------------- */
+function fazerLogin(){
+  const usuario = ($('loginUsuario').value || '').trim().toUpperCase();
+  const senha = ($('loginSenha').value || '').trim();
+  if(usuario === 'ADMIN' && senha === '1234'){
+    mostrar('menu');
+  } else {
+    alert('Usuário ou senha incorretos!');
+    focarLogin();
+  }
+}
+
+function sair(){
+  mostrar('loginContainer');
+  focarLogin();
+}
+
+/* ---------------- CADASTRO ---------------- */
+function abrirCadastro(){ mostrar('menuCadastro'); }
+function abrirInserir(){ mostrar('inserir'); limparCamposCadastro(); }
+function abrirConsultar(){ mostrar('consultar'); carregarCadastros(); }
+function voltarCadastro(){ mostrar('menuCadastro'); }
+
+async function salvarCadastro(){
+  const nome = $('nome').value.trim().toUpperCase();
+  const cargo = $('cargo').value.trim().toUpperCase();
+  if(!nome || !cargo) return alert('Preencha todos os campos.');
+
+  const idEdit = $('idEditando').value;
+  const cadRef = ref(db, 'funcionarios');
+  
+  if(idEdit){
+    await update(ref(db, 'funcionarios/' + idEdit), { nome, cargo });
+  } else {
+    const novo = push(cadRef);
+    await set(novo, { nome, cargo });
+  }
+
+  limparCamposCadastro();
+  voltarCadastro();
+}
+
+function limparCamposCadastro(){
+  $('idEditando').value = '';
+  $('nome').value = '';
+  $('cargo').value = '';
+}
+
+function carregarCadastros(){
+  const lista = $('listaCadastros');
+  const filtro = ($('filtro').value || '').toUpperCase();
+  lista.innerHTML = '';
+
+  onValue(ref(db, 'funcionarios'), snapshot => {
+    lista.innerHTML = '';
+    snapshot.forEach(child => {
+      const id = child.key;
+      const { nome, cargo } = child.val();
+      if(filtro && !nome.includes(filtro)) return;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span><strong>${nome}</strong> - ${cargo}</span>
+        <button class="btn-excluir" onclick="excluirCadastro('${id}')">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  });
+}
+
+async function excluirCadastro(id){
+  if(!confirm('Excluir este funcionário?')) return;
+  await remove(ref(db, 'funcionarios/' + id));
+}
+
+/* ---------------- LANÇAMENTO ---------------- */
+function abrirLancamento(){ mostrar('menuLancamento'); }
+function voltarLancamento(){ mostrar('menuLancamento'); }
+function abrirInserirLancamento(){ mostrar('inserirLancamento'); atualizarNomesLanc(); }
+function abrirConsultarLancamento(){ mostrar('consultarLancamento'); carregarLancamentos(); }
+
+async function salvarLancamento(){
+  const nome = $('nomeLanc').value.trim().toUpperCase();
+  const data = $('dataLanc').value;
+  const tipo = $('tipoLanc').value;
+  const valor = parseFloat($('valorLanc').value);
+  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos.');
+
+  const idEdit = $('idLancEditando').value;
+  const lancRef = ref(db, 'lancamentos');
+
+  if(idEdit){
+    await update(ref(db, 'lancamentos/' + idEdit), { nome, data, tipo, valor });
+  } else {
+    const novo = push(lancRef);
+    await set(novo, { nome, data, tipo, valor });
+  }
+
+  limparCamposLancamento();
+  voltarLancamento();
+}
+
+function limparCamposLancamento(){
+  $('idLancEditando').value=''; $('nomeLanc').value=''; $('dataLanc').value='';
+  $('tipoLanc').value=''; $('valorLanc').value='';
+}
+
+function atualizarNomesLanc(){
+  const datalist = $('nomesCadastradosLanc');
+  datalist.innerHTML = '';
+  get(ref(db, 'funcionarios')).then(snapshot => {
+    snapshot.forEach(child => {
+      const opt = document.createElement('option');
+      opt.value = child.val().nome;
+      datalist.appendChild(opt);
+    });
+  });
+}
+
+function carregarLancamentos(){
+  const lista = $('listaLancamentos');
+  const filtroNome = ($('filtroLanc').value || '').toUpperCase();
+  const filtroMesAno = $('filtroMesAno').value;
+  lista.innerHTML = '';
+
+  onValue(ref(db, 'lancamentos'), snapshot => {
+    lista.innerHTML = '';
+    snapshot.forEach(child => {
+      const id = child.key;
+      const l = child.val();
+      if(filtroNome && !l.nome.includes(filtroNome)) return;
+      if(filtroMesAno && !l.data.startsWith(filtroMesAno)) return;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span><strong>${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
+        <button class="btn-excluir" onclick="excluirLancamento('${id}')">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  });
+}
+
+async function excluirLancamento(id){
+  if(!confirm('Excluir este lançamento?')) return;
+  await remove(ref(db, 'lancamentos/' + id));
+}
+
+/* ---------------- PDF ---------------- */
+async function gerarPDFResumoLancamentos(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  let y = 20;
+
+  pdf.setFontSize(14);
+  pdf.text("SUPERMERCADO LEV +", pageWidth/2, y, { align: "center" });
+  y += 10;
+
+  const snapshot = await get(ref(db, 'lancamentos'));
+  const resumo = {};
+  snapshot.forEach(child => {
+    const l = child.val();
+    resumo[l.nome] = (resumo[l.nome] || 0) + l.valor;
+  });
+
+  pdf.setFontSize(12);
+  for(const nome in resumo){
+    const valor = resumo[nome];
+    pdf.text(`${nome} ........... R$ ${valor.toFixed(2).replace('.', ',')}`, 10, y);
+    y += 8;
+  }
+
+  const total = Object.values(resumo).reduce((a,b)=>a+b,0);
+  y += 5;
+  pdf.text(`TOTAL GERAL ........... R$ ${total.toFixed(2).replace('.', ',')}`, 10, y);
+  pdf.save("RESUMO_LANCAMENTOS.pdf");
+}
+
+/* ---------------- Foco automático no login ---------------- */
+function focarLogin(){
+  setTimeout(()=> $('loginUsuario').focus(), 200);
+}
+window.addEventListener('load', focarLogin);
+</script>
 </head>
 <body>
-  <!-- LOGIN -->
-  <div class="container" id="loginContainer">
-    <h2>Login</h2>
-    <input id="loginUsuario" placeholder="Usuário" />
-    <input id="loginSenha" type="password" placeholder="Senha" />
-    <button id="btnEntrar">Entrar</button>
-    <p class="muted">usuário: <b>ADMIN</b> / senha: <b>1234</b></p>
-  </div>
 
-  <!-- MENU -->
-  <div class="container hidden" id="menu">
-    <h2>Menu Principal</h2>
-    <button id="btnCadastro">Cadastro</button>
-    <button id="btnLancamento">Lançamento</button>
-    <button id="btnGerarPDF">Gerar Relatório (PDF)</button>
-    <button class="btn-voltar" id="btnSair">Sair</button>
-  </div>
+<!-- LOGIN -->
+<div class="container" id="loginContainer">
+  <h2>Login</h2>
+  <input type="text" id="loginUsuario" placeholder="Usuário" />
+  <input type="password" id="loginSenha" placeholder="Senha" />
+  <button onclick="fazerLogin()">Entrar</button>
+</div>
 
-  <!-- MENU CADASTRO -->
-  <div class="container hidden" id="menuCadastro">
-    <h2>Cadastro</h2>
-    <button id="btnInserir">Inserir</button>
-    <button id="btnConsultar">Consultar</button>
-    <button class="btn-voltar" id="btnVoltarMenu">Voltar</button>
-  </div>
+<!-- MENU -->
+<div class="container hidden" id="menu">
+  <h2>Menu Principal</h2>
+  <button onclick="abrirCadastro()">Cadastro</button>
+  <button onclick="abrirLancamento()">Lançamento</button>
+  <button onclick="sair()" id="btnSair">Sair</button>
+</div>
 
-  <!-- INSERIR / EDITAR FUNCIONÁRIO -->
-  <div class="container hidden" id="inserir">
-    <h2>Inserir / Editar Funcionário</h2>
-    <input type="hidden" id="idEditando" />
-    <input id="nome" placeholder="Nome" />
-    <input id="cargo" placeholder="Cargo" />
-    <button id="btnSalvarFuncionario">Salvar</button>
-    <button class="btn-voltar" id="btnVoltarCadastro">Voltar</button>
-  </div>
+<!-- CADASTRO -->
+<div class="container hidden" id="menuCadastro">
+  <h2>Cadastro</h2>
+  <button onclick="abrirInserir()">Inserir</button>
+  <button onclick="abrirConsultar()">Consultar</button>
+  <button class="btn-voltar" onclick="mostrar('menu')">Voltar</button>
+</div>
 
-  <!-- CONSULTAR FUNCIONÁRIOS -->
-  <div class="container hidden" id="consultar">
-    <h2>Consultar Funcionários</h2>
-    <input id="filtroFuncionarios" placeholder="Filtrar por nome" />
-    <div class="lista" id="listaFuncionarios"></div>
-    <button class="btn-voltar" id="btnVoltarConsulta">Voltar</button>
-  </div>
+<div class="container hidden" id="inserir">
+  <h2>Inserir Funcionário</h2>
+  <input type="hidden" id="idEditando" />
+  <input type="text" id="nome" placeholder="Nome" />
+  <input type="text" id="cargo" placeholder="Cargo" />
+  <button onclick="salvarCadastro()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
 
-  <!-- MENU LANÇAMENTO -->
-  <div class="container hidden" id="menuLancamento">
-    <h2>Lançamentos</h2>
-    <button id="btnInserirLanc">Inserir</button>
-    <button id="btnConsultarLanc">Consultar</button>
-    <button class="btn-voltar" id="btnVoltarMenuLanc">Voltar</button>
-  </div>
+<div class="container hidden" id="consultar">
+  <h2>Consultar Funcionários</h2>
+  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="carregarCadastros()" />
+  <div class="lista" id="listaCadastros"></div>
+  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+</div>
 
-  <!-- INSERIR / EDITAR LANÇAMENTO -->
-  <div class="container hidden" id="inserirLanc">
-    <h2>Inserir / Editar Lançamento</h2>
-    <input type="hidden" id="idLancEditando" />
-    <select id="tipoLanc">
-      <option value="">SELECIONE TIPO</option>
-      <option value="VALE">VALE</option>
-      <option value="COMPRA">COMPRA</option>
-    </select>
+<!-- LANÇAMENTOS -->
+<div class="container hidden" id="menuLancamento">
+  <h2>Lançamento</h2>
+  <button onclick="abrirInserirLancamento()">Inserir</button>
+  <button onclick="abrirConsultarLancamento()">Consultar</button>
+  <button class="btn-voltar" onclick="mostrar('menu')">Voltar</button>
+</div>
 
-    <input list="datalistFuncionarios" id="nomeLanc" placeholder="Nome do Funcionário" />
-    <datalist id="datalistFuncionarios"></datalist>
+<div class="container hidden" id="inserirLancamento">
+  <h2>Inserir Lançamento</h2>
+  <input type="hidden" id="idLancEditando" />
+  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
+  <datalist id="nomesCadastradosLanc"></datalist>
+  <input type="date" id="dataLanc" />
+  <select id="tipoLanc">
+    <option value="">Selecione Tipo</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
+  </select>
+  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
+  <button onclick="salvarLancamento()">Salvar</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
 
-    <input id="dataLanc" type="date" />
-    <input id="valorLanc" type="number" step="0.01" placeholder="Valor (Ex: 50.00)" />
-    <button id="btnSalvarLanc">Salvar</button>
-    <button class="btn-voltar" id="btnVoltarLanc">Voltar</button>
-  </div>
+<div class="container hidden" id="consultarLancamento">
+  <h2>Consultar Lançamentos</h2>
+  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="carregarLancamentos()" />
+  <input type="month" id="filtroMesAno" onchange="carregarLancamentos()" />
+  <div class="lista" id="listaLancamentos"></div>
+  <button onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
+  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+</div>
 
-  <!-- CONSULTAR LANÇAMENTOS -->
-  <div class="container hidden" id="consultarLanc">
-    <h2>Consultar Lançamentos</h2>
-    <input type="month" id="filtroMes" />
-    <input id="filtroLancNome" placeholder="Filtrar por nome" />
-    <div class="lista" id="listaLancamentos"></div>
-    <button class="btn-voltar" id="btnVoltarConsultaLanc">Voltar</button>
-  </div>
-
-<script type="module">
-  // ---------- Firebase (modular imports) ----------
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getDatabase, ref, push, set, get, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-    authDomain: "funcionarios-7c778.firebaseapp.com",
-    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
-    projectId: "funcionarios-7c778",
-    storageBucket: "funcionarios-7c778.firebasestorage.app",
-    messagingSenderId: "632364021109",
-    appId: "1:632364021109:web:f140b97a8dbc36148b4f3c",
-    measurementId: "G-2JXX10SBVG"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // ---------- helpers UI ----------
-  const $ = id => document.getElementById(id);
-  function esconderTudo(){ document.querySelectorAll('.container').forEach(c=>c.classList.add('hidden')); }
-  function mostrar(id){ esconderTudo(); $(id).classList.remove('hidden'); }
-
-  // ---------- LOGIN ----------
-  $('btnEntrar').addEventListener('click', () => {
-    const u = ($('loginUsuario').value||'').trim().toUpperCase();
-    const s = ($('loginSenha').value||'').trim();
-    if(u === 'ADMIN' && s === '1234'){ mostrar('menu'); } else { alert('Usuário ou senha incorretos!'); $('loginUsuario').focus(); }
-  });
-
-  // ---------- MENU NAV ----------
-  $('btnCadastro').onclick = ()=> mostrar('menuCadastro');
-  $('btnLancamento').onclick = ()=> mostrar('menuLancamento');
-  $('btnSair').onclick = ()=> { mostrar('loginContainer'); };
-
-  // ---------- CADASTRO ----------
-  $('btnInserir').onclick = ()=> { mostrar('inserir'); $('nome').focus(); };
-  $('btnConsultar').onclick = ()=> { mostrar('consultar'); carregarFuncionarios(); };
-  $('btnVoltarMenu').onclick = ()=> mostrar('menu');
-  $('btnVoltarCadastro').onclick = ()=> mostrar('menuCadastro');
-  $('btnVoltarConsulta').onclick = ()=> mostrar('menuCadastro');
-
-  // Save / Edit funcionario
-  $('btnSalvarFuncionario').addEventListener('click', async () => {
-    const nome = ($('nome').value||'').trim().toUpperCase();
-    const cargo = ($('cargo').value||'').trim().toUpperCase();
-    if(!nome || !cargo){ alert('Preencha todos os campos.'); return; }
-    const idEdit = $('idEditando').value;
-    if(idEdit){
-      await update(ref(db, `funcionarios/${idEdit}`), { nome, cargo });
-      $('idEditando').value = '';
-    } else {
-      await push(ref(db, 'funcionarios'), { nome, cargo });
-    }
-    $('nome').value=''; $('cargo').value='';
-    alert('Funcionário salvo!');
-  });
-
-  // Load and show funcionarios (real-time)
-  function carregarFuncionarios(){
-    const lista = $('listaFuncionarios');
-    const filtroEl = $('filtroFuncionarios');
-    const q = ref(db, 'funcionarios');
-    onValue(q, snap => {
-      lista.innerHTML = '';
-      const dl = $('datalistFuncionarios'); dl.innerHTML = '';
-      snap.forEach(ch => {
-        const d = ch.val();
-        const nome = d.nome||'';
-        const cargo = d.cargo||'';
-        // filtering
-        const termo = (filtroEl.value||'').trim().toUpperCase();
-        if(!termo || nome.includes(termo)){
-          const div = document.createElement('div'); div.className='item';
-          div.innerHTML = `<span ondblclick="editarFuncionario('${ch.key}')"><b>${nome}</b> - ${cargo}</span>
-            <button class="btn-excluir" onclick="excluirFuncionario('${ch.key}')">🗑️</button>`;
-          lista.appendChild(div);
-        }
-        const opt = document.createElement('option'); opt.value = nome; dl.appendChild(opt);
-      });
-    });
-  }
-
-  // Expose edit/delete to window so inline handlers can call them
-  window.editarFuncionario = async function(id){
-    const snap = await get(ref(db, `funcionarios/${id}`));
-    if(!snap.exists()) return alert('Funcionário não encontrado.');
-    const d = snap.val();
-    $('idEditando').value = id;
-    $('nome').value = d.nome||'';
-    $('cargo').value = d.cargo||'';
-    mostrar('inserir');
-  };
-
-  window.excluirFuncionario = async function(id){
-    if(!confirm('Excluir este funcionário?')) return;
-    await remove(ref(db, `funcionarios/${id}`));
-  };
-
-  // ---------- LANÇAMENTOS ----------
-  $('btnInserirLanc').onclick = ()=> { atualizarDatalistFuncionarios(); mostrar('inserirLanc'); };
-  $('btnConsultarLanc').onclick = ()=> { mostrar('consultarLanc'); carregarLancamentos(); };
-  $('btnVoltarMenuLanc').onclick = ()=> mostrar('menu');
-
-  // Save / Edit lancamento
-  $('btnSalvarLanc').addEventListener('click', async () => {
-    const tipo = ($('tipoLanc').value||'').trim();
-    const nome = ($('nomeLanc').value||'').trim().toUpperCase();
-    const data = ($('dataLanc').value||'').trim();
-    const valor = parseFloat((($('valorLanc').value||'') + '').replace(',', '.'));
-    if(!tipo || !nome || !data || isNaN(valor)){ alert('Preencha todos os campos corretamente.'); return; }
-    const idEdit = $('idLancEditando').value;
-    // optional: verify funcionario exists
-    const funcs = await get(ref(db, 'funcionarios'));
-    let existe = false;
-    funcs.forEach(ch => { if((ch.val().nome||'').toUpperCase() === nome) existe = true; });
-    if(!existe){
-      if(!confirm('Funcionário não encontrado. Deseja salvar o lançamento mesmo assim?')) return;
-    }
-    if(idEdit){
-      await update(ref(db, `lancamentos/${idEdit}`), { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
-      $('idLancEditando').value = '';
-    } else {
-      await push(ref(db, 'lancamentos'), { tipo, nome, data, valor: parseFloat(valor.toFixed(2)) });
-    }
-    $('tipoLanc').value=''; $('nomeLanc').value=''; $('dataLanc').value=''; $('valorLanc').value='';
-    alert('Lançamento salvo!');
-  });
-
-  // Load lancamentos (real-time) with filters
-  function carregarLancamentos(){
-    const lista = $('listaLancamentos');
-    const filtroMes = $('filtroMes').value; // YYYY-MM
-    const filtroNome = ($('filtroLancNome').value||'').trim().toUpperCase();
-    onValue(ref(db, 'lancamentos'), snap => {
-      lista.innerHTML = '';
-      snap.forEach(ch => {
-        const l = ch.val();
-        const okMes = !filtroMes || (l.data && l.data.startsWith(filtroMes));
-        const okNome = !filtroNome || (l.nome && l.nome.includes(filtroNome));
-        if(okMes && okNome){
-          const div = document.createElement('div'); div.className='item';
-          div.innerHTML = `<span ondblclick="editarLancamento('${ch.key}')"><b>${l.tipo}</b> | ${l.nome} | ${l.data} | R$ ${Number(l.valor).toFixed(2).replace('.', ',')}</span>
-            <button class="btn-excluir" onclick="excluirLancamento('${ch.key}')">🗑️</button>`;
-          lista.appendChild(div);
-        }
-      });
-    });
-  }
-
-  window.editarLancamento = async function(id){
-    const snap = await get(ref(db, `lancamentos/${id}`));
-    if(!snap.exists()) return alert('Lançamento não encontrado.');
-    const l = snap.val();
-    $('idLancEditando').value = id;
-    $('tipoLanc').value = l.tipo || '';
-    $('nomeLanc').value = l.nome || '';
-    $('dataLanc').value = l.data || '';
-    $('valorLanc').value = l.valor || '';
-    mostrar('inserirLanc');
-  };
-
-  window.excluirLancamento = async function(id){
-    if(!confirm('Excluir este lançamento?')) return;
-    await remove(ref(db, `lancamentos/${id}`));
-  };
-
-  // Update datalist of funcionarios before inserting lancamento
-  async function atualizarDatalistFuncionarios(){
-    const snap = await get(ref(db, 'funcionarios'));
-    const dl = $('datalistFuncionarios'); dl.innerHTML = '';
-    snap.forEach(ch => {
-      const n = ch.val().nome || '';
-      const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt);
-    });
-  }
-
-  // ---------- GERAR PDF (a partir de /lancamentos) ----------
-  $('btnGerarPDF').addEventListener('click', gerarPDFRelatorio);
-
-  async function gerarPDFRelatorio(){
-    const snap = await get(ref(db, 'lancamentos'));
-    const dados = snap.exists() ? snap.val() : {};
-    const arr = Object.values(dados || {});
-    if(arr.length === 0){ alert('Nenhum lançamento encontrado.'); return; }
-
-    // agrupar por nome
-    const resumo = {};
-    arr.forEach(l=>{
-      const nome = (l.nome || '---').toUpperCase();
-      resumo[nome] = (resumo[nome] || 0) + Number(l.valor || 0);
-    });
-
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    const pageW = pdf.internal.pageSize.getWidth();
-
-    pdf.setFontSize(14); pdf.setFont("helvetica", "bold");
-    const title = "RESUMO DE LANÇAMENTOS";
-    const titleW = pdf.getTextWidth(title);
-    pdf.text(title, (pageW - titleW)/2, 14);
-
-    pdf.setFontSize(10); pdf.setFont("helvetica", "normal");
-    pdf.text(new Date().toLocaleString('pt-BR'), 10, 20);
-    pdf.line(10,22,pageW-10,22);
-
-    let y = 30;
-    pdf.setFontSize(12); pdf.setFont("helvetica", "bold");
-    pdf.text("TOTAL POR FUNCIONÁRIO", 10, y); y += 8;
-    pdf.setFont("helvetica", "normal");
-
-    const nomes = Object.keys(resumo).sort();
-    nomes.forEach(nome => {
-      const valorStr = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
-      const leftX = 10; const rightX = pageW - 10;
-      const nomeW = pdf.getTextWidth(nome); const valW = pdf.getTextWidth(valorStr);
-      const dotsW = rightX - leftX - nomeW - valW - 8;
-      const dotW = pdf.getTextWidth('.');
-      const countDots = Math.max(3, Math.floor(dotsW / dotW));
-      const dots = '.'.repeat(countDots);
-      pdf.text(`${nome} ${dots} ${valorStr}`, leftX, y);
-      y += 8;
-      if(y > 280){ pdf.addPage(); y = 20; }
-    });
-
-    const total = nomes.reduce((s,n) => s + resumo[n], 0);
-    y += 8;
-    pdf.setFont("helvetica", "bold");
-    const totalTxt = "TOTAL GERAL"; const totalVal = "R$ " + total.toFixed(2).replace('.', ',');
-    const totalTxtW = pdf.getTextWidth(totalTxt); const totalValW = pdf.getTextWidth(totalVal);
-    const dotsW = (pageW - 10) - 10 - totalTxtW - totalValW - 8;
-    const dotW = pdf.getTextWidth('.');
-    const countDots = Math.max(3, Math.floor(dotsW / dotW));
-    pdf.text(`${totalTxt} ${'.'.repeat(countDots)} ${totalVal}`, 10, y);
-
-    pdf.save('RESUMO_LANCAMENTOS.pdf');
-  }
-
-  // ---------- Enter navigation: focus next, and last triggers click ----------
-  document.addEventListener('keydown', function(e){
-    if(e.key !== 'Enter') return;
-    const interactive = Array.from(document.querySelectorAll('input, select, button'))
-      .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-    const idx = interactive.indexOf(e.target);
-    if(idx === -1) return;
-    e.preventDefault();
-    const next = interactive[idx+1];
-    if(next) next.focus(); else {
-      const el = interactive[idx];
-      if(el && typeof el.click === 'function') el.click();
-    }
-  });
-
-  // uppercase input behavior for text fields (keeps caret)
-  document.addEventListener('input', function(e){
-    const el = e.target; if(!el) return;
-    const tag = el.tagName.toLowerCase();
-    if(tag === 'input'){
-      const t = el.type;
-      if(t === 'text' || t === 'search' || t === 'tel' || t === 'email'){
-        const pos = el.selectionStart;
-        el.value = el.value.toUpperCase();
-        try { el.setSelectionRange(pos,pos); } catch(err){}
-      }
-    }
-  });
-
-  // focus on login on load
-  window.addEventListener('load', ()=> { $('loginUsuario').focus(); });
-</script>
 </body>
 </html>
