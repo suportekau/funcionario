@@ -1,132 +1,97 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login com Firebase</title>
+  <title>Cadastro Funcionário - Incluir no Firebase</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      text-transform: uppercase;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
+    .hidden { display: none; }
   </style>
+</head>
+<body>
 
-  <!-- Firebase SDK -->
+  <h2>Cadastro de Funcionário</h2>
+
+  <button onclick="abrirInserir()">Incluir Funcionário</button>
+
+  <div id="inserir" class="hidden">
+    <h3>Inserir Funcionário</h3>
+    <input type="hidden" id="idEditando" />
+    <label>Nome: <input type="text" id="nome" /></label><br><br>
+    <label>Cargo: <input type="text" id="cargo" /></label><br><br>
+    <button onclick="salvarCadastro()">Salvar</button>
+    <button onclick="voltarCadastro()">Cancelar</button>
+  </div>
+
   <script type="module">
-    // Importa Firebase Auth
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+    // Config do Firebase - use a sua
     const firebaseConfig = {
       apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
       authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
       projectId: "funcionarios-7c778",
       storageBucket: "funcionarios-7c778.appspot.com",
       messagingSenderId: "632364021109",
-      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c"
+      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+      measurementId: "G-46DKFS3LHV"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    // LOGIN
-    window.fazerLogin = async function () {
-      const email = document.getElementById('loginUsuario').value.trim();
-      const senha = document.getElementById('loginSenha').value.trim();
+    // Elementos DOM
+    const inserirDiv = document.getElementById('inserir');
+    const idEditandoInput = document.getElementById('idEditando');
+    const nomeInput = document.getElementById('nome');
+    const cargoInput = document.getElementById('cargo');
 
-      if (!email || !senha) {
+    function abrirInserir() {
+      inserirDiv.classList.remove('hidden');
+      limparCamposCadastro();
+      nomeInput.focus();
+    }
+
+    function limparCamposCadastro() {
+      idEditandoInput.value = '';
+      nomeInput.value = '';
+      cargoInput.value = '';
+    }
+
+    function voltarCadastro() {
+      inserirDiv.classList.add('hidden');
+      limparCamposCadastro();
+    }
+
+    async function salvarCadastro() {
+      const nome = nomeInput.value.trim();
+      const cargo = cargoInput.value.trim();
+      const idEditando = idEditandoInput.value;
+
+      if (!nome || !cargo) {
         alert("Preencha todos os campos.");
         return;
       }
 
+      const cadRef = ref(db, 'cadastros');
+
       try {
-        await signInWithEmailAndPassword(auth, email, senha);
-        alert("Login bem-sucedido!");
-        // Redirecionar ou abrir menu
+        if (idEditando) {
+          // Atualizar funcionário existente
+          await update(ref(db, `cadastros/${idEditando}`), { nome, cargo });
+          alert('Cadastro atualizado com sucesso!');
+        } else {
+          // Inserir novo funcionário
+          const novoRef = push(cadRef);
+          await set(novoRef, { nome, cargo });
+          alert('Funcionário incluído com sucesso!');
+        }
+        voltarCadastro();
       } catch (error) {
-        console.error(error);
-        alert("Erro ao fazer login: " + (error.message || "verifique suas credenciais"));
+        alert('Erro ao salvar no Firebase: ' + error.message);
       }
-    };
-
-    // Foco no campo usuário ao carregar
-    window.addEventListener('load', () => {
-      const userField = document.getElementById('loginUsuario');
-      if (userField) {
-        userField.focus();
-        userField.select();
-      }
-    });
-
-    // Enter para navegar e acionar botão
-    document.addEventListener('keydown', function (e) {
-      if (e.key !== 'Enter') return;
-
-      const fields = Array.from(document.querySelectorAll('input, button'))
-        .filter(el => el.offsetParent !== null && !el.disabled);
-
-      const idx = fields.indexOf(document.activeElement);
-      if (idx === -1) return;
-
-      e.preventDefault();
-
-      if (idx + 1 < fields.length) {
-        fields[idx + 1].focus();
-      } else {
-        const last = fields[idx];
-        if (last && typeof last.click === 'function') last.click();
-      }
-    });
+    }
   </script>
-</head>
-<body>
-
-  <div class="container">
-    <h2>Login</h2>
-    <input type="email" id="loginUsuario" placeholder="E-mail (usuário)" />
-    <input type="password" id="loginSenha" placeholder="Senha" />
-    <button onclick="fazerLogin()">Entrar</button>
-  </div>
-
 </body>
 </html>
