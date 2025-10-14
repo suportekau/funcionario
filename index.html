@@ -21,11 +21,12 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.15);
       width: 90%;
-      max-width: 380px;
+      max-width: 360px;
       text-align: center;
     }
 
     h2 { margin-bottom: 20px; }
+
     input, button, select {
       width: 100%;
       padding: 10px;
@@ -33,6 +34,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 15px;
+      text-transform: uppercase; /* 🔠 tudo em maiúsculas */
     }
 
     button {
@@ -75,15 +77,15 @@
   </style>
 </head>
 <body>
-  <!-- TELA DE LOGIN -->
+  <!-- 🔐 LOGIN -->
   <div id="telaLogin" class="card">
     <h2>Login</h2>
-    <input type="text" id="usuario" placeholder="Usuário">
+    <input type="text" id="usuario" placeholder="Usuário" autofocus>
     <input type="password" id="senha" placeholder="Senha">
     <button id="btnEntrar">Entrar</button>
   </div>
 
-  <!-- TELA PRINCIPAL -->
+  <!-- 🧾 SISTEMA PRINCIPAL -->
   <div id="telaPrincipal">
     <h1>Sistema de Funcionários</h1>
     <button id="btnSair">Sair</button>
@@ -115,12 +117,13 @@
     <button id="btnPDF">Gerar PDF</button>
   </div>
 
-  <!-- FIREBASE + SISTEMA -->
   <script type="module">
+    // === IMPORTS FIREBASE ===
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
     import { jsPDF } from "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.es.min.js";
 
+    // === CONFIG FIREBASE ===
     const firebaseConfig = {
       apiKey: "AIzaSyBQi6DKYqEmkMq19UpgXl1qYg8G3q8Id-w",
       authDomain: "funcionarios-b75f8.firebaseapp.com",
@@ -134,31 +137,54 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // === LOGIN LOCAL ===
+    // === LOGIN ===
+    const usuario = document.getElementById("usuario");
+    const senha = document.getElementById("senha");
     const btnEntrar = document.getElementById("btnEntrar");
     const telaLogin = document.getElementById("telaLogin");
     const telaPrincipal = document.getElementById("telaPrincipal");
     const btnSair = document.getElementById("btnSair");
 
-    btnEntrar.addEventListener("click", () => {
-      const usuario = document.getElementById("usuario").value;
-      const senha = document.getElementById("senha").value;
+    usuario.focus();
 
-      if (usuario === "admin" && senha === "123") {
+    // Enter muda de campo
+    usuario.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        senha.focus();
+      }
+    });
+
+    senha.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btnEntrar.click();
+      }
+    });
+
+    // Botão Entrar
+    btnEntrar.addEventListener("click", () => {
+      const user = usuario.value.trim().toUpperCase();
+      const pass = senha.value.trim();
+
+      if (user === "ADMIN" && pass === "123") {
         telaLogin.style.display = "none";
         telaPrincipal.style.display = "block";
         carregarFuncionarios();
         carregarLancamentos();
       } else {
         alert("Usuário ou senha incorretos!");
+        usuario.focus();
       }
     });
 
+    // Botão Sair
     btnSair.addEventListener("click", () => {
       telaPrincipal.style.display = "none";
       telaLogin.style.display = "flex";
-      document.getElementById("usuario").value = "";
-      document.getElementById("senha").value = "";
+      usuario.value = "";
+      senha.value = "";
+      usuario.focus();
     });
 
     // === FUNCIONÁRIOS ===
