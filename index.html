@@ -102,22 +102,22 @@
     }
   });
 
-  // Função Entrar
-entrar.addEventListener("click", () => {
-  const user = usuario.value.trim().toUpperCase();
-  const pass = senha.value.trim();
+  // Função Entrar (corrigido)
+  entrar.addEventListener("click", () => {
+    const user = usuario.value.trim().toUpperCase();
+    const pass = senha.value.trim();
 
-  if (user === "" || pass === "") {
-    alert("Preencha usuário e senha!");
-    return;
-  }
+    if (user === "" || pass === "") {
+      alert("Preencha usuário e senha!");
+      return;
+    }
 
-  if (user === "ADMIN" && pass === "1234") {
-    window.location.href = "cadastro.html"; // redireciona pro sistema
-  } else {
-    alert("Usuário ou senha incorretos!");
-  }
-});
+    if (user === "ADMIN" && pass === "1234") {
+      window.location.href = "cadastro.html"; // redireciona pro sistema
+    } else {
+      alert("Usuário ou senha incorretos!");
+    }
+  });
 
   // Função Voltar
   voltar.addEventListener("click", () => {
@@ -126,4 +126,3 @@ entrar.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
