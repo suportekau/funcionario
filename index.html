@@ -2,218 +2,96 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Firebase com Menu</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <title>Cadastro Funcionário - Incluir no Firebase</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
     .hidden { display: none; }
-    label { display: block; margin: 8px 0 4px; }
-    nav button {
-      margin-right: 10px;
-      padding: 8px 15px;
-      cursor: pointer;
-    }
-    #incluirForm, #consultarDiv {
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      padding: 15px;
-      max-width: 400px;
-    }
   </style>
 </head>
 <body>
 
-  <div id="loginDiv">
-    <h2>Login</h2>
-    <label>Email (usuário): <input type="email" id="emailLogin" /></label>
-    <label>Senha: <input type="password" id="senhaLogin" /></label>
-    <button onclick="fazerLogin()">Entrar</button>
+  <h2>Cadastro de Funcionário</h2>
+
+  <button onclick="abrirInserir()">Incluir Funcionário</button>
+
+  <div id="inserir" class="hidden">
+    <h3>Inserir Funcionário</h3>
+    <input type="hidden" id="idEditando" />
+    <label>Nome: <input type="text" id="nome" /></label><br><br>
+    <label>Cargo: <input type="text" id="cargo" /></label><br><br>
+    <button onclick="salvarCadastro()">Salvar</button>
+    <button onclick="voltarCadastro()">Cancelar</button>
   </div>
 
-  <div id="conteudo" class="hidden">
-    <h2>Bem-vindo!</h2>
-    <p id="userEmailDisplay"></p>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    <!-- Menu -->
-    <nav>
-      <button onclick="mostrarIncluir()">Incluir</button>
-      <button onclick="mostrarConsultar()">Consultar</button>
-      <button onclick="fazerLogout()">Sair</button>
-    </nav>
+    // Config do Firebase - use a sua
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+      authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+      projectId: "funcionarios-7c778",
+      storageBucket: "funcionarios-7c778.appspot.com",
+      messagingSenderId: "632364021109",
+      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+      measurementId: "G-46DKFS3LHV"
+    };
 
-    <!-- Formulário Incluir -->
-    <div id="incluirForm" class="hidden">
-      <h3>Incluir novo cadastro</h3>
-      <label>Nome: <input type="text" id="nomeIncluir" /></label>
-      <label>Email: <input type="email" id="emailIncluir" /></label>
-      <button onclick="incluirCadastro()">Salvar</button>
-    </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    <!-- Consulta -->
-    <div id="consultarDiv" class="hidden">
-      <h3>Consultar dados</h3>
-      <p>Aqui será exibido o resultado da consulta.</p>
-    </div>
+    // Elementos DOM
+    const inserirDiv = document.getElementById('inserir');
+    const idEditandoInput = document.getElementById('idEditando');
+    const nomeInput = document.getElementById('nome');
+    const cargoInput = document.getElementById('cargo');
 
-    <br>
-    <!-- Alterar usuário e senha -->
-    <h3>Alterar usuário (email) e senha</h3>
-    <label>Novo email: <input type="email" id="novoEmail" /></label>
-    <label>Nova senha: <input type="password" id="novaSenha" /></label>
-    <button onclick="alterarCredenciais()">Salvar alterações</button>
-  </div>
-
-<script>
-  // Configurações do Firebase
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
-
-  // Inicializa Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  // Login
-  function fazerLogin() {
-    const email = document.getElementById('emailLogin').value.trim();
-    const senha = document.getElementById('senhaLogin').value.trim();
-
-    if (!email || !senha) {
-      alert('Preencha email e senha.');
-      return;
+    function abrirInserir() {
+      inserirDiv.classList.remove('hidden');
+      limparCamposCadastro();
+      nomeInput.focus();
     }
 
-    auth.signInWithEmailAndPassword(email, senha)
-      .then((userCredential) => {
-        alert('Login efetuado com sucesso!');
-        mostrarConteudo(userCredential.user);
-      })
-      .catch((error) => {
-        alert('Erro no login: ' + error.message);
-      });
-  }
-
-  // Mostrar conteúdo e menu
-  function mostrarConteudo(user) {
-    document.getElementById('loginDiv').classList.add('hidden');
-    document.getElementById('conteudo').classList.remove('hidden');
-    document.getElementById('userEmailDisplay').innerText = `Usuário logado: ${user.email}`;
-
-    document.getElementById('novoEmail').value = user.email;
-    document.getElementById('novaSenha').value = '';
-
-    esconderTodosMenus();
-  }
-
-  // Esconde as seções de incluir e consultar
-  function esconderTodosMenus() {
-    document.getElementById('incluirForm').classList.add('hidden');
-    document.getElementById('consultarDiv').classList.add('hidden');
-  }
-
-  // Mostrar formulário Incluir
-  function mostrarIncluir() {
-    esconderTodosMenus();
-    document.getElementById('incluirForm').classList.remove('hidden');
-  }
-
-  // Mostrar consulta
-  function mostrarConsultar() {
-    esconderTodosMenus();
-    document.getElementById('consultarDiv').classList.remove('hidden');
-  }
-
-  // Função simples para "incluir" cadastro — aqui você pode integrar Firebase Firestore ou Realtime Database
-  function incluirCadastro() {
-    const nome = document.getElementById('nomeIncluir').value.trim();
-    const email = document.getElementById('emailIncluir').value.trim();
-
-    if (!nome || !email) {
-      alert('Preencha nome e email para incluir.');
-      return;
+    function limparCamposCadastro() {
+      idEditandoInput.value = '';
+      nomeInput.value = '';
+      cargoInput.value = '';
     }
 
-    // Aqui você pode adicionar a lógica para salvar no Firebase Database
-    alert(`Cadastro incluído:\nNome: ${nome}\nEmail: ${email}`);
-
-    // Limpar campos após salvar
-    document.getElementById('nomeIncluir').value = '';
-    document.getElementById('emailIncluir').value = '';
-  }
-
-  // Alterar email e senha
-  function alterarCredenciais() {
-    const user = auth.currentUser;
-    const novoEmail = document.getElementById('novoEmail').value.trim();
-    const novaSenha = document.getElementById('novaSenha').value.trim();
-
-    if (!user) {
-      alert('Nenhum usuário logado.');
-      return;
+    function voltarCadastro() {
+      inserirDiv.classList.add('hidden');
+      limparCamposCadastro();
     }
 
-    if (novoEmail && novoEmail !== user.email) {
-      user.updateEmail(novoEmail)
-        .then(() => {
-          alert('Email atualizado com sucesso!');
-          document.getElementById('userEmailDisplay').innerText = `Usuário logado: ${novoEmail}`;
-        })
-        .catch(error => {
-          alert('Erro ao atualizar email: ' + error.message);
-        });
-    }
+    async function salvarCadastro() {
+      const nome = nomeInput.value.trim();
+      const cargo = cargoInput.value.trim();
+      const idEditando = idEditandoInput.value;
 
-    if (novaSenha) {
-      if (novaSenha.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres.');
+      if (!nome || !cargo) {
+        alert("Preencha todos os campos.");
         return;
       }
-      user.updatePassword(novaSenha)
-        .then(() => {
-          alert('Senha atualizada com sucesso!');
-          document.getElementById('novaSenha').value = '';
-        })
-        .catch(error => {
-          alert('Erro ao atualizar senha: ' + error.message);
-        });
+
+      const cadRef = ref(db, 'cadastros');
+
+      try {
+        if (idEditando) {
+          // Atualizar funcionário existente
+          await update(ref(db, `cadastros/${idEditando}`), { nome, cargo });
+          alert('Cadastro atualizado com sucesso!');
+        } else {
+          // Inserir novo funcionário
+          const novoRef = push(cadRef);
+          await set(novoRef, { nome, cargo });
+          alert('Funcionário incluído com sucesso!');
+        }
+        voltarCadastro();
+      } catch (error) {
+        alert('Erro ao salvar no Firebase: ' + error.message);
+      }
     }
-  }
-
-  // Logout
-  function fazerLogout() {
-    auth.signOut().then(() => {
-      alert('Logout efetuado.');
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
-      document.getElementById('emailLogin').value = '';
-      document.getElementById('senhaLogin').value = '';
-      esconderTodosMenus();
-    });
-  }
-
-  // Verificar estado de autenticação
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      mostrarConteudo(user);
-    } else {
-      document.getElementById('conteudo').classList.add('hidden');
-      document.getElementById('loginDiv').classList.remove('hidden');
-    }
-  });
-
-  // Enter no formulário de login
-  ['emailLogin', 'senhaLogin'].forEach(id => {
-    document.getElementById(id).addEventListener('keypress', e => {
-      if (e.key === 'Enter') fazerLogin();
-    });
-  });
-</script>
-
+  </script>
 </body>
 </html>
