@@ -3,16 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Firebase Realtime Database - Exemplo</title>
+  <title>Exemplo Completo Firebase Realtime Database</title>
+</head>
+<body>
+  <h1>Cadastro de Funcionários</h1>
 
-  <!-- Importar Firebase modular SDK -->
+  <form id="formFuncionario">
+    <input type="text" id="nome" placeholder="Nome" required />
+    <input type="text" id="cargo" placeholder="Cargo" required />
+    <button type="submit">Adicionar Funcionário</button>
+  </form>
+
+  <h2>Lista de Funcionários</h2>
+  <ul id="listaFuncionarios"></ul>
+
   <script type="module">
-    // Importar as funções do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
-    import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-    // Configuração do Firebase (a sua)
+    // Configuração do Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
       authDomain: "funcionarios-7c778.firebaseapp.com",
@@ -24,58 +33,56 @@
       measurementId: "G-46DKFS3LHV"
     };
 
-    // Inicializar Firebase
+    // Inicializa o app Firebase
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const database = getDatabase(app);
 
-    // Função para adicionar um funcionário
-    window.adicionarFuncionario = function(nome, cargo) {
-      const funcionariosRef = ref(database, 'funcionarios');
-      const novoFuncionarioRef = push(funcionariosRef);
-      set(novoFuncionarioRef, {
-        nome: nome,
-        cargo: cargo
-      })
-      .then(() => {
-        alert('Funcionário adicionado com sucesso!');
-        listarFuncionarios();
-      })
-      .catch((error) => {
-        alert('Erro ao adicionar funcionário: ' + error);
-      });
-    };
+    // Referência ao nó "funcionarios"
+    const funcionariosRef = ref(database, "funcionarios");
 
-    // Função para listar funcionários
-    window.listarFuncionarios = function() {
-      const funcionariosRef = ref(database, 'funcionarios');
-      onValue(funcionariosRef, (snapshot) => {
-        const dados = snapshot.val();
-        const lista = document.getElementById('listaFuncionarios');
-        lista.innerHTML = ''; // Limpa a lista
-        for (let id in dados) {
-          const item = document.createElement('li');
-          item.textContent = `${dados[id].nome} - ${dados[id].cargo}`;
-          lista.appendChild(item);
-        }
-      });
-    };
+    const form = document.getElementById("formFuncionario");
+    const listaFuncionarios = document.getElementById("listaFuncionarios");
 
-    // Quando a página carregar, lista os funcionários
-    window.addEventListener('load', () => {
-      listarFuncionarios();
+    // Função para adicionar funcionário
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const nome = document.getElementById("nome").value.trim();
+      const cargo = document.getElementById("cargo").value.trim();
+
+      if (nome && cargo) {
+        const novoFuncionarioRef = push(funcionariosRef);
+
+        set(novoFuncionarioRef, {
+          nome: nome,
+          cargo: cargo,
+        })
+          .then(() => {
+            alert("Funcionário adicionado com sucesso!");
+            form.reset();
+          })
+          .catch((error) => {
+            alert("Erro ao adicionar funcionário: " + error);
+          });
+      }
+    });
+
+    // Escuta mudanças no Realtime Database e atualiza a lista
+    onValue(funcionariosRef, (snapshot) => {
+      listaFuncionarios.innerHTML = ""; // limpa a lista
+
+      const funcionarios = snapshot.val();
+
+      if (funcionarios) {
+        Object.entries(funcionarios).forEach(([id, func]) => {
+          const li = document.createElement("li");
+          li.textContent = `${func.nome} - ${func.cargo}`;
+          listaFuncionarios.appendChild(li);
+        });
+      } else {
+        listaFuncionarios.textContent = "Nenhum funcionário cadastrado.";
+      }
     });
   </script>
-</head>
-<body>
-  <h1>Funcionários</h1>
-  <form id="formFuncionario" onsubmit="event.preventDefault(); adicionarFuncionario(nome.value, cargo.value); this.reset();">
-    <input type="text" id="nome" name="nome" placeholder="Nome" required />
-    <input type="text" id="cargo" name="cargo" placeholder="Cargo" required />
-    <button type="submit">Adicionar Funcionário</button>
-  </form>
-
-  <h2>Lista de Funcionários</h2>
-  <ul id="listaFuncionarios"></ul>
 </body>
 </html>
