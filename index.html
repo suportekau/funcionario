@@ -34,7 +34,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 15px;
-      text-transform: uppercase; /* 🔠 tudo em maiúsculas */
+      text-transform: uppercase;
     }
 
     button {
@@ -46,6 +46,22 @@
 
     button:hover {
       background-color: #0056b3;
+    }
+
+    .senha-container {
+      position: relative;
+    }
+
+    .toggle-senha {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #007bff;
     }
 
     #telaPrincipal {
@@ -81,7 +97,10 @@
   <div id="telaLogin" class="card">
     <h2>Login</h2>
     <input type="text" id="usuario" placeholder="Usuário" autofocus>
-    <input type="password" id="senha" placeholder="Senha">
+    <div class="senha-container">
+      <input type="password" id="senha" placeholder="Senha">
+      <button class="toggle-senha" id="btnMostrarSenha">👁️</button>
+    </div>
     <button id="btnEntrar">Entrar</button>
   </div>
 
@@ -144,10 +163,12 @@
     const telaLogin = document.getElementById("telaLogin");
     const telaPrincipal = document.getElementById("telaPrincipal");
     const btnSair = document.getElementById("btnSair");
+    const btnMostrarSenha = document.getElementById("btnMostrarSenha");
 
+    // 🔹 Foco automático no campo usuário
     usuario.focus();
 
-    // Enter muda de campo
+    // 🔹 Enter muda de campo ou faz login
     usuario.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -162,7 +183,19 @@
       }
     });
 
-    // Botão Entrar
+    // 🔹 Mostrar/ocultar senha
+    btnMostrarSenha.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (senha.type === "password") {
+        senha.type = "text";
+        btnMostrarSenha.textContent = "🙈";
+      } else {
+        senha.type = "password";
+        btnMostrarSenha.textContent = "👁️";
+      }
+    });
+
+    // 🔹 Login simples (local)
     btnEntrar.addEventListener("click", () => {
       const user = usuario.value.trim().toUpperCase();
       const pass = senha.value.trim();
@@ -178,7 +211,6 @@
       }
     });
 
-    // Botão Sair
     btnSair.addEventListener("click", () => {
       telaPrincipal.style.display = "none";
       telaLogin.style.display = "flex";
