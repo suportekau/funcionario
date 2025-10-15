@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Funcionários - Firestore (Tempo real)</title>
+  <title>Funcionários - Firebase</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;text-transform:uppercase}
     .card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08);width:95%;max-width:380px;text-align:center}
-    input,button,select{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box;font-size:14px;text-transform:uppercase}
+    input,button{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box;font-size:14px;text-transform:uppercase}
     button{background:#007bff;color:#fff;border:0;cursor:pointer}
     button:hover{background:#0056b3}
     .btn-voltar{background:#6c757d}
@@ -59,7 +59,7 @@
     <button id="btnVoltarConsulta" class="btn-voltar">Voltar</button>
   </div>
 
-  <!-- Firebase compat (funciona abrindo o arquivo localmente) -->
+  <!-- Firebase compat (para funcionar local) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
@@ -104,17 +104,13 @@
   const listaCadastros = document.getElementById('listaCadastros');
   const btnVoltarConsulta = document.getElementById('btnVoltarConsulta');
 
-  // helper para esconder tudo
-  function esconderTudo(){
-    [elLogin,elMenu,elCadastroMenu,elCadastroForm,elConsulta].forEach(x=>x.classList.add('hidden'));
-  }
+  // helper
+  function esconderTudo(){ [elLogin,elMenu,elCadastroMenu,elCadastroForm,elConsulta].forEach(x=>x.classList.add('hidden')); }
 
-  // ----- foco inicial e uppercase visual -----
-  window.addEventListener('load', ()=> usuarioInput.focus());
+  // uppercase automático
   document.addEventListener('input', e=>{
     const t = e.target;
-    if (!t) return;
-    if (t.tagName.toLowerCase()==='input' && t.type==='text') {
+    if (t.tagName==='INPUT' && t.type==='text') {
       const pos = t.selectionStart;
       t.value = t.value.toUpperCase();
       try{ t.setSelectionRange(pos,pos); }catch(e){}
@@ -122,15 +118,15 @@
   });
 
   // ----- LOGIN -----
-  usuarioInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); senhaInput.focus(); }});
-  senhaInput.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); btnLogin.click(); }});
+  usuarioInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); senhaInput.focus(); }});
+  senhaInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); btnLogin.click(); }});
   btnLogin.addEventListener('click', ()=>{
-    const user = (usuarioInput.value||'').trim().toUpperCase();
-    const pass = (senhaInput.value||'').trim();
+    const user = usuarioInput.value.trim().toUpperCase();
+    const pass = senhaInput.value.trim();
     if (user==='ADMIN' && pass==='1234'){ esconderTudo(); elMenu.classList.remove('hidden'); }
     else { alert('Usuário ou senha incorretos!'); usuarioInput.focus(); }
   });
-  btnSair.addEventListener('click', ()=> location.reload());
+  btnSair.addEventListener('click', ()=>location.reload());
 
   // ----- MENU -----
   btnAbrirCadastro.addEventListener('click', ()=>{ esconderTudo(); elCadastroMenu.classList.remove('hidden'); });
@@ -139,21 +135,19 @@
   // ----- INSERIR -----
   btnInserir.addEventListener('click', ()=>{
     formTitulo.textContent = 'INSERIR FUNCIONÁRIO';
-    idEditandoInput.value = '';
-    nomeInput.value = '';
-    cargoInput.value = '';
-    esconderTudo(); elCadastroForm.classList.remove('hidden');
-    nomeInput.focus();
+    idEditandoInput.value=''; nomeInput.value=''; cargoInput.value='';
+    esconderTudo(); elCadastroForm.classList.remove('hidden'); nomeInput.focus();
   });
   btnVoltarCadastro.addEventListener('click', ()=>{ esconderTudo(); elCadastroMenu.classList.remove('hidden'); });
 
-  // ----- SALVAR (inserir/atualizar) -----
-  async function salvarCadastro(){
-    const nome = (nomeInput.value||'').trim();
-    const cargo = (cargoInput.value||'').trim();
+  // ----- SALVAR -----
+  async function salvarCadastro(limparDepois=true){
+    const nome = nomeInput.value.trim();
+    const cargo = cargoInput.value.trim();
     if(!nome || !cargo){ alert('Preencha todos os campos!'); nomeInput.focus(); return; }
+
     const idEdit = idEditandoInput.value;
-    try{
+    try {
       if(idEdit){
         await db.collection('funcionarios').doc(idEdit).update({ nome, cargo });
         alert('Funcionário atualizado!');
@@ -161,87 +155,62 @@
         await db.collection('funcionarios').add({ nome, cargo });
         alert('Funcionário inserido!');
       }
-      // limpa e foca no nome (pronto para novo registro)
-      idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; nomeInput.focus();
+      if(limparDepois){
+        idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; nomeInput.focus();
+      }
     } catch(err){
       console.error(err);
-      alert('Erro ao salvar: ' + (err.message||err));
+      alert('Erro ao salvar: '+err.message);
     }
   }
-  btnSalvar.addEventListener('click', e=>{ e.preventDefault(); salvarCadastro(); });
 
-  // Enter navigation inside form: name -> cargo -> save
+  btnSalvar.addEventListener('click', async e=>{ e.preventDefault(); await salvarCadastro(true); });
   nomeInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); cargoInput.focus(); }});
-  cargoInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); salvarCadastro(); }});
+  cargoInput.addEventListener('keydown', async e=>{ if(e.key==='Enter'){ e.preventDefault(); await salvarCadastro(true); }});
 
-  // ----- CONSULTA (real-time) -----
-  let unsubscribe = null;
+  // ----- CONSULTA TEMPO REAL -----
+  let unsubscribe=null;
   btnConsultar.addEventListener('click', listarFuncionarios);
-  btnVoltarConsulta.addEventListener('click', ()=>{
-    // remover listener ao sair da consulta
-    if (typeof unsubscribe === 'function') unsubscribe();
-    unsubscribe = null;
-    esconderTudo(); elCadastroMenu.classList.remove('hidden');
-  });
+  btnVoltarConsulta.addEventListener('click', ()=>{ if(unsubscribe)unsubscribe(); esconderTudo(); elCadastroMenu.classList.remove('hidden'); });
 
-  function renderListaFromSnapshot(snapshot){
-    listaCadastros.innerHTML = '';
-    if (snapshot.empty || snapshot.size===0){ listaCadastros.innerHTML = '<p>Nenhum funcionário cadastrado.</p>'; return; }
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const id = doc.id;
-      const div = document.createElement('div');
-      div.className = 'item';
-      const span = document.createElement('span');
-      span.textContent = `${d.nome} - ${d.cargo}`;
-      span.style.cursor = 'pointer';
-      span.ondblclick = ()=> editarFuncionario(id);
-      const btnDel = document.createElement('button');
-      btnDel.className = 'btn-excluir';
-      btnDel.textContent = '🗑️';
-      btnDel.onclick = async ()=> {
-        if(confirm('Excluir este funcionário?')){
-          await db.collection('funcionarios').doc(id).delete();
-        }
-      };
-      div.appendChild(span);
-      div.appendChild(btnDel);
-      listaCadastros.appendChild(div);
-    });
-  }
-
-  async function listarFuncionarios(){
+  function listarFuncionarios(){
     esconderTudo(); elConsulta.classList.remove('hidden');
-    listaCadastros.innerHTML = '<p>Carregando...</p>';
-    // remove listener anterior
-    if (typeof unsubscribe === 'function') unsubscribe();
-    // onSnapshot retorna a função unsubscribe
-    unsubscribe = db.collection('funcionarios').orderBy('nome').onSnapshot({
-      next: snapshot => renderListaFromSnapshot(snapshot),
-      error: err => { console.error('snapshot error', err); listaCadastros.innerHTML = '<p>Erro ao carregar.</p>'; }
+    listaCadastros.innerHTML='<p>Carregando...</p>';
+    if(unsubscribe)unsubscribe();
+    unsubscribe=db.collection('funcionarios').orderBy('nome').onSnapshot(snapshot=>{
+      listaCadastros.innerHTML='';
+      if(snapshot.empty){ listaCadastros.innerHTML='<p>Nenhum funcionário cadastrado.</p>'; return; }
+      snapshot.forEach(doc=>{
+        const d=doc.data();
+        const div=document.createElement('div');
+        div.className='item';
+        const span=document.createElement('span');
+        span.textContent=`${d.nome} - ${d.cargo}`;
+        span.style.cursor='pointer';
+        span.ondblclick=()=>editarFuncionario(doc.id);
+        const btnDel=document.createElement('button');
+        btnDel.className='btn-excluir';
+        btnDel.textContent='🗑️';
+        btnDel.onclick=async()=>{ if(confirm('Excluir este funcionário?')){ await db.collection('funcionarios').doc(doc.id).delete(); } };
+        div.appendChild(span); div.appendChild(btnDel);
+        listaCadastros.appendChild(div);
+      });
+    }, err=>{
+      console.error(err);
+      listaCadastros.innerHTML='<p>Erro ao carregar funcionários.</p>';
     });
   }
 
-  // ----- EDITAR -----
   async function editarFuncionario(id){
-    try{
-      const docSnap = await db.collection('funcionarios').doc(id).get();
-      if (!docSnap.exists) { alert('Registro não encontrado'); return; }
-      const d = docSnap.data();
-      formTitulo.textContent = 'EDITAR FUNCIONÁRIO';
-      idEditandoInput.value = id;
-      nomeInput.value = d.nome || '';
-      cargoInput.value = d.cargo || '';
-      // abrir formulário e focar
-      esconderTudo(); elCadastroForm.classList.remove('hidden'); nomeInput.focus();
-    }catch(err){
-      console.error(err);
-      alert('Erro ao carregar para edição: ' + (err.message||err));
-    }
+    const docSnap=await db.collection('funcionarios').doc(id).get();
+    if(!docSnap.exists){ alert('Registro não encontrado'); return; }
+    const d=docSnap.data();
+    formTitulo.textContent='EDITAR FUNCIONÁRIO';
+    idEditandoInput.value=id;
+    nomeInput.value=d.nome||'';
+    cargoInput.value=d.cargo||'';
+    esconderTudo(); elCadastroForm.classList.remove('hidden'); nomeInput.focus();
   }
-
-  // Cleanup when user closes tab (unsubscribe)
-  window.addEventListener('beforeunload', ()=> { if(typeof unsubscribe==='function') unsubscribe(); });
 
   </script>
 </body>
