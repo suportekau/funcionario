@@ -127,9 +127,8 @@
         const next = formInputs[idx+1];
         if(next){ next.focus(); }
         else{
-          // Último campo → executa ação padrão
-          if(elLogin && !elLogin.classList.contains('hidden')) btnLogin.click();
-          else if(elCadastroForm && !elCadastroForm.classList.contains('hidden')) btnSalvar.click();
+          if(!elLogin.classList.contains('hidden')) btnLogin.click();
+          else if(!elCadastroForm.classList.contains('hidden')) btnSalvar.click();
         }
       }
     }
@@ -171,9 +170,20 @@
         await db.collection('funcionarios').add({ nome, cargo });
         alert('Funcionário inserido!');
       }
+
+      // 🔹 limpa campos e mantém foco
       if(limparDepois){
-        idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; nomeInput.focus();
+        idEditandoInput.value='';
+        nomeInput.value='';
+        cargoInput.value='';
+        nomeInput.focus();
       }
+
+      // 🔹 força refresh da lista
+      if(!elConsulta.classList.contains('hidden')){
+        listarFuncionarios();
+      }
+
     } catch(err){
       console.error(err);
       alert('Erro ao salvar: '+err.message);
@@ -205,7 +215,12 @@
         const btnDel=document.createElement('button');
         btnDel.className='btn-excluir';
         btnDel.textContent='🗑️';
-        btnDel.onclick=async()=>{ if(confirm('Excluir este funcionário?')){ await db.collection('funcionarios').doc(doc.id).delete(); } };
+        btnDel.onclick=async()=>{ 
+          if(confirm('Excluir este funcionário?')){ 
+            await db.collection('funcionarios').doc(doc.id).delete(); 
+            listarFuncionarios(); 
+          } 
+        };
         div.appendChild(span); div.appendChild(btnDel);
         listaCadastros.appendChild(div);
       });
