@@ -1,102 +1,8 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Funcionários - Firebase</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      text-transform: uppercase;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      width: 95%;
-      max-width: 380px;
-      text-align: center;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-      box-sizing: border-box;
-      text-transform: uppercase;
-    }
-    button { background: #007bff; color: #fff; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .btn-voltar { background: #6c757d; }
-    .hidden { display: none; }
-    .lista { text-align: left; margin-top: 10px; max-height: 280px; overflow-y: auto; }
-    .item { display:flex; justify-content:space-between; align-items:center; background:#f1f3f5; padding:8px; border-radius:6px; margin:6px 0; }
-    .btn-excluir { background:#dc3545;color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer; }
-    .small { max-width: 300px; margin: 0 auto; }
-    h2 { margin: 8px 0 16px 0; font-size: 1.1rem; }
-  </style>
-</head>
-<body>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-  <!-- LOGIN -->
-  <div id="login" class="container">
-    <h2>Login</h2>
-    <input id="usuario" type="text" placeholder="Usuário" autofocus />
-    <input id="senha" type="password" placeholder="Senha" />
-    <button id="btnLogin">Entrar</button>
-  </div>
-
-  <!-- MENU PRINCIPAL -->
-  <div id="menu" class="container hidden">
-    <h2>Menu Principal</h2>
-    <button id="btnAbrirCadastro">Cadastro</button>
-    <button id="btnAbrirLancamento" disabled>Lançamento (opcional)</button>
-    <button id="btnSair" class="btn-voltar">Sair</button>
-  </div>
-
-  <!-- MENU CADASTRO -->
-  <div id="cadastroMenu" class="container hidden">
-    <h2>Cadastro</h2>
-    <button id="btnInserir">Inserir</button>
-    <button id="btnConsultar">Consultar</button>
-    <button id="btnVoltarMenu" class="btn-voltar">Voltar</button>
-  </div>
-
-  <!-- FORMULÁRIO INSERIR / EDITAR -->
-  <div id="cadastroForm" class="container hidden">
-    <h2 id="formTitulo">INSERIR FUNCIONÁRIO</h2>
-    <input type="hidden" id="idEditando" />
-    <input id="nome" type="text" placeholder="Nome" />
-    <input id="cargo" type="text" placeholder="Cargo" />
-    <button id="btnSalvar">Salvar</button>
-    <button id="btnVoltarCadastro" class="btn-voltar">Voltar</button>
-  </div>
-
-  <!-- CONSULTA -->
-  <div id="consulta" class="container hidden">
-    <h2>Consultar Funcionários</h2>
-    <div id="listaCadastros" class="lista"></div>
-    <button id="btnVoltarConsulta" class="btn-voltar">Voltar</button>
-  </div>
-
-  <!-- jsPDF (para futuro uso se quiser gerar PDF) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- Firebase compat (para funcionar abrindo o arquivo localmente) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-  <script>
-  /***** CONFIG FIREBASE (seu projeto) *****/
+<script>
+  // CONFIG FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyBQi6DKYqEmkMq19UpgXl1qYg8G3q8Id-w",
     authDomain: "funcionarios-b75f8.firebaseapp.com",
@@ -106,11 +12,10 @@
     appId: "1:486091546093:web:4cfa5518f209e5e68edbe4",
     measurementId: "G-R2SYT938ZG"
   };
-  // Inicializa Firebase (compat)
+
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  /***** ELEMENTOS *****/
   const elLogin = document.getElementById('login');
   const elMenu = document.getElementById('menu');
   const elCadastroMenu = document.getElementById('cadastroMenu');
@@ -120,9 +25,7 @@
   const usuarioInput = document.getElementById('usuario');
   const senhaInput = document.getElementById('senha');
   const btnLogin = document.getElementById('btnLogin');
-
   const btnAbrirCadastro = document.getElementById('btnAbrirCadastro');
-  const btnAbrirLancamento = document.getElementById('btnAbrirLancamento');
   const btnSair = document.getElementById('btnSair');
 
   const btnInserir = document.getElementById('btnInserir');
@@ -139,49 +42,21 @@
   const listaCadastros = document.getElementById('listaCadastros');
   const btnVoltarConsulta = document.getElementById('btnVoltarConsulta');
 
-  // helpers
-  function esconderTudo(){ elLogin.classList.add('hidden'); elMenu.classList.add('hidden'); elCadastroMenu.classList.add('hidden'); elCadastroForm.classList.add('hidden'); elConsulta.classList.add('hidden'); }
-
-  // foco inicial
-  window.addEventListener('load', ()=> { usuarioInput.focus(); });
-
-  // transformar inputs text em maiúsculas (visual + valor salvo)
-  document.addEventListener('input', e=>{
-    const t = e.target;
-    if (!t) return;
-    if (t.tagName.toLowerCase() === 'input' && (t.type === 'text')) {
-      const pos = t.selectionStart;
-      t.value = t.value.toUpperCase();
-      try { t.setSelectionRange(pos,pos); } catch(e){}
-    }
-  });
-
-  // Navegação Enter: move para próximo input dentro do container
-  function bindEnterNavigation(container, saveOnLast=false, saveHandler=null){
-    const elements = Array.from(container.querySelectorAll('input, button'));
-    elements.forEach((el, idx) => {
-      el.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
-        const next = elements[idx+1];
-        if (next) {
-          next.focus();
-        } else {
-          // último elemento
-          if (saveOnLast && typeof saveHandler === 'function') saveHandler();
-        }
-      });
-    });
+  // Função para esconder telas
+  function esconderTudo() {
+    [elLogin, elMenu, elCadastroMenu, elCadastroForm, elConsulta].forEach(e => e.classList.add('hidden'));
   }
 
-  /******** LOGIN ********/
-  // Enter navigation on login: usuario -> senha -> btnLogin
-  usuarioInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); senhaInput.focus(); }});
-  senhaInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btnLogin.click(); }});
-
-  btnLogin.addEventListener('click', ()=>{
-    const user = (usuarioInput.value || '').trim().toUpperCase();
-    const pass = (senhaInput.value || '').trim();
+  // LOGIN
+  usuarioInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); senhaInput.focus(); }
+  });
+  senhaInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); btnLogin.click(); }
+  });
+  btnLogin.addEventListener('click', () => {
+    const user = usuarioInput.value.trim().toUpperCase();
+    const pass = senhaInput.value.trim();
     if (user === 'ADMIN' && pass === '1234') {
       esconderTudo();
       elMenu.classList.remove('hidden');
@@ -190,20 +65,20 @@
       usuarioInput.focus();
     }
   });
+  btnSair.addEventListener('click', () => location.reload());
 
-  btnAbrirCadastro.addEventListener('click', ()=>{
+  // MENU → CADASTRO
+  btnAbrirCadastro.addEventListener('click', () => {
     esconderTudo();
     elCadastroMenu.classList.remove('hidden');
   });
-  btnAbrirLancamento.addEventListener('click', ()=>{ alert('Ainda não implementado'); });
+  btnVoltarMenu.addEventListener('click', () => {
+    esconderTudo();
+    elMenu.classList.remove('hidden');
+  });
 
-  btnSair.addEventListener('click', ()=> { location.reload(); });
-
-  /******** CADASTRO: Inserir / Consultar / Editar ********/
-  btnVoltarMenu.addEventListener('click', ()=>{ esconderTudo(); elMenu.classList.remove('hidden'); });
-
-  // Inserir -> abre formulário vazio
-  btnInserir.addEventListener('click', ()=>{
+  // INSERIR
+  btnInserir.addEventListener('click', () => {
     formTitulo.textContent = 'INSERIR FUNCIONÁRIO';
     idEditandoInput.value = '';
     nomeInput.value = '';
@@ -211,102 +86,101 @@
     esconderTudo();
     elCadastroForm.classList.remove('hidden');
     nomeInput.focus();
-    // bind Enter inside form: move and save on last
-    bindEnterNavigation(elCadastroForm, true, async () => { await salvarCadastro(); });
+  });
+  btnVoltarCadastro.addEventListener('click', () => {
+    esconderTudo();
+    elCadastroMenu.classList.remove('hidden');
   });
 
-  btnVoltarCadastro.addEventListener('click', ()=>{ esconderTudo(); elCadastroMenu.classList.remove('hidden'); });
+  // Salvar no Firestore
+  async function salvarCadastro() {
+    const nome = nomeInput.value.trim();
+    const cargo = cargoInput.value.trim();
+    if (!nome || !cargo) {
+      alert('Preencha todos os campos!');
+      nomeInput.focus();
+      return;
+    }
 
-  // Salvar (inserir ou atualizar). After save: return to cadastro menu
-  async function salvarCadastro(){
-    const nome = (nomeInput.value || '').trim();
-    const cargo = (cargoInput.value || '').trim();
-    if (!nome || !cargo) { alert('Preencha todos os campos!'); nomeInput.focus(); return; }
     const idEditando = idEditandoInput.value;
     try {
       if (idEditando) {
-        // atualizar
         await db.collection('funcionarios').doc(idEditando).update({ nome, cargo });
         alert('Funcionário atualizado!');
       } else {
-        // inserir
         await db.collection('funcionarios').add({ nome, cargo });
         alert('Funcionário inserido!');
       }
-      // voltar para menu de cadastro automaticamente
-      esconderTudo();
-      elCadastroMenu.classList.remove('hidden');
+      // Limpa os campos após salvar
+      idEditandoInput.value = '';
+      nomeInput.value = '';
+      cargoInput.value = '';
+      nomeInput.focus();
     } catch (err) {
-      console.error(err);
       alert('Erro ao salvar: ' + err.message);
+      console.error(err);
     }
   }
-  btnSalvar.addEventListener('click', salvarCadastro);
 
-  // Consultar -> listar funcionários
-  btnConsultar.addEventListener('click', async ()=>{
-    esconderTudo();
-    elConsulta.classList.remove('hidden');
-    await listarFuncionarios();
+  // Botão salvar
+  btnSalvar.addEventListener('click', e => {
+    e.preventDefault();
+    salvarCadastro();
   });
 
-  btnVoltarConsulta.addEventListener('click', ()=>{ esconderTudo(); elCadastroMenu.classList.remove('hidden'); });
+  // ENTER navegação e salvar automático
+  nomeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); cargoInput.focus(); }
+  });
+  cargoInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); salvarCadastro(); }
+  });
 
-  async function listarFuncionarios(){
+  // CONSULTAR
+  btnConsultar.addEventListener('click', listarFuncionarios);
+  btnVoltarConsulta.addEventListener('click', () => {
+    esconderTudo();
+    elCadastroMenu.classList.remove('hidden');
+  });
+
+  async function listarFuncionarios() {
+    esconderTudo();
+    elConsulta.classList.remove('hidden');
     listaCadastros.innerHTML = '';
-    try {
-      const snap = await db.collection('funcionarios').orderBy('nome').get();
-      snap.forEach(docu => {
-        const d = docu.data();
-        const id = docu.id;
-        const div = document.createElement('div');
-        div.className = 'item';
-        // span with ondblclick to edit
-        const span = document.createElement('span');
-        span.textContent = `${d.nome} - ${d.cargo}`;
-        span.style.cursor = 'pointer';
-        span.ondblclick = () => editarFuncionario(id);
-        const btnDel = document.createElement('button');
-        btnDel.className = 'btn-excluir';
-        btnDel.title = 'Excluir';
-        btnDel.innerText = '🗑️';
-        btnDel.onclick = async () => {
-          if (confirm('Excluir este funcionário?')) {
-            await db.collection('funcionarios').doc(id).delete();
-            listarFuncionarios();
-          }
-        };
-        div.appendChild(span);
-        div.appendChild(btnDel);
-        listaCadastros.appendChild(div);
-      });
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao listar: ' + err.message);
-    }
+    const snap = await db.collection('funcionarios').orderBy('nome').get();
+    snap.forEach(doc => {
+      const d = doc.data();
+      const div = document.createElement('div');
+      div.className = 'item';
+      const span = document.createElement('span');
+      span.textContent = `${d.nome} - ${d.cargo}`;
+      span.style.cursor = 'pointer';
+      span.ondblclick = () => editarFuncionario(doc.id);
+      const btnDel = document.createElement('button');
+      btnDel.className = 'btn-excluir';
+      btnDel.textContent = '🗑️';
+      btnDel.onclick = async () => {
+        if (confirm('Excluir este funcionário?')) {
+          await db.collection('funcionarios').doc(doc.id).delete();
+          listarFuncionarios();
+        }
+      };
+      div.appendChild(span);
+      div.appendChild(btnDel);
+      listaCadastros.appendChild(div);
+    });
   }
 
-  // Edita: abre o form preenchido, foco no nome, salvar com Enter no cargo
-  async function editarFuncionario(id){
-    try {
-      const docu = await db.collection('funcionarios').doc(id).get();
-      if (!docu.exists) { alert('Registro não encontrado'); return; }
-      const d = docu.data();
-      formTitulo.textContent = 'EDITAR FUNCIONÁRIO';
-      idEditandoInput.value = id;
-      nomeInput.value = d.nome || '';
-      cargoInput.value = d.cargo || '';
-      esconderTudo();
-      elCadastroForm.classList.remove('hidden');
-      nomeInput.focus();
-      // bind Enter inside form: move and save on last
-      bindEnterNavigation(elCadastroForm, true, async () => { await salvarCadastro(); await listarFuncionarios(); });
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao carregar para edição: ' + err.message);
-    }
+  async function editarFuncionario(id) {
+    const docSnap = await db.collection('funcionarios').doc(id).get();
+    if (!docSnap.exists) return alert('Registro não encontrado');
+    const d = docSnap.data();
+    formTitulo.textContent = 'EDITAR FUNCIONÁRIO';
+    idEditandoInput.value = id;
+    nomeInput.value = d.nome || '';
+    cargoInput.value = d.cargo || '';
+    esconderTudo();
+    elCadastroForm.classList.remove('hidden');
+    nomeInput.focus();
   }
-
-  </script>
-</body>
-</html>
+</script>
