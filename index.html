@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sistema Simples - Funcionários</title>
 <style>
-  /* Visual igual ao seu, porém responsivo */
   body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
@@ -15,10 +14,9 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    text-transform: uppercase; /* mantem visual em maiúsculas */
+    text-transform: uppercase;
     box-sizing: border-box;
   }
-
   .container {
     background: white;
     padding: 25px;
@@ -29,9 +27,7 @@
     max-width: 380px;
     box-sizing: border-box;
   }
-
   h2 { margin-bottom: 20px; font-size: 1.4em; }
-
   input, select, textarea {
     width: 100%;
     padding: 10px;
@@ -40,9 +36,8 @@
     border: 1px solid #ccc;
     font-size: 16px;
     box-sizing: border-box;
-    text-transform: uppercase; /* visual */
+    text-transform: uppercase;
   }
-
   button {
     width: 100%;
     padding: 12px;
@@ -55,15 +50,11 @@
     cursor: pointer;
     transition: background 0.2s;
   }
-
   button:hover { background-color: #0056b3; }
   .btn-voltar { background-color: #6c757d; }
   .btn-voltar:hover { background-color: #565e64; }
-
   .hidden { display: none; }
-
   .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
-
   .item {
     display: flex;
     justify-content: space-between;
@@ -81,16 +72,7 @@
     font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
   }
   .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
-
-  @media (max-width: 400px) {
-    h2 { font-size: 1.2em; }
-    button { font-size: 15px; padding: 10px; }
-    input, select, textarea { font-size: 15px; padding: 8px; }
-  }
 </style>
-
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -99,18 +81,18 @@
   <h2>Login</h2>
   <input type="text" id="loginUsuario" placeholder="Usuário" />
   <input type="password" id="loginSenha" placeholder="Senha" />
-  <button id="btnEntrar" onclick="fazerLogin()">Entrar</button>
+  <button onclick="fazerLogin()">Entrar</button>
 </div>
 
-<!-- MENU PRINCIPAL -->
+<!-- MENU -->
 <div class="container hidden" id="menu">
   <h2>Menu Principal</h2>
   <button onclick="abrirCadastro()">Cadastro</button>
   <button onclick="abrirLancamento()">Lançamento</button>
-  <button onclick="sair()">Sair</button>
+  <button class="btn-voltar" onclick="sair()">Sair</button>
 </div>
 
-<!-- MENU CADASTRO -->
+<!-- CADASTRO -->
 <div class="container hidden" id="menuCadastro">
   <h2>Cadastro</h2>
   <button onclick="abrirInserir()">Inserir</button>
@@ -120,15 +102,15 @@
 
 <!-- INSERIR CADASTRO -->
 <div class="container hidden" id="inserir">
-  <h2>Inserir / Editar Funcionário</h2>
+  <h2>Inserir Funcionário</h2>
   <input type="hidden" id="idEditando" />
   <input type="text" id="nome" placeholder="Nome" />
   <input type="text" id="cargo" placeholder="Cargo" />
-  <button id="btnSalvarCadastro" onclick="salvarCadastro()">Salvar</button>
+  <button onclick="salvarCadastro()">Salvar</button>
   <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
 </div>
 
-<!-- CONSULTAR CADASTRO -->
+<!-- CONSULTAR -->
 <div class="container hidden" id="consultar">
   <h2>Consultar Funcionários</h2>
   <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
@@ -136,7 +118,7 @@
   <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
 </div>
 
-<!-- MENU LANÇAMENTO -->
+<!-- LANÇAMENTO -->
 <div class="container hidden" id="menuLancamento">
   <h2>Lançamento</h2>
   <button onclick="abrirInserirLancamento()">Inserir</button>
@@ -146,356 +128,139 @@
 
 <!-- INSERIR LANÇAMENTO -->
 <div class="container hidden" id="inserirLancamento">
-  <h2>Inserir / Editar Lançamento</h2>
-  <input type="hidden" id="idLancEditando" />
-  <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
-  <datalist id="nomesCadastradosLanc"></datalist>
+  <h2>Novo Lançamento</h2>
+  <input type="text" id="nomeLanc" placeholder="Nome do Funcionário" />
   <input type="date" id="dataLanc" />
   <select id="tipoLanc">
-    <option value="">Selecione Tipo</option>
+    <option value="">Tipo</option>
     <option value="VALE">VALE</option>
     <option value="COMPRA">COMPRA</option>
   </select>
   <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
-  <button id="btnSalvarLanc" onclick="salvarLancamento()">Salvar</button>
+  <button onclick="salvarLancamento()">Salvar</button>
   <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
 </div>
 
 <!-- CONSULTAR LANÇAMENTO -->
 <div class="container hidden" id="consultarLancamento">
-  <h2>Consultar Lançamentos</h2>
+  <h2>Lançamentos</h2>
   <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
-  <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
   <div class="lista" id="listaLancamentos"></div>
-  <button id="btnGerarPDF" onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
   <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
 </div>
 
-<script>
-/* -------------------------
-   Foco inicial no Usuário
-   ------------------------- */
-window.addEventListener('load', () => {
-  const u = document.getElementById('loginUsuario');
-  if (u) { u.focus(); u.select && u.select(); }
-});
+<!-- SDK FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, set, push, get, remove, update, child }
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-/* -------------------------
-   Enter: navegação e executar último botão
-   - Enter avança para próximo elemento visível (input/select/button)
-   - Quando estiver no último elemento visível, Enter aciona .click() nele
-   ------------------------- */
-document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  const interactive = Array.from(document.querySelectorAll('input, select, button'))
-    .filter(el => el.offsetParent !== null && !el.disabled && el.type !== 'hidden');
-  // find the element that is target or contains target (for button text spans etc.)
-  const target = e.target;
-  const idx = interactive.indexOf(target);
-  if (idx === -1) return; // não processa se não for um desses
-  e.preventDefault();
-  const nextIndex = idx + 1;
-  if (nextIndex < interactive.length) {
-    const next = interactive[nextIndex];
-    // se próximo for botão, focar no botão (para visual) mas não disparar automaticamente aqui
-    next.focus();
-  } else {
-    // último elemento visível -> executar clique
-    const el = interactive[idx];
-    if (el && typeof el.click === 'function') el.click();
-  }
-});
+  const firebaseConfig = {
+    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+    authDomain: "funcionarios-7c778.firebaseapp.com",
+    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+    projectId: "funcionarios-7c778",
+    storageBucket: "funcionarios-7c778.firebasestorage.app",
+    messagingSenderId: "632364021109",
+    appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+    measurementId: "G-46DKFS3LHV"
+  };
 
-/* -------------------------
-   Maiúsculas automáticas (JS + CSS visual)
-   - Aplica para inputs de texto e textareas
-   - Não altera inputs type=number/date/password
-   ------------------------- */
-document.addEventListener('input', function(e) {
-  const el = e.target;
-  if (!el) return;
-  const tag = el.tagName.toLowerCase();
-  if (tag === 'input') {
-    const t = el.type;
-    if (t === 'text' || t === 'search' || t === 'tel' || t === 'email') {
-      const pos = el.selectionStart;
-      el.value = el.value.toUpperCase();
-      try { el.setSelectionRange(pos, pos); } catch(err){}
-    }
-  } else if (tag === 'textarea') {
-    const pos = el.selectionStart;
-    el.value = el.value.toUpperCase();
-    try { el.setSelectionRange(pos, pos); } catch(err){}
-  }
-});
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  console.log("✅ Firebase conectado com sucesso!");
 
-/* -------------------------
-   Navegação entre telas (sem alterar lógica)
-   ------------------------- */
-function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
-function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
-function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
-function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function sair(){ alert('Saindo do sistema...'); location.reload(); }
+  // Login
+  window.fazerLogin = function() {
+    const u = document.getElementById('loginUsuario').value.trim().toUpperCase();
+    const s = document.getElementById('loginSenha').value.trim();
+    if (u === 'ADMIN' && s === '1234') {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('menu').classList.remove('hidden');
+      alert('Login bem-sucedido!');
+    } else alert('Usuário ou senha incorretos!');
+  };
 
-/* -------------------------
-   LOGIN (ADMIN / 1234)
-   ------------------------- */
-function fazerLogin(){
-  const usuario = (document.getElementById('loginUsuario').value || '').trim().toUpperCase();
-  const senha = (document.getElementById('loginSenha').value || '').trim();
-  if (usuario === 'ADMIN' && senha === '1234') {
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('menu').classList.remove('hidden');
-    alert('Login bem-sucedido!');
-    // garantir foco no primeiro botão do menu
-    const btn = document.querySelector('#menu button');
-    if (btn) btn.focus();
-  } else {
-    alert('Usuário ou senha incorretos!');
-    // deixar foco em usuário para facilitar
-    const u = document.getElementById('loginUsuario'); if(u){ u.focus(); u.select && u.select(); }
-  }
-}
+  // Navegação
+  function esconderTudo() { document.querySelectorAll('.container').forEach(d=>d.classList.add('hidden')); }
+  window.abrirCadastro = ()=>{esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden');};
+  window.abrirLancamento = ()=>{esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden');};
+  window.voltar = ()=>{esconderTudo(); document.getElementById('menu').classList.remove('hidden');};
+  window.voltarCadastro = ()=>{esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden');};
+  window.voltarLancamento = ()=>{esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden');};
+  window.sair = ()=>location.reload();
 
-/* -------------------------
-   CADASTROS
-   ------------------------- */
-const nomeInput = document.getElementById('nome');
-const cargoInput = document.getElementById('cargo');
-const idEditandoInput = document.getElementById('idEditando');
+  // Cadastros
+  window.abrirInserir = ()=>{esconderTudo(); document.getElementById('inserir').classList.remove('hidden');};
+  window.abrirConsultar = ()=>{esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros();};
 
-function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
-function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+  window.salvarCadastro = async function(){
+    const nome = document.getElementById('nome').value.trim().toUpperCase();
+    const cargo = document.getElementById('cargo').value.trim().toUpperCase();
+    if(!nome || !cargo) return alert('Preencha todos os campos.');
+    const novoRef = push(ref(db, 'cadastros'));
+    await set(novoRef, { nome, cargo });
+    alert('Cadastro salvo!');
+    voltarCadastro();
+  };
 
-function salvarCadastro(){
-  const nome = (nomeInput.value || '').trim();
-  const cargo = (cargoInput.value || '').trim();
-  if(!nome || !cargo) return alert('Preencha todos os campos.');
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const idEditando = idEditandoInput.value;
-  if(idEditando){
-    const idx = cadastros.findIndex(c => c.id == idEditando);
-    if(idx > -1){ cadastros[idx].nome = nome; cadastros[idx].cargo = cargo; }
-  } else {
-    const novoId = cadastros.length ? (cadastros[cadastros.length-1].id + 1) : 1;
-    cadastros.push({ id: novoId, nome, cargo });
-  }
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  limparCamposCadastro();
-  voltarCadastro();
-}
+  window.mostrarCadastros = async function(){
+    const lista = document.getElementById('listaCadastros');
+    lista.innerHTML = '';
+    const snap = await get(ref(db, 'cadastros'));
+    if(!snap.exists()) return;
+    snap.forEach(childSnap=>{
+      const c = childSnap.val();
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span><strong>${c.nome}</strong> - ${c.cargo}</span>
+        <button class="btn-excluir" onclick="excluirCadastro('${childSnap.key}')">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  };
 
-function mostrarCadastros(){
-  const lista = document.getElementById('listaCadastros');
-  const filtro = (document.getElementById('filtro').value || '').trim().toUpperCase();
-  lista.innerHTML = '';
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(filtro) cadastros = cadastros.filter(c => (c.nome||'').toUpperCase().includes(filtro));
-  cadastros.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarCadastro(${c.id})"><strong>${c.nome}</strong> - ${c.cargo}</span>
-      <button class="btn-excluir" onclick="excluirCadastro(${c.id})" title="Excluir">🗑️</button>`;
-    lista.appendChild(div);
-  });
-}
+  window.excluirCadastro = async function(id){
+    if(!confirm('Excluir este cadastro?')) return;
+    await remove(ref(db, 'cadastros/' + id));
+    mostrarCadastros();
+  };
 
-function editarCadastro(id){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  const c = cadastros.find(x => x.id === id);
-  if(!c) return;
-  esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
-  idEditandoInput.value = c.id; nomeInput.value = c.nome; cargoInput.value = c.cargo;
-}
+  // Lançamentos
+  window.abrirInserirLancamento = ()=>{esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');};
+  window.abrirConsultarLancamento = ()=>{esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos();};
 
-function excluirCadastro(id){
-  if(!confirm('Excluir este cadastro?')) return;
-  let cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  cadastros = cadastros.filter(c => c.id !== id);
-  localStorage.setItem('cadastros', JSON.stringify(cadastros));
-  mostrarCadastros();
-}
+  window.salvarLancamento = async function(){
+    const nome = document.getElementById('nomeLanc').value.trim().toUpperCase();
+    const data = document.getElementById('dataLanc').value;
+    const tipo = document.getElementById('tipoLanc').value;
+    const valor = parseFloat(document.getElementById('valorLanc').value);
+    if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha tudo corretamente.');
+    const novoRef = push(ref(db, 'lancamentos'));
+    await set(novoRef, { nome, data, tipo, valor });
+    alert('Lançamento salvo!');
+    voltarLancamento();
+  };
 
-function limparCamposCadastro(){ idEditandoInput.value=''; nomeInput.value=''; cargoInput.value=''; }
+  window.mostrarLancamentos = async function(){
+    const lista = document.getElementById('listaLancamentos');
+    lista.innerHTML = '';
+    const snap = await get(ref(db, 'lancamentos'));
+    if(!snap.exists()) return;
+    snap.forEach(childSnap=>{
+      const l = childSnap.val();
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span><strong>${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2)}</span>
+        <button class="btn-excluir" onclick="excluirLancamento('${childSnap.key}')">🗑️</button>`;
+      lista.appendChild(div);
+    });
+  };
 
-/* -------------------------
-   LANÇAMENTOS
-   ------------------------- */
-const nomeLanc = document.getElementById('nomeLanc');
-const dataLanc = document.getElementById('dataLanc');
-const tipoLanc = document.getElementById('tipoLanc');
-const valorLanc = document.getElementById('valorLanc');
-const idLancEditando = document.getElementById('idLancEditando');
-
-function abrirInserirLancamento(){
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(cadastros.length === 0){
-    alert('Nenhum funcionário cadastrado. Cadastre antes de lançar.');
-    abrirCadastro();
-    return;
-  }
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  limparCamposLancamento();
-  atualizarDatalistLanc();
-}
-
-function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
-
-function salvarLancamento(){
-  const nome = (nomeLanc.value || '').trim().toUpperCase();
-  const data = dataLanc.value;
-  const tipo = tipoLanc.value;
-  const valor = parseFloat(valorLanc.value);
-  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  if(!cadastros.find(c => c.nome === nome)) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const idEdit = idLancEditando.value;
-  if(idEdit){
-    const idx = lancamentos.findIndex(l => l.id == idEdit);
-    if(idx > -1){ lancamentos[idx] = { id: lancamentos[idx].id, nome, data, tipo, valor }; }
-  } else {
-    const novoId = lancamentos.length ? (lancamentos[lancamentos.length-1].id + 1) : 1;
-    lancamentos.push({ id: novoId, nome, data, tipo, valor });
-  }
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  limparCamposLancamento();
-  voltarLancamento();
-}
-
-function mostrarLancamentos(){
-  const lista = document.getElementById('listaLancamentos');
-  const filtroNome = (document.getElementById('filtroLanc').value || '').trim().toUpperCase();
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  lista.innerHTML = '';
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  if(filtroNome) lancamentos = lancamentos.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-  if(filtroMesAno) lancamentos = lancamentos.filter(l => (l.data||'').startsWith(filtroMesAno));
-  lancamentos.forEach(l => {
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML = `<span ondblclick="editarLancamento(${l.id})"><strong>${l.id} - ${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2).replace('.', ',')}</span>
-      <button class="btn-excluir" onclick="excluirLancamento(${l.id})">🗑️</button>`;
-    lista.appendChild(div);
-  });
-}
-
-function editarLancamento(id){
-  const lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  const l = lancamentos.find(x => x.id === id);
-  if(!l) return;
-  esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
-  idLancEditando.value = l.id; nomeLanc.value = l.nome; dataLanc.value = l.data; tipoLanc.value = l.tipo; valorLanc.value = l.valor;
-}
-
-function excluirLancamento(id){
-  if(!confirm('Excluir este lançamento?')) return;
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos'))||[];
-  lancamentos = lancamentos.filter(l => l.id !== id);
-  localStorage.setItem('lancamentos', JSON.stringify(lancamentos));
-  mostrarLancamentos();
-}
-
-function limparCamposLancamento(){
-  idLancEditando.value=''; nomeLanc.value=''; dataLanc.value=''; tipoLanc.value=''; valorLanc.value='';
-}
-
-function atualizarDatalistLanc(){
-  const datalist = document.getElementById('nomesCadastradosLanc');
-  const cadastros = JSON.parse(localStorage.getItem('cadastros'))||[];
-  datalist.innerHTML = '';
-  cadastros.forEach(c => {
-    const opt = document.createElement('option'); opt.value = c.nome; datalist.appendChild(opt);
-  });
-}
-
-/* -------------------------
-   GERAR PDF - com pontinhos e maiúsculas
-   ------------------------- */
-async function gerarPDFResumoLancamentos(){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-
-  // Cabeçalho
-  pdf.setFontSize(14);
-  pdf.setFont("helvetica", "bold");
-  const titulo = "SUPERMERCADO LEV +";
-  const tituloWidth = pdf.getTextWidth(titulo);
-  pdf.text(titulo, (pageWidth - tituloWidth) / 2, 15);
-
-  const agora = new Date();
-  const dataHoraStr = agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  pdf.setFontSize(10);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(dataHoraStr, 10, 22);
-
-  const filtroMesAno = document.getElementById('filtroMesAno').value;
-  if (filtroMesAno) {
-    const [ano, mes] = filtroMesAno.split('-');
-    const periodoStr = `Período: ${mes}/${ano}`;
-    const periodoWidth = pdf.getTextWidth(periodoStr);
-    pdf.text(periodoStr, (pageWidth - periodoWidth) / 2, 22);
-  }
-
-  pdf.line(10, 25, pageWidth - 10, 25);
-
-  // Corpo do relatório
-  let y = 35;
-  pdf.setFontSize(12);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("RESUMO DE LANÇAMENTOS", 10, y);
-  y += 10;
-
-  let lancamentos = JSON.parse(localStorage.getItem('lancamentos')) || [];
-  if (filtroMesAno) lancamentos = lancamentos.filter(l => l.data.startsWith(filtroMesAno));
-
-  const resumo = {};
-  lancamentos.forEach(l => { const nomeUp = (l.nome || '').toUpperCase(); resumo[nomeUp] = (resumo[nomeUp] || 0) + l.valor; });
-
-  pdf.setFont("helvetica", "normal");
-  const nomesOrdenados = Object.keys(resumo).sort();
-
-  nomesOrdenados.forEach(nome => {
-    const valorFormatado = "R$ " + resumo[nome].toFixed(2).replace('.', ',');
-    const leftX = 10;
-    const rightX = pageWidth - 10;
-    const nomeWidth = pdf.getTextWidth(nome);
-    const valorWidth = pdf.getTextWidth(valorFormatado);
-    const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-    const dotWidth = pdf.getTextWidth('.');
-    const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-    const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-    const linha = `${nome} ${dots} ${valorFormatado}`;
-    pdf.text(linha, leftX, y);
-    y += 8;
-    if (y > 280) { pdf.addPage(); y = 20; }
-  });
-
-  // Total geral
-  const totalGeral = Object.values(resumo).reduce((a,b) => a + b, 0);
-  const totalNome = "TOTAL GERAL";
-  const totalValor = "R$ " + totalGeral.toFixed(2).replace('.', ',');
-  const leftX = 10;
-  const rightX = pageWidth - 10;
-  const nomeWidth = pdf.getTextWidth(totalNome);
-  const valorWidth = pdf.getTextWidth(totalValor);
-  const totalDotsWidth = rightX - leftX - nomeWidth - valorWidth - 8;
-  const dotWidth = pdf.getTextWidth('.');
-  const dotsCount = Math.floor(totalDotsWidth / dotWidth);
-  const dots = '.'.repeat(dotsCount > 0 ? dotsCount : 3);
-
-  y += 10;
-  pdf.setFont("helvetica", "bold");
-  pdf.text(`${totalNome} ${dots} ${totalValor}`, leftX, y);
-
-  pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
-}
+  window.excluirLancamento = async function(id){
+    if(!confirm('Excluir este lançamento?')) return;
+    await remove(ref(db, 'lancamentos/' + id));
+    mostrarLancamentos();
+  };
 </script>
-
 </body>
 </html>
