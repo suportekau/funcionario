@@ -1,266 +1,193 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema Simples - Funcionários</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    text-transform: uppercase;
-    box-sizing: border-box;
-  }
-  .container {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    text-align: center;
-    width: 100%;
-    max-width: 380px;
-    box-sizing: border-box;
-  }
-  h2 { margin-bottom: 20px; font-size: 1.4em; }
-  input, select, textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-    text-transform: uppercase;
-  }
-  button {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 8px;
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  button:hover { background-color: #0056b3; }
-  .btn-voltar { background-color: #6c757d; }
-  .btn-voltar:hover { background-color: #565e64; }
-  .hidden { display: none; }
-  .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
-  .item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f1f3f5;
-    padding: 6px 8px;
-    border-radius: 6px;
-    margin: 4px 0;
-    transition: background 0.2s;
-  }
-  .item:hover { background-color: #e0e3e7; }
-  .btn-excluir {
-    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
-    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
-    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
-  }
-  .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Funcionários (Firebase)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    tr:hover {
+      background: #f1f1f1;
+    }
+    .delete {
+      background: #dc3545;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .edit {
+      background: #ffc107;
+      border: none;
+      color: #333;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+  </style>
 </head>
 <body>
+  <h1>📋 Cadastro de Funcionários</h1>
 
-<!-- LOGIN -->
-<div class="container" id="loginContainer">
-  <h2>Login</h2>
-  <input type="text" id="loginUsuario" placeholder="Usuário" />
-  <input type="password" id="loginSenha" placeholder="Senha" />
-  <button onclick="fazerLogin()">Entrar</button>
-</div>
+  <form id="formFuncionario">
+    <input type="hidden" id="idFuncionario" />
+    <input type="text" id="nome" placeholder="Nome do funcionário" required />
+    <input type="text" id="cargo" placeholder="Cargo" required />
+    <input type="number" id="idade" placeholder="Idade" required />
+    <button type="submit">Salvar Funcionário</button>
+  </form>
 
-<!-- MENU -->
-<div class="container hidden" id="menu">
-  <h2>Menu Principal</h2>
-  <button onclick="abrirCadastro()">Cadastro</button>
-  <button onclick="abrirLancamento()">Lançamento</button>
-  <button class="btn-voltar" onclick="sair()">Sair</button>
-</div>
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Cargo</th>
+        <th>Idade</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<!-- CADASTRO -->
-<div class="container hidden" id="menuCadastro">
-  <h2>Cadastro</h2>
-  <button onclick="abrirInserir()">Inserir</button>
-  <button onclick="abrirConsultar()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
+  <!-- SDK Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-<!-- INSERIR CADASTRO -->
-<div class="container hidden" id="inserir">
-  <h2>Inserir Funcionário</h2>
-  <input type="hidden" id="idEditando" />
-  <input type="text" id="nome" placeholder="Nome" />
-  <input type="text" id="cargo" placeholder="Cargo" />
-  <button onclick="salvarCadastro()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
+    // 🔥 CONFIGURAÇÃO DO SEU FIREBASE
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY_AQUI",
+      authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com/",
+      projectId: "funcionarios-7c778",
+      storageBucket: "funcionarios-7c778.appspot.com",
+      messagingSenderId: "632364021109",
+      appId: "1:632364021109:web:xxxxxx"
+    };
 
-<!-- CONSULTAR -->
-<div class="container hidden" id="consultar">
-  <h2>Consultar Funcionários</h2>
-  <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
-  <div class="lista" id="listaCadastros"></div>
-  <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
-</div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-<!-- LANÇAMENTO -->
-<div class="container hidden" id="menuLancamento">
-  <h2>Lançamento</h2>
-  <button onclick="abrirInserirLancamento()">Inserir</button>
-  <button onclick="abrirConsultarLancamento()">Consultar</button>
-  <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</div>
+    const form = document.getElementById('formFuncionario');
+    const tabela = document.querySelector('#tabela tbody');
 
-<!-- INSERIR LANÇAMENTO -->
-<div class="container hidden" id="inserirLancamento">
-  <h2>Novo Lançamento</h2>
-  <input type="text" id="nomeLanc" placeholder="Nome do Funcionário" />
-  <input type="date" id="dataLanc" />
-  <select id="tipoLanc">
-    <option value="">Tipo</option>
-    <option value="VALE">VALE</option>
-    <option value="COMPRA">COMPRA</option>
-  </select>
-  <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
-  <button onclick="salvarLancamento()">Salvar</button>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
+    // 📥 Inserir ou atualizar funcionário
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const id = document.getElementById('idFuncionario').value;
+      const nome = document.getElementById('nome').value.trim();
+      const cargo = document.getElementById('cargo').value.trim();
+      const idade = document.getElementById('idade').value.trim();
 
-<!-- CONSULTAR LANÇAMENTO -->
-<div class="container hidden" id="consultarLancamento">
-  <h2>Lançamentos</h2>
-  <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
-  <div class="lista" id="listaLancamentos"></div>
-  <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
-</div>
+      if (!nome || !cargo || !idade) return;
 
-<!-- SDK FIREBASE -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getDatabase, ref, set, push, get, remove, update, child }
-    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+      if (id) {
+        // Atualiza funcionário existente
+        update(ref(db, "funcionarios/" + id), { nome, cargo, idade });
+        alert("✅ Funcionário atualizado com sucesso!");
+      } else {
+        // Insere novo funcionário
+        push(ref(db, "funcionarios"), { nome, cargo, idade });
+        alert("✅ Funcionário adicionado!");
+      }
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
-    authDomain: "funcionarios-7c778.firebaseapp.com",
-    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
-    projectId: "funcionarios-7c778",
-    storageBucket: "funcionarios-7c778.firebasestorage.app",
-    messagingSenderId: "632364021109",
-    appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
-    measurementId: "G-46DKFS3LHV"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  console.log("✅ Firebase conectado com sucesso!");
-
-  // Login
-  window.fazerLogin = function() {
-    const u = document.getElementById('loginUsuario').value.trim().toUpperCase();
-    const s = document.getElementById('loginSenha').value.trim();
-    if (u === 'ADMIN' && s === '1234') {
-      document.getElementById('loginContainer').classList.add('hidden');
-      document.getElementById('menu').classList.remove('hidden');
-      alert('Login bem-sucedido!');
-    } else alert('Usuário ou senha incorretos!');
-  };
-
-  // Navegação
-  function esconderTudo() { document.querySelectorAll('.container').forEach(d=>d.classList.add('hidden')); }
-  window.abrirCadastro = ()=>{esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden');};
-  window.abrirLancamento = ()=>{esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden');};
-  window.voltar = ()=>{esconderTudo(); document.getElementById('menu').classList.remove('hidden');};
-  window.voltarCadastro = ()=>{esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden');};
-  window.voltarLancamento = ()=>{esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden');};
-  window.sair = ()=>location.reload();
-
-  // Cadastros
-  window.abrirInserir = ()=>{esconderTudo(); document.getElementById('inserir').classList.remove('hidden');};
-  window.abrirConsultar = ()=>{esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros();};
-
-  window.salvarCadastro = async function(){
-    const nome = document.getElementById('nome').value.trim().toUpperCase();
-    const cargo = document.getElementById('cargo').value.trim().toUpperCase();
-    if(!nome || !cargo) return alert('Preencha todos os campos.');
-    const novoRef = push(ref(db, 'cadastros'));
-    await set(novoRef, { nome, cargo });
-    alert('Cadastro salvo!');
-    voltarCadastro();
-  };
-
-  window.mostrarCadastros = async function(){
-    const lista = document.getElementById('listaCadastros');
-    lista.innerHTML = '';
-    const snap = await get(ref(db, 'cadastros'));
-    if(!snap.exists()) return;
-    snap.forEach(childSnap=>{
-      const c = childSnap.val();
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `<span><strong>${c.nome}</strong> - ${c.cargo}</span>
-        <button class="btn-excluir" onclick="excluirCadastro('${childSnap.key}')">🗑️</button>`;
-      lista.appendChild(div);
+      form.reset();
+      document.getElementById('idFuncionario').value = "";
     });
-  };
 
-  window.excluirCadastro = async function(id){
-    if(!confirm('Excluir este cadastro?')) return;
-    await remove(ref(db, 'cadastros/' + id));
-    mostrarCadastros();
-  };
+    // 📋 Exibir funcionários
+    onValue(ref(db, "funcionarios"), snapshot => {
+      tabela.innerHTML = "";
+      snapshot.forEach(child => {
+        const data = child.val();
+        const id = child.key;
+        const row = `
+          <tr>
+            <td>${data.nome}</td>
+            <td>${data.cargo}</td>
+            <td>${data.idade}</td>
+            <td>
+              <button class="edit" data-id="${id}">Editar</button>
+              <button class="delete" data-id="${id}">Excluir</button>
+            </td>
+          </tr>`;
+        tabela.innerHTML += row;
+      });
 
-  // Lançamentos
-  window.abrirInserirLancamento = ()=>{esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');};
-  window.abrirConsultarLancamento = ()=>{esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos();};
+      // ✏️ Editar funcionário
+      document.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const id = e.target.getAttribute('data-id');
+          const funcionario = snapshot.child(id).val();
+          document.getElementById('idFuncionario').value = id;
+          document.getElementById('nome').value = funcionario.nome;
+          document.getElementById('cargo').value = funcionario.cargo;
+          document.getElementById('idade').value = funcionario.idade;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
 
-  window.salvarLancamento = async function(){
-    const nome = document.getElementById('nomeLanc').value.trim().toUpperCase();
-    const data = document.getElementById('dataLanc').value;
-    const tipo = document.getElementById('tipoLanc').value;
-    const valor = parseFloat(document.getElementById('valorLanc').value);
-    if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha tudo corretamente.');
-    const novoRef = push(ref(db, 'lancamentos'));
-    await set(novoRef, { nome, data, tipo, valor });
-    alert('Lançamento salvo!');
-    voltarLancamento();
-  };
-
-  window.mostrarLancamentos = async function(){
-    const lista = document.getElementById('listaLancamentos');
-    lista.innerHTML = '';
-    const snap = await get(ref(db, 'lancamentos'));
-    if(!snap.exists()) return;
-    snap.forEach(childSnap=>{
-      const l = childSnap.val();
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `<span><strong>${l.nome}</strong> | ${l.data} | ${l.tipo} | R$ ${l.valor.toFixed(2)}</span>
-        <button class="btn-excluir" onclick="excluirLancamento('${childSnap.key}')">🗑️</button>`;
-      lista.appendChild(div);
+      // ❌ Excluir funcionário
+      document.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const id = e.target.getAttribute('data-id');
+          if (confirm("Deseja excluir este funcionário?")) {
+            remove(ref(db, "funcionarios/" + id));
+          }
+        });
+      });
     });
-  };
-
-  window.excluirLancamento = async function(id){
-    if(!confirm('Excluir este lançamento?')) return;
-    await remove(ref(db, 'lancamentos/' + id));
-    mostrarLancamentos();
-  };
-</script>
+  </script>
 </body>
 </html>
