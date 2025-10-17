@@ -268,6 +268,20 @@ async function gerarPDFResumoLancamentos(){
   pdf.text(`TOTAL ................ R$ ${total.toFixed(2).replace('.',',')}`,10,y);
   pdf.save("RESUMO_LANCAMENTOS_SUPERMERCADO_LEV+.pdf");
 }
+
+/* ---- Mudar campo com ENTER ---- */
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    const inputs = Array.from(document.querySelectorAll("input, select, textarea, button"));
+    const atual = document.activeElement;
+    const i = inputs.indexOf(atual);
+    if (i > -1) {
+      e.preventDefault();
+      const proximo = inputs[i + 1];
+      if (proximo) proximo.focus();
+    }
+  }
+});
 </script>
 </body>
 </html>
