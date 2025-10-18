@@ -112,7 +112,7 @@
 <body>
 <div class="wrap">
 
-<!-- LOGIN -->
+  <!-- LOGIN -->
 function login(){
   const u = (document.getElementById('loginUsuario').value||'').trim().toUpperCase();
   const s = (document.getElementById('loginSenha').value||'').trim().toUpperCase(); // maiúsculas também
@@ -127,8 +127,8 @@ function login(){
     alert('Usuário ou senha incorretos!');
     document.getElementById('loginUsuario').focus();
   }
-}  
-</div>
+}
+  </div>
 
   <!-- CADASTRO MENU (igual à imagem) -->
   <div class="card hidden cadastro-menu" id="cadastroMenuCard">
@@ -138,7 +138,7 @@ function login(){
     <button class="btn-big voltar secondary" onclick="voltarAoMenu()">Voltar</button>
   </div>
 
-  <!-- TELA PRINCIPAL (após login) simples com botão para ir para CADASTRO -->
+  <!-- TELA PRINCIPAL (após login) simple with button to go to CADASTRO -->
   <div class="card hidden" id="homeCard">
     <h2>MENU PRINCIPAL</h2>
     <button class="primary" onclick="abrirTelaCadastro()">Cadastro</button>
@@ -283,7 +283,7 @@ function hideAll(){
 function login(){
   const u = (el('loginUsuario').value||'').trim().toUpperCase();
   const s = (el('loginSenha').value||'').trim();
-  if(u === 'ADMIN' && s === '1234'){
+  if(u === '1' && s === '1'){
     hide('loginCard');
     show('homeCard');
     el('loginUsuario').value = '';
@@ -396,7 +396,6 @@ async function excluirFuncionario(id){
   }catch(err){ console.error(err); alert('Erro ao excluir.'); }
 }
 
-/* ========== LANÇAMENTOS (CRUD) ========== */
 async function salvarLancamento(){
   const nome = (el('lancNome').value||'').trim().toUpperCase();
   const data = el('lancData').value;
@@ -405,7 +404,6 @@ async function salvarLancamento(){
   const id = el('lancId').value;
   if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
   try{
-    // valida se nome existe nos funcionários
     const funcs = await getJSON(URL_FUNC);
     const exists = funcs && Object.values(funcs).some(f => (f.nome||'').toUpperCase() === nome);
     if(!exists) return alert('Nome não cadastrado. Cadastre antes de lançar.');
@@ -474,7 +472,6 @@ async function excluirLancamento(id){
   try{ await delJSON(URL_LANC + '/' + id); mostrarLancamentos(); } catch(err){ console.error(err); alert('Erro ao excluir.'); }
 }
 
-/* atualiza datalist de nomes (para lançamentos) */
 async function atualizarDatalist(){
   try{
     const funcs = await getJSON(URL_FUNC);
@@ -487,7 +484,6 @@ async function atualizarDatalist(){
   }catch(err){ console.error(err); }
 }
 
-/* ========== GERAR PDF (resumo simples) ========== */
 async function gerarPDF(){
   try{
     const { jsPDF } = window.jspdf;
@@ -509,7 +505,6 @@ async function gerarPDF(){
   }catch(err){ console.error(err); alert('Erro ao gerar PDF.'); }
 }
 
-/* ========== Inicialização: foco no login e esconder telas ========== */
 (function init(){
   hide('homeCard'); hide('cadastroMenuCard'); hide('inserirCard'); hide('consultarCard');
   hide('lancamentoMenuCard'); hide('inserirLancCard'); hide('consultarLancCard');
@@ -518,6 +513,3 @@ async function gerarPDF(){
 </script>
 </body>
 </html>
-
-
-
