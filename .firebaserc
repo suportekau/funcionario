@@ -1,7 +1,5 @@
 {
   "projects": {
     "default": "funcionarios-7c778"
-  },
-  "targets": {},
-  "etags": {}
+  }
 }
