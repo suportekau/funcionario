@@ -3,508 +3,258 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sistema - Funcionários (Firebase)</title>
-<link rel="preconnect" href="https://fonts.gstatic.com">
+<title>Sistema Simples - Funcionários (Firebase)</title>
 <style>
-  :root{
-    --blue:#0088ff;
-    --blue-dark:#006fcc;
-    --gray:#6c757d;
-    --card-bg:#ffffff;
-    --page-bg:#f4f4f6;
-    --radius:12px;
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
   }
-  html,body{height:100%; margin:0; font-family:Arial, sans-serif; background:var(--page-bg);}
-  /* centraliza tudo */
-  .wrap {
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-    box-sizing:border-box;
+  .container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #ccc;
+    width: 100%;
+    max-width: 420px;
   }
-
-  /* Container das telas */
-  .card {
-    width:100%;
-    max-width:420px;
-    background:var(--card-bg);
-    border-radius:var(--radius);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding:22px;
-    box-sizing:border-box;
-    text-align:center;
-    text-transform:uppercase; /* mantém visual em maiúsculas */
+  h2 {
+    text-align: center;
+    color: #333;
+    text-transform: uppercase;
   }
-
-  h2{
-    margin:0 0 18px;
-    font-size:18px;
-    letter-spacing:1px;
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-transform: uppercase;
   }
-
-  /* estilos inputs/botões */
-  input[type="text"], input[type="password"], input[type="date"], input[type="number"], select {
-    width:100%;
-    padding:10px 12px;
-    margin:8px 0;
-    border-radius:8px;
-    border:1px solid #ddd;
-    box-sizing:border-box;
-    font-size:14px;
-    text-transform:uppercase;
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
   }
-
-  button{
-    display:inline-block;
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:none;
-    cursor:pointer;
-    font-weight:700;
-    font-size:15px;
-    text-transform:uppercase;
+  button:hover {
+    background-color: #0056b3;
   }
-
-  button.primary { background:var(--blue); color:#fff; }
-  button.primary:hover { background:var(--blue-dark); }
-
-  button.secondary { background:var(--gray); color:#fff; }
-  button.secondary:hover { background:#565e64; }
-
-  /* Tela de menu cadastro igual à imagem */
-  .cadastro-menu .btn-big {
-    width:100%;
-    padding:14px 16px;
-    margin:10px 0;
-    border-radius:10px;
-    background:var(--blue);
-    color:#fff;
-    font-size:16px;
-    box-shadow:none;
+  .menu {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
   }
-  .cadastro-menu .btn-big.consultar{ background:var(--blue); }
-  .cadastro-menu .btn-big.voltar{ background:var(--gray); }
-
-  .hidden { display:none; }
-
-  /* lista simples */
-  .lista { text-align:left; margin-top:10px; max-height:300px; overflow:auto; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { padding:8px; border:1px solid #eee; text-align:left; }
-  th { background:#007bff; color:#fff; font-weight:700; font-size:12px; text-transform:uppercase; }
-
-  /* Botões pequenos de ação */
-  .action-btn { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; margin-right:6px; }
-  .edit { background:#ffc107; color:#000; }
-  .del  { background:#dc3545; color:#fff; }
-
-  @media (max-width:420px){
-    .card{padding:16px;}
-    h2{font-size:16px;}
-    button{font-size:14px;}
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background: #007bff;
+    color: #fff;
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- LOGIN -->
-  <div class="card" id="loginCard">
-    <h2>LOGIN</h2>
-    <input id="loginUsuario" type="text" placeholder="Usuário" autocomplete="username" />
-    <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
-    <button class="primary" id="btnLogin" onclick="login()">Entrar</button>
-  </div>
-
-  <!-- CADASTRO MENU (igual à imagem) -->
-  <div class="card hidden cadastro-menu" id="cadastroMenuCard">
-    <h2>CADASTRO</h2>
-    <button class="btn-big" onclick="abrirInserir()">Inserir</button>
-    <button class="btn-big consultar" onclick="abrirConsultar()">Consultar</button>
-    <button class="btn-big voltar secondary" onclick="voltarAoMenu()">Voltar</button>
-  </div>
-
-  <!-- TELA PRINCIPAL (após login) simples com botão para ir para CADASTRO -->
-  <div class="card hidden" id="homeCard">
-    <h2>MENU PRINCIPAL</h2>
-    <button class="primary" onclick="abrirTelaCadastro()">Cadastro</button>
-    <button class="primary" onclick="abrirTelaLancamento()">Lançamento</button>
-    <button class="secondary" onclick="fazerLogout()">Sair</button>
-  </div>
-
-  <!-- INSERIR FUNCIONÁRIO -->
-  <div class="card hidden" id="inserirCard">
-    <h2>Inserir / Editar</h2>
-    <input type="hidden" id="funcId" />
-    <input id="funcNome" type="text" placeholder="Nome do funcionário" />
-    <input id="funcCargo" type="text" placeholder="Cargo" />
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-      <button class="primary" onclick="salvarFuncionario()" style="padding:10px;">Salvar</button>
-      <button class="secondary" onclick="voltarAoCadastro()" style="padding:10px;">Voltar</button>
-    </div>
-  </div>
-
-  <!-- CONSULTAR FUNCIONÁRIOS -->
-  <div class="card hidden" id="consultarCard">
-    <h2>Consultar Funcionários</h2>
-    <input id="filtroNome" type="text" placeholder="Filtrar por nome" oninput="mostrarFuncionarios()" />
-    <div class="lista" id="listaFuncionarios"></div>
-    <button class="secondary" onclick="voltarAoCadastro()">Voltar</button>
-  </div>
-
-  <!-- LANÇAMENTOS: tela simplificada -->
-  <div class="card hidden" id="lancamentoMenuCard">
-    <h2>Lançamentos</h2>
-    <button class="primary" onclick="abrirInserirLanc()">Inserir</button>
-    <button class="primary" onclick="abrirConsultarLanc()">Consultar</button>
-    <button class="secondary" onclick="voltarAoMenu()">Voltar</button>
-  </div>
-
-  <!-- INSERIR LANÇAMENTO -->
-  <div class="card hidden" id="inserirLancCard">
-    <h2>Inserir Lançamento</h2>
-    <input type="hidden" id="lancId" />
-    <input id="lancNome" list="nomesFuncList" placeholder="Nome do funcionário" />
-    <datalist id="nomesFuncList"></datalist>
-    <input id="lancData" type="date" />
-    <select id="lancTipo">
-      <option value="">Selecione Tipo</option>
-      <option value="VALE">VALE</option>
-      <option value="COMPRA">COMPRA</option>
-    </select>
-    <input id="lancValor" type="number" step="0.01" placeholder="Valor" />
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-      <button class="primary" onclick="salvarLancamento()">Salvar</button>
-      <button class="secondary" onclick="voltarAoLancamento()">Voltar</button>
-    </div>
-  </div>
-
-  <!-- CONSULTAR LANÇAMENTOS -->
-  <div class="card hidden" id="consultarLancCard">
-    <h2>Consultar Lançamentos</h2>
-    <input id="filtroLancNome" type="text" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
-    <input id="filtroLancMes" type="month" onchange="mostrarLancamentos()" />
-    <div class="lista" id="listaLanc"></div>
-    <button class="primary" onclick="gerarPDF()" style="margin-top:8px;">Gerar PDF</button>
-    <button class="secondary" onclick="voltarAoLancamento()">Voltar</button>
-  </div>
-
+<div class="container" id="loginDiv">
+  <h2>Login</h2>
+  <input type="text" id="usuario" placeholder="Usuário">
+  <input type="password" id="senha" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
 </div>
 
-<!-- jsPDF -->
+<div class="container" id="menuDiv" style="display:none">
+  <h2>Menu Principal</h2>
+  <div class="menu">
+    <button onclick="abrirCadastro()">Cadastro</button>
+    <button onclick="abrirLancamento()">Lançamento</button>
+  </div>
+</div>
+
+<div class="container" id="cadastroDiv" style="display:none">
+  <h2>Cadastro de Funcionários</h2>
+  <input id="nome" placeholder="Nome">
+  <input id="cargo" placeholder="Cargo">
+  <button onclick="salvarFuncionario()">Salvar</button>
+  <button onclick="mostrarFuncionarios()">Consultar</button>
+  <div id="lista"></div>
+  <button onclick="voltarMenu()">Voltar</button>
+</div>
+
+<div class="container" id="lancamentoDiv" style="display:none">
+  <h2>Lançamentos</h2>
+  <input id="dataLanc" type="date">
+  <input id="funcLanc" placeholder="Funcionário">
+  <input id="valorLanc" type="number" step="0.01" placeholder="Valor">
+  <button onclick="salvarLancamento()">Salvar</button>
+  <button onclick="mostrarLancamentos()">Consultar</button>
+  <button onclick="gerarPDF()">Gerar PDF</button>
+  <div id="listaLanc"></div>
+  <button onclick="voltarMenu()">Voltar</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
-/* ========== CONFIGURAÇÕES FIREBASE (REST) ========== */
-/* Usamos chamadas REST diretas para o Realtime Database */
-const BASE_DB = 'https://funcionarios-7c778-default-rtdb.firebaseio.com';
-const URL_FUNC = BASE_DB + '/funcionarios';
-const URL_LANC = BASE_DB + '/lancamentos';
+const URL_FUNC = "https://funcionarios-7c778-default-rtdb.firebaseio.com/funcionarios.json";
+const URL_LANC = "https://funcionarios-7c778-default-rtdb.firebaseio.com/lancamentos.json";
 
-/* ========== UTILIDADES E ESTADO ========== */
-function el(id){ return document.getElementById(id); }
-function show(id){ el(id).classList.remove('hidden'); }
-function hide(id){ el(id).classList.add('hidden'); }
-function upperIfTextInput(e){
-  const t = e.target;
-  if(!t) return;
-  if(t.tagName.toLowerCase() === 'input'){
-    const type = t.type;
-    if(type === 'text' || type === 'search' || type === 'tel' || type === 'email'){
-      const pos = t.selectionStart;
-      t.value = t.value.toUpperCase();
-      try { t.setSelectionRange(pos,pos); } catch(e){}
-    }
-    // password: keep digits intact but visually uppercase (no effect on digits)
-    if(type === 'password'){
-      const pos = t.selectionStart;
-      t.value = t.value.toUpperCase();
-      try { t.setSelectionRange(pos,pos); } catch(e){}
-    }
+/* ---- LOGIN ---- */
+function login() {
+  const u = usuario.value.trim();
+  const s = senha.value.trim();
+  if (u === "ADMIN" && s === "1234") {
+    loginDiv.style.display = "none";
+    menuDiv.style.display = "block";
+    setTimeout(()=>document.querySelector('#menuDiv button').focus(),100);
+  } else {
+    alert("Usuário ou senha incorretos");
   }
+
+/* ---- NAVEGAÇÃO ---- */
+function abrirCadastro() {
+  menuDiv.style.display = "none";
+  cadastroDiv.style.display = "block";
+  setTimeout(()=>document.getElementById("nome").focus(),100);
+}
+function abrirLancamento() {
+  menuDiv.style.display = "none";
+  lancamentoDiv.style.display = "block";
+  setTimeout(()=>document.getElementById("dataLanc").focus(),100);
+}
+function voltarMenu() {
+  cadastroDiv.style.display = "none";
+  lancamentoDiv.style.display = "none";
+  menuDiv.style.display = "block";
+  setTimeout(()=>document.querySelector('#menuDiv button').focus(),100);
 }
 
-/* aplica maiúsculas automáticas em todo input texto */
-document.addEventListener('input', upperIfTextInput);
-
-/* ========== ENTER: só no login faz entrar ======== */
-document.addEventListener('keydown', function(e){
-  if(e.key !== 'Enter') return;
-  const active = document.activeElement;
-  if(!active) return;
-  const id = active.id || '';
-  // se estiver nos campos de login, executar login
-  if(id === 'loginUsuario' || id === 'loginSenha'){
-    e.preventDefault();
-    login();
-    return;
+/* ---- FUNCIONÁRIOS ---- */
+async function salvarFuncionario() {
+  const nome = document.getElementById('nome').value.trim();
+  const cargo = document.getElementById('cargo').value.trim();
+  if (!nome || !cargo) return alert("Preencha todos os campos!");
+  const dados = { nome, cargo };
+  await fetch(URL_FUNC, { method:"POST", body:JSON.stringify(dados) });
+  alert("Funcionário salvo!");
+  nome.value = ""; cargo.value = "";
+  nome.focus();
+}
+async function mostrarFuncionarios() {
+  const resp = await fetch(URL_FUNC);
+  const data = await resp.json();
+  if (!data) return alert("Nenhum funcionário cadastrado.");
+  let html = "<table><tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr>";
+  for (let id in data) {
+    html += `<tr>
+      <td>${data[id].nome}</td>
+      <td>${data[id].cargo}</td>
+      <td>
+        <button onclick="editarFuncionario('${id}','${data[id].nome}','${data[id].cargo}')">✏️</button>
+        <button onclick="excluirFuncionario('${id}')">🗑️</button>
+      </td></tr>`;
   }
-  // caso contrário, impedir ação (não pular campos)
-  e.preventDefault();
+  html += "</table>";
+  document.getElementById("lista").innerHTML = html;
+}
+function editarFuncionario(id,nome,cargo){
+  document.getElementById('nome').value = nome;
+  document.getElementById('cargo').value = cargo;
+  excluirFuncionario(id);
+}
+async function excluirFuncionario(id){
+  await fetch(`https://funcionarios-7c778-default-rtdb.firebaseio.com/funcionarios/${id}.json`,{method:"DELETE"});
+  mostrarFuncionarios();
+}
+
+/* ---- LANÇAMENTOS ---- */
+async function salvarLancamento() {
+  const data = dataLanc.value;
+  const func = funcLanc.value.trim();
+  const valor = valorLanc.value;
+  if (!data || !func || !valor) return alert("Preencha todos os campos!");
+  const dados = { data, func, valor };
+  await fetch(URL_LANC, { method:"POST", body:JSON.stringify(dados) });
+  alert("Lançamento salvo!");
+  dataLanc.value = ""; funcLanc.value = ""; valorLanc.value = "";
+  dataLanc.focus();
+}
+async function mostrarLancamentos() {
+  const resp = await fetch(URL_LANC);
+  const data = await resp.json();
+  if (!data) return alert("Nenhum lançamento encontrado.");
+  let html = "<table><tr><th>Data</th><th>Funcionário</th><th>Valor</th><th>Ações</th></tr>";
+  for (let id in data) {
+    html += `<tr>
+      <td>${data[id].data}</td>
+      <td>${data[id].func}</td>
+      <td>R$ ${parseFloat(data[id].valor).toFixed(2)}</td>
+      <td>
+        <button onclick="editarLanc('${id}','${data[id].data}','${data[id].func}','${data[id].valor}')">✏️</button>
+        <button onclick="excluirLanc('${id}')">🗑️</button>
+      </td></tr>`;
+  }
+  html += "</table>";
+  document.getElementById("listaLanc").innerHTML = html;
+}
+function editarLanc(id,data,func,valor){
+  dataLanc.value = data;
+  funcLanc.value = func;
+  valorLanc.value = valor;
+  excluirLanc(id);
+}
+async function excluirLanc(id){
+  await fetch(`https://funcionarios-7c778-default-rtdb.firebaseio.com/lancamentos/${id}.json`,{method:"DELETE"});
+  mostrarLancamentos();
+}
+
+/* ---- GERAR PDF ---- */
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const resp = await fetch(URL_LANC);
+  const data = await resp.json();
+  if (!data) return alert("Nenhum lançamento encontrado!");
+  let y = 20;
+  doc.text("RELATÓRIO DE LANÇAMENTOS", 60, 10);
+  let totalGeral = 0;
+  for (let id in data) {
+    const l = data[id];
+    doc.text(`${l.data} - ${l.func} - R$ ${parseFloat(l.valor).toFixed(2)}`, 10, y);
+    y += 8;
+    totalGeral += parseFloat(l.valor);
+  }
+  doc.text(`TOTAL GERAL: R$ ${totalGeral.toFixed(2)}`, 10, y + 10);
+  doc.save("relatorio.pdf");
+}
+
+/* ---- ENTER TROCA DE CAMPO ---- */
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    const inputs = Array.from(document.querySelectorAll("input, select, textarea, button"));
+    const atual = document.activeElement;
+    const i = inputs.indexOf(atual);
+    if (i > -1) {
+      e.preventDefault();
+      const proximo = inputs[i + 1];
+      if (proximo) proximo.focus();
+    }
+  }
 });
 
-/* ========== NAVEGAÇÃO BASICA ENTRE TELAS ========== */
-function abrirTelaCadastro(){
-  hide('homeCard'); show('cadastroMenuCard');
-}
-function abrirTelaLancamento(){
-  hide('homeCard'); show('lancamentoMenuCard');
-}
-function abrirInserir(){ hideAll(); show('inserirCard'); el('funcNome').focus(); }
-function abrirConsultar(){ hideAll(); show('consultarCard'); mostrarFuncionarios(); el('filtroNome').focus(); }
-function voltarAoCadastro(){ hideAll(); show('cadastroMenuCard'); }
-function voltarAoMenu(){ hideAll(); show('homeCard'); }
-function fazerLogout(){ location.reload(); }
-
-function abrirInserirLanc(){ hideAll(); atualizarDatalist(); show('inserirLancCard'); el('lancNome').focus(); }
-function abrirConsultarLanc(){ hideAll(); show('consultarLancCard'); mostrarLancamentos(); }
-function voltarAoLancamento(){ hideAll(); show('lancamentoMenuCard'); }
-
-function hideAll(){
-  const ids = ['loginCard','homeCard','cadastroMenuCard','inserirCard','consultarCard','lancamentoMenuCard','inserirLancCard','consultarLancCard'];
-  ids.forEach(id => hide(id));
-}
-
-/* ========== LOGIN ========== */
-function login(){
-  const u = (el('loginUsuario').value||'').trim().toUpperCase();
-  const s = (el('loginSenha').value||'').trim();
-  if(u === 'ADMIN' && s === '1234'){
-    hide('loginCard');
-    show('homeCard');
-    el('loginUsuario').value = '';
-    el('loginSenha').value = '';
-    // foco no primeiro botão
-    setTimeout(()=>{ const b = document.querySelector('#homeCard button'); if(b) b.focus(); },100);
-  } else {
-    alert('Usuário ou senha incorretos!');
-    el('loginUsuario').focus();
-  }
-}
-
-/* ========== FIREBASE: helpers fetch (JSON) ========== */
-async function getJSON(url){
-  const res = await fetch(url + '.json');
-  if(!res.ok) throw new Error('Erro ao buscar: ' + res.status);
-  return res.json();
-}
-async function postJSON(url, body){
-  const res = await fetch(url + '.json', { method:'POST', body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('Erro ao postar: ' + res.status);
-  return res.json();
-}
-async function putJSON(url, body){ // substitui nó
-  const res = await fetch(url + '.json', { method:'PUT', body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('Erro ao atualizar: ' + res.status);
-  return res.json();
-}
-async function delJSON(url){ // delete
-  const res = await fetch(url + '.json', { method:'DELETE' });
-  if(!res.ok) throw new Error('Erro ao deletar: ' + res.status);
-  return res.json();
-}
-
-/* ========== FUNCIONÁRIOS (CRUD) ========== */
-async function salvarFuncionario(){
-  const nome = (el('funcNome').value||'').trim().toUpperCase();
-  const cargo = (el('funcCargo').value||'').trim().toUpperCase();
-  const id = el('funcId').value;
-  if(!nome || !cargo) return alert('Preencha todos os campos.');
-  try{
-    if(id){
-      // atualizar existente (id é a chave no RTDB)
-      await putJSON(URL_FUNC + '/' + id, { nome, cargo });
-      alert('Funcionário atualizado!');
-      el('funcId').value = '';
-    } else {
-      await postJSON(URL_FUNC, { nome, cargo });
-      alert('Funcionário salvo!');
-    }
-    el('funcNome').value = ''; el('funcCargo').value = '';
-    mostrarFuncionarios();
-    atualizarDatalist();
-    voltarAoCadastro();
-  }catch(err){
-    console.error(err); alert('Erro ao salvar: ' + err.message);
-  }
-}
-
-async function mostrarFuncionarios(){
-  try{
-    const data = await getJSON(URL_FUNC);
-    const lista = el('listaFuncionarios');
-    lista.innerHTML = '';
-    if(!data){ lista.innerHTML = '<p>Nenhum funcionário encontrado.</p>'; return; }
-    const filtro = (el('filtroNome').value||'').trim().toUpperCase();
-    const rows = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    const filtrados = filtro ? rows.filter(r => (r.nome||'').toUpperCase().includes(filtro)) : rows;
-    if(filtrados.length === 0){ lista.innerHTML = '<p>Nenhum funcionário encontrado.</p>'; return; }
-
-    // montar tabela simples
-    const table = document.createElement('table');
-    const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr>'; table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    filtrados.forEach(r => {
-      const tr = document.createElement('tr');
-      const tdNome = document.createElement('td'); tdNome.textContent = r.nome;
-      const tdCargo = document.createElement('td'); tdCargo.textContent = r.cargo;
-      const tdAcoes = document.createElement('td');
-      const btnEdit = document.createElement('button'); btnEdit.className='action-btn edit'; btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editarFuncionario(r.id);
-      const btnDel  = document.createElement('button'); btnDel.className='action-btn del'; btnDel.textContent='🗑️'; btnDel.onclick = ()=> excluirFuncionario(r.id);
-      tdAcoes.appendChild(btnEdit); tdAcoes.appendChild(btnDel);
-      tr.appendChild(tdNome); tr.appendChild(tdCargo); tr.appendChild(tdAcoes);
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    lista.appendChild(table);
-  }catch(err){
-    console.error(err); el('listaFuncionarios').innerHTML = '<p>Erro ao buscar funcionários.</p>';
-  }
-}
-
-async function editarFuncionario(id){
-  try{
-    const obj = await getJSON(URL_FUNC + '/' + id);
-    if(!obj) return alert('Não encontrado.');
-    el('funcId').value = id;
-    el('funcNome').value = obj.nome || '';
-    el('funcCargo').value = obj.cargo || '';
-    hide('cadastroMenuCard'); show('inserirCard');
-  }catch(err){ console.error(err); alert('Erro ao carregar para editar.'); }
-}
-
-async function excluirFuncionario(id){
-  if(!confirm('Excluir este funcionário?')) return;
-  try{
-    await delJSON(URL_FUNC + '/' + id);
-    mostrarFuncionarios();
-    atualizarDatalist();
-  }catch(err){ console.error(err); alert('Erro ao excluir.'); }
-}
-
-/* ========== LANÇAMENTOS (CRUD) ========== */
-async function salvarLancamento(){
-  const nome = (el('lancNome').value||'').trim().toUpperCase();
-  const data = el('lancData').value;
-  const tipo = el('lancTipo').value;
-  const valor = parseFloat(el('lancValor').value);
-  const id = el('lancId').value;
-  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  try{
-    // valida se nome existe nos funcionários
-    const funcs = await getJSON(URL_FUNC);
-    const exists = funcs && Object.values(funcs).some(f => (f.nome||'').toUpperCase() === nome);
-    if(!exists) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-    if(id){
-      await putJSON(URL_LANC + '/' + id, { nome, data, tipo, valor });
-      alert('Lançamento atualizado!');
-      el('lancId').value = '';
-    } else {
-      await postJSON(URL_LANC, { nome, data, tipo, valor });
-      alert('Lançamento salvo!');
-    }
-    el('lancNome').value=''; el('lancData').value=''; el('lancTipo').value=''; el('lancValor').value='';
-    atualizarDatalist(); mostrarLancamentos(); voltarAoLancamento();
-  }catch(err){ console.error(err); alert('Erro ao salvar lançamento.'); }
-}
-
-async function mostrarLancamentos(){
-  try{
-    const data = await getJSON(URL_LANC);
-    const lista = el('listaLanc');
-    lista.innerHTML = '';
-    if(!data){ lista.innerHTML = '<p>Nenhum lançamento encontrado.</p>'; return; }
-    const arr = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    const filtroNome = (el('filtroLancNome').value||'').trim().toUpperCase();
-    const filtroMes = el('filtroLancMes').value;
-    let filtrados = arr;
-    if(filtroNome) filtrados = filtrados.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-    if(filtroMes) filtrados = filtrados.filter(l => (l.data||'').startsWith(filtroMes));
-    if(filtrados.length === 0){ lista.innerHTML = '<p>Nenhum lançamento encontrado.</p>'; return; }
-    filtrados.sort((a,b)=> a.data.localeCompare(b.data));
-    filtrados.forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.style.display='flex'; div.style.justifyContent='space-between'; div.style.alignItems='center';
-      div.style.padding='8px'; div.style.margin='6px 0'; div.style.background='#f7f9fb'; div.style.borderRadius='8px';
-      const left = document.createElement('div'); left.innerHTML = `<strong>${l.nome}</strong><div style="font-size:12px">${l.data} | ${l.tipo}</div>`;
-      const right = document.createElement('div');
-      right.innerHTML = `<div style="text-align:right">R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</div>`;
-      const actions = document.createElement('div'); actions.style.marginLeft='12px';
-      const btnEdit = document.createElement('button'); btnEdit.className='action-btn edit'; btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editarLancamento(l.id);
-      const btnDel  = document.createElement('button'); btnDel.className='action-btn del'; btnDel.textContent='🗑️'; btnDel.onclick = ()=> excluirLancamento(l.id);
-      actions.appendChild(btnEdit); actions.appendChild(btnDel);
-      div.appendChild(left); div.appendChild(right); div.appendChild(actions);
-      lista.appendChild(div);
-    });
-  }catch(err){
-    console.error(err); el('listaLanc').innerHTML = '<p>Erro ao buscar lançamentos.</p>';
-  }
-}
-
-async function editarLancamento(id){
-  try{
-    const l = await getJSON(URL_LANC + '/' + id);
-    if(!l) return alert('Não encontrado.');
-    el('lancId').value = id;
-    el('lancNome').value = l.nome || '';
-    el('lancData').value = l.data || '';
-    el('lancTipo').value = l.tipo || '';
-    el('lancValor').value = l.valor || '';
-    hide('cadastroMenuCard'); hide('lancamentoMenuCard'); show('inserirLancCard');
-  }catch(err){ console.error(err); alert('Erro ao carregar lançamento.'); }
-}
-
-async function excluirLancamento(id){
-  if(!confirm('Excluir este lançamento?')) return;
-  try{ await delJSON(URL_LANC + '/' + id); mostrarLancamentos(); } catch(err){ console.error(err); alert('Erro ao excluir.'); }
-}
-
-/* atualiza datalist de nomes (para lançamentos) */
-async function atualizarDatalist(){
-  try{
-    const funcs = await getJSON(URL_FUNC);
-    const list = el('nomesFuncList');
-    list.innerHTML = '';
-    if(!funcs) return;
-    Object.values(funcs).forEach(f => {
-      const opt = document.createElement('option'); opt.value = f.nome; list.appendChild(opt);
-    });
-  }catch(err){ console.error(err); }
-}
-
-/* ========== GERAR PDF (resumo simples) ========== */
-async function gerarPDF(){
-  try{
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.setFontSize(14); pdf.setFont("helvetica","bold");
-    pdf.text("RELATÓRIO DE LANÇAMENTOS", 14, 18);
-    pdf.setFontSize(10); pdf.setFont("helvetica","normal");
-    let y = 30;
-    const data = await getJSON(URL_LANC);
-    if(!data) return alert('Nenhum lançamento encontrado.');
-    const arr = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    arr.forEach(item => {
-      const line = `${item.data} - ${item.nome} - ${item.tipo} - R$ ${parseFloat(item.valor).toFixed(2).replace('.',',')}`;
-      pdf.text(line, 14, y);
-      y += 8;
-      if(y > 280){ pdf.addPage(); y = 20; }
-    });
-    pdf.save('relatorio_lancamentos.pdf');
-  }catch(err){ console.error(err); alert('Erro ao gerar PDF.'); }
-}
-
-/* ========== Inicialização: foco no login e esconder telas ========== */
-(function init(){
-  hide('homeCard'); hide('cadastroMenuCard'); hide('inserirCard'); hide('consultarCard');
-  hide('lancamentoMenuCard'); hide('inserirLancCard'); hide('consultarLancCard');
-  el('loginUsuario').focus();
-})();
+/* ---- FOCO INICIAL LOGIN ---- */
+window.onload = () => document.getElementById("usuario").focus();
 </script>
 </body>
 </html>
