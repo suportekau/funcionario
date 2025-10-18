@@ -15,7 +15,6 @@
     --radius:12px;
   }
   html,body{height:100%; margin:0; font-family:Arial, sans-serif; background:var(--page-bg);}
-  /* centraliza tudo */
   .wrap {
     min-height:100vh;
     display:flex;
@@ -24,8 +23,6 @@
     padding:18px;
     box-sizing:border-box;
   }
-
-  /* Container das telas */
   .card {
     width:100%;
     max-width:420px;
@@ -35,16 +32,13 @@
     padding:22px;
     box-sizing:border-box;
     text-align:center;
-    text-transform:uppercase; /* mantém visual em maiúsculas */
+    text-transform:uppercase;
   }
-
   h2{
     margin:0 0 18px;
     font-size:18px;
     letter-spacing:1px;
   }
-
-  /* estilos inputs/botões */
   input[type="text"], input[type="password"], input[type="date"], input[type="number"], select {
     width:100%;
     padding:10px 12px;
@@ -55,7 +49,6 @@
     font-size:14px;
     text-transform:uppercase;
   }
-
   button{
     display:inline-block;
     width:100%;
@@ -68,14 +61,10 @@
     font-size:15px;
     text-transform:uppercase;
   }
-
   button.primary { background:var(--blue); color:#fff; }
   button.primary:hover { background:var(--blue-dark); }
-
   button.secondary { background:var(--gray); color:#fff; }
   button.secondary:hover { background:#565e64; }
-
-  /* Tela de menu cadastro igual à imagem */
   .cadastro-menu .btn-big {
     width:100%;
     padding:14px 16px;
@@ -88,20 +77,14 @@
   }
   .cadastro-menu .btn-big.consultar{ background:var(--blue); }
   .cadastro-menu .btn-big.voltar{ background:var(--gray); }
-
   .hidden { display:none; }
-
-  /* lista simples */
   .lista { text-align:left; margin-top:10px; max-height:300px; overflow:auto; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
   th,td { padding:8px; border:1px solid #eee; text-align:left; }
   th { background:#007bff; color:#fff; font-weight:700; font-size:12px; text-transform:uppercase; }
-
-  /* Botões pequenos de ação */
   .action-btn { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; margin-right:6px; }
   .edit { background:#ffc107; color:#000; }
   .del  { background:#dc3545; color:#fff; }
-
   @media (max-width:420px){
     .card{padding:16px;}
     h2{font-size:16px;}
@@ -113,24 +96,14 @@
 <div class="wrap">
 
   <!-- LOGIN -->
-function login(){
-  const u = (document.getElementById('loginUsuario').value||'').trim().toUpperCase();
-  const s = (document.getElementById('loginSenha').value||'').trim().toUpperCase(); // maiúsculas também
-  console.log('login:', u, s);
-  // senha esperada (numérica) = '1234' — upper não afeta números
-  if(u === 'ADMIN' && s === '1234'){
-    document.getElementById('loginCard').classList.add('hidden');
-    document.getElementById('homeCard').classList.remove('hidden');
-    document.getElementById('loginUsuario').value = '';
-    document.getElementById('loginSenha').value = '';
-  } else {
-    alert('Usuário ou senha incorretos!');
-    document.getElementById('loginUsuario').focus();
-  }
-}
+  <div class="card" id="loginCard">
+    <h2>LOGIN</h2>
+    <input id="loginUsuario" type="text" placeholder="Usuário" autocomplete="username" />
+    <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
+    <button class="primary" id="btnLogin" onclick="login()">Entrar</button>
   </div>
 
-  <!-- CADASTRO MENU (igual à imagem) -->
+  <!-- CADASTRO MENU -->
   <div class="card hidden cadastro-menu" id="cadastroMenuCard">
     <h2>CADASTRO</h2>
     <button class="btn-big" onclick="abrirInserir()">Inserir</button>
@@ -138,7 +111,7 @@ function login(){
     <button class="btn-big voltar secondary" onclick="voltarAoMenu()">Voltar</button>
   </div>
 
-  <!-- TELA PRINCIPAL (após login) simple with button to go to CADASTRO -->
+  <!-- HOME -->
   <div class="card hidden" id="homeCard">
     <h2>MENU PRINCIPAL</h2>
     <button class="primary" onclick="abrirTelaCadastro()">Cadastro</button>
@@ -166,7 +139,7 @@ function login(){
     <button class="secondary" onclick="voltarAoCadastro()">Voltar</button>
   </div>
 
-  <!-- LANÇAMENTOS: tela simplificada -->
+  <!-- LANÇAMENTOS MENU -->
   <div class="card hidden" id="lancamentoMenuCard">
     <h2>Lançamentos</h2>
     <button class="primary" onclick="abrirInserirLanc()">Inserir</button>
@@ -205,17 +178,12 @@ function login(){
 
 </div>
 
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
-/* ========== CONFIGURAÇÕES FIREBASE (REST) ========== */
-/* Usamos chamadas REST diretas para o Realtime Database */
 const BASE_DB = 'https://funcionarios-7c778-default-rtdb.firebaseio.com';
 const URL_FUNC = BASE_DB + '/funcionarios';
 const URL_LANC = BASE_DB + '/lancamentos';
 
-/* ========== UTILIDADES E ESTADO ========== */
 function el(id){ return document.getElementById(id); }
 function show(id){ el(id).classList.remove('hidden'); }
 function hide(id){ el(id).classList.add('hidden'); }
@@ -224,56 +192,51 @@ function upperIfTextInput(e){
   if(!t) return;
   if(t.tagName.toLowerCase() === 'input'){
     const type = t.type;
-    if(type === 'text' || type === 'search' || type === 'tel' || type === 'email'){
-      const pos = t.selectionStart;
-      t.value = t.value.toUpperCase();
-      try { t.setSelectionRange(pos,pos); } catch(e){}
-    }
-    // password: keep digits intact but visually uppercase (no effect on digits)
-    if(type === 'password'){
+    if(type === 'text' || type === 'search' || type === 'tel' || type === 'email' || type === 'password'){
       const pos = t.selectionStart;
       t.value = t.value.toUpperCase();
       try { t.setSelectionRange(pos,pos); } catch(e){}
     }
   }
 }
-
-/* aplica maiúsculas automáticas em todo input texto */
 document.addEventListener('input', upperIfTextInput);
 
-/* ========== ENTER: só no login faz entrar ======== */
+/* ========== ENTER: comportamento inteligente ======== */
 document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter') return;
+
   const active = document.activeElement;
-  if(!active) return;
-  const id = active.id || '';
-  // se estiver nos campos de login, executar login
-  if(id === 'loginUsuario' || id === 'loginSenha'){
-    e.preventDefault();
+  if(!active || active.tagName.toLowerCase() !== 'input') return;
+  e.preventDefault();
+
+  const formInputs = Array.from(document.querySelectorAll('input, select, button'))
+    .filter(el => !el.disabled && el.offsetParent !== null);
+
+  const idx = formInputs.indexOf(active);
+
+  // --- LOGIN: se for o último campo (senha), faz login
+  if(active.id === 'loginSenha'){
     login();
     return;
   }
-  // caso contrário, impedir ação (não pular campos)
-  e.preventDefault();
+
+  // --- nos outros casos: move o foco para o próximo campo
+  if(idx >= 0 && idx < formInputs.length - 1){
+    formInputs[idx + 1].focus();
+  }
 });
 
-/* ========== NAVEGAÇÃO BASICA ENTRE TELAS ========== */
-function abrirTelaCadastro(){
-  hide('homeCard'); show('cadastroMenuCard');
-}
-function abrirTelaLancamento(){
-  hide('homeCard'); show('lancamentoMenuCard');
-}
+/* ========== NAVEGAÇÃO ========== */
+function abrirTelaCadastro(){ hide('homeCard'); show('cadastroMenuCard'); }
+function abrirTelaLancamento(){ hide('homeCard'); show('lancamentoMenuCard'); }
 function abrirInserir(){ hideAll(); show('inserirCard'); el('funcNome').focus(); }
 function abrirConsultar(){ hideAll(); show('consultarCard'); mostrarFuncionarios(); el('filtroNome').focus(); }
 function voltarAoCadastro(){ hideAll(); show('cadastroMenuCard'); }
 function voltarAoMenu(){ hideAll(); show('homeCard'); }
 function fazerLogout(){ location.reload(); }
-
 function abrirInserirLanc(){ hideAll(); atualizarDatalist(); show('inserirLancCard'); el('lancNome').focus(); }
 function abrirConsultarLanc(){ hideAll(); show('consultarLancCard'); mostrarLancamentos(); }
 function voltarAoLancamento(){ hideAll(); show('lancamentoMenuCard'); }
-
 function hideAll(){
   const ids = ['loginCard','homeCard','cadastroMenuCard','inserirCard','consultarCard','lancamentoMenuCard','inserirLancCard','consultarLancCard'];
   ids.forEach(id => hide(id));
@@ -283,12 +246,9 @@ function hideAll(){
 function login(){
   const u = (el('loginUsuario').value||'').trim().toUpperCase();
   const s = (el('loginSenha').value||'').trim();
-  if(u === '1' && s === '1'){
-    hide('loginCard');
-    show('homeCard');
-    el('loginUsuario').value = '';
-    el('loginSenha').value = '';
-    // foco no primeiro botão
+  if(u === 'ADMIN' && s === '1234'){
+    hide('loginCard'); show('homeCard');
+    el('loginUsuario').value = ''; el('loginSenha').value = '';
     setTimeout(()=>{ const b = document.querySelector('#homeCard button'); if(b) b.focus(); },100);
   } else {
     alert('Usuário ou senha incorretos!');
@@ -296,220 +256,103 @@ function login(){
   }
 }
 
-/* ========== FIREBASE: helpers fetch (JSON) ========== */
-async function getJSON(url){
-  const res = await fetch(url + '.json');
-  if(!res.ok) throw new Error('Erro ao buscar: ' + res.status);
-  return res.json();
-}
-async function postJSON(url, body){
-  const res = await fetch(url + '.json', { method:'POST', body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('Erro ao postar: ' + res.status);
-  return res.json();
-}
-async function putJSON(url, body){ // substitui nó
-  const res = await fetch(url + '.json', { method:'PUT', body: JSON.stringify(body) });
-  if(!res.ok) throw new Error('Erro ao atualizar: ' + res.status);
-  return res.json();
-}
-async function delJSON(url){ // delete
-  const res = await fetch(url + '.json', { method:'DELETE' });
-  if(!res.ok) throw new Error('Erro ao deletar: ' + res.status);
-  return res.json();
-}
+/* ==== Firebase Helpers ==== */
+async function getJSON(url){ const r=await fetch(url+'.json'); if(!r.ok)throw new Error(r.status); return r.json(); }
+async function postJSON(url,b){ const r=await fetch(url+'.json',{method:'POST',body:JSON.stringify(b)}); if(!r.ok)throw new Error(r.status); return r.json(); }
+async function putJSON(url,b){ const r=await fetch(url+'.json',{method:'PUT',body:JSON.stringify(b)}); if(!r.ok)throw new Error(r.status); return r.json(); }
+async function delJSON(url){ const r=await fetch(url+'.json',{method:'DELETE'}); if(!r.ok)throw new Error(r.status); return r.json(); }
 
-/* ========== FUNCIONÁRIOS (CRUD) ========== */
+/* ==== Funcionários ==== */
 async function salvarFuncionario(){
-  const nome = (el('funcNome').value||'').trim().toUpperCase();
-  const cargo = (el('funcCargo').value||'').trim().toUpperCase();
-  const id = el('funcId').value;
-  if(!nome || !cargo) return alert('Preencha todos os campos.');
+  const nome=(el('funcNome').value||'').trim().toUpperCase();
+  const cargo=(el('funcCargo').value||'').trim().toUpperCase();
+  const id=el('funcId').value;
+  if(!nome||!cargo) return alert('Preencha todos os campos.');
   try{
-    if(id){
-      // atualizar existente (id é a chave no RTDB)
-      await putJSON(URL_FUNC + '/' + id, { nome, cargo });
-      alert('Funcionário atualizado!');
-      el('funcId').value = '';
-    } else {
-      await postJSON(URL_FUNC, { nome, cargo });
-      alert('Funcionário salvo!');
-    }
-    el('funcNome').value = ''; el('funcCargo').value = '';
-    mostrarFuncionarios();
-    atualizarDatalist();
-    voltarAoCadastro();
-  }catch(err){
-    console.error(err); alert('Erro ao salvar: ' + err.message);
-  }
+    if(id){ await putJSON(URL_FUNC+'/'+id,{nome,cargo}); alert('Funcionário atualizado!'); el('funcId').value=''; }
+    else { await postJSON(URL_FUNC,{nome,cargo}); alert('Funcionário salvo!'); }
+    el('funcNome').value=''; el('funcCargo').value='';
+    mostrarFuncionarios(); atualizarDatalist(); voltarAoCadastro();
+  }catch(e){alert('Erro ao salvar.');}
 }
 
 async function mostrarFuncionarios(){
   try{
-    const data = await getJSON(URL_FUNC);
-    const lista = el('listaFuncionarios');
-    lista.innerHTML = '';
-    if(!data){ lista.innerHTML = '<p>Nenhum funcionário encontrado.</p>'; return; }
-    const filtro = (el('filtroNome').value||'').trim().toUpperCase();
-    const rows = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    const filtrados = filtro ? rows.filter(r => (r.nome||'').toUpperCase().includes(filtro)) : rows;
-    if(filtrados.length === 0){ lista.innerHTML = '<p>Nenhum funcionário encontrado.</p>'; return; }
-
-    // montar tabela simples
-    const table = document.createElement('table');
-    const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr>'; table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    filtrados.forEach(r => {
-      const tr = document.createElement('tr');
-      const tdNome = document.createElement('td'); tdNome.textContent = r.nome;
-      const tdCargo = document.createElement('td'); tdCargo.textContent = r.cargo;
-      const tdAcoes = document.createElement('td');
-      const btnEdit = document.createElement('button'); btnEdit.className='action-btn edit'; btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editarFuncionario(r.id);
-      const btnDel  = document.createElement('button'); btnDel.className='action-btn del'; btnDel.textContent='🗑️'; btnDel.onclick = ()=> excluirFuncionario(r.id);
-      tdAcoes.appendChild(btnEdit); tdAcoes.appendChild(btnDel);
-      tr.appendChild(tdNome); tr.appendChild(tdCargo); tr.appendChild(tdAcoes);
-      tbody.appendChild(tr);
+    const d=await getJSON(URL_FUNC);
+    const lista=el('listaFuncionarios'); lista.innerHTML='';
+    if(!d){lista.innerHTML='<p>Nenhum funcionário encontrado.</p>';return;}
+    const filtro=(el('filtroNome').value||'').trim().toUpperCase();
+    const arr=Object.keys(d).map(k=>({id:k,...d[k]})).filter(r=>r.nome.toUpperCase().includes(filtro));
+    if(arr.length===0){lista.innerHTML='<p>Nenhum funcionário encontrado.</p>';return;}
+    const table=document.createElement('table');
+    table.innerHTML='<thead><tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr></thead>';
+    const tb=document.createElement('tbody');
+    arr.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${r.nome}</td><td>${r.cargo}</td><td>
+      <button class="action-btn edit" onclick="editarFuncionario('${r.id}')">✏️</button>
+      <button class="action-btn del" onclick="excluirFuncionario('${r.id}')">🗑️</button></td>`;
+      tb.appendChild(tr);
     });
-    table.appendChild(tbody);
-    lista.appendChild(table);
-  }catch(err){
-    console.error(err); el('listaFuncionarios').innerHTML = '<p>Erro ao buscar funcionários.</p>';
-  }
+    table.appendChild(tb); lista.appendChild(table);
+  }catch(e){el('listaFuncionarios').innerHTML='<p>Erro ao buscar.</p>'; }
 }
+async function editarFuncionario(id){const o=await getJSON(URL_FUNC+'/'+id);el('funcId').value=id;el('funcNome').value=o.nome;el('funcCargo').value=o.cargo;hide('cadastroMenuCard');show('inserirCard');}
+async function excluirFuncionario(id){if(!confirm('Excluir?'))return;await delJSON(URL_FUNC+'/'+id);mostrarFuncionarios();atualizarDatalist();}
 
-async function editarFuncionario(id){
-  try{
-    const obj = await getJSON(URL_FUNC + '/' + id);
-    if(!obj) return alert('Não encontrado.');
-    el('funcId').value = id;
-    el('funcNome').value = obj.nome || '';
-    el('funcCargo').value = obj.cargo || '';
-    hide('cadastroMenuCard'); show('inserirCard');
-  }catch(err){ console.error(err); alert('Erro ao carregar para editar.'); }
-}
-
-async function excluirFuncionario(id){
-  if(!confirm('Excluir este funcionário?')) return;
-  try{
-    await delJSON(URL_FUNC + '/' + id);
-    mostrarFuncionarios();
-    atualizarDatalist();
-  }catch(err){ console.error(err); alert('Erro ao excluir.'); }
-}
-
+/* ==== Lançamentos ==== */
 async function salvarLancamento(){
-  const nome = (el('lancNome').value||'').trim().toUpperCase();
-  const data = el('lancData').value;
-  const tipo = el('lancTipo').value;
-  const valor = parseFloat(el('lancValor').value);
-  const id = el('lancId').value;
-  if(!nome || !data || !tipo || isNaN(valor)) return alert('Preencha todos os campos corretamente.');
-  try{
-    const funcs = await getJSON(URL_FUNC);
-    const exists = funcs && Object.values(funcs).some(f => (f.nome||'').toUpperCase() === nome);
-    if(!exists) return alert('Nome não cadastrado. Cadastre antes de lançar.');
-    if(id){
-      await putJSON(URL_LANC + '/' + id, { nome, data, tipo, valor });
-      alert('Lançamento atualizado!');
-      el('lancId').value = '';
-    } else {
-      await postJSON(URL_LANC, { nome, data, tipo, valor });
-      alert('Lançamento salvo!');
-    }
-    el('lancNome').value=''; el('lancData').value=''; el('lancTipo').value=''; el('lancValor').value='';
-    atualizarDatalist(); mostrarLancamentos(); voltarAoLancamento();
-  }catch(err){ console.error(err); alert('Erro ao salvar lançamento.'); }
+  const nome=(el('lancNome').value||'').trim().toUpperCase();
+  const data=el('lancData').value; const tipo=el('lancTipo').value;
+  const valor=parseFloat(el('lancValor').value); const id=el('lancId').value;
+  if(!nome||!data||!tipo||isNaN(valor)) return alert('Preencha todos os campos.');
+  const funcs=await getJSON(URL_FUNC);
+  const exists=funcs&&Object.values(funcs).some(f=>(f.nome||'').toUpperCase()===nome);
+  if(!exists)return alert('Nome não cadastrado.');
+  if(id){await putJSON(URL_LANC+'/'+id,{nome,data,tipo,valor});alert('Lançamento atualizado!');el('lancId').value='';}
+  else{await postJSON(URL_LANC,{nome,data,tipo,valor});alert('Lançamento salvo!');}
+  el('lancNome').value='';el('lancData').value='';el('lancTipo').value='';el('lancValor').value='';
+  atualizarDatalist();mostrarLancamentos();voltarAoLancamento();
 }
 
 async function mostrarLancamentos(){
-  try{
-    const data = await getJSON(URL_LANC);
-    const lista = el('listaLanc');
-    lista.innerHTML = '';
-    if(!data){ lista.innerHTML = '<p>Nenhum lançamento encontrado.</p>'; return; }
-    const arr = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    const filtroNome = (el('filtroLancNome').value||'').trim().toUpperCase();
-    const filtroMes = el('filtroLancMes').value;
-    let filtrados = arr;
-    if(filtroNome) filtrados = filtrados.filter(l => (l.nome||'').toUpperCase().includes(filtroNome));
-    if(filtroMes) filtrados = filtrados.filter(l => (l.data||'').startsWith(filtroMes));
-    if(filtrados.length === 0){ lista.innerHTML = '<p>Nenhum lançamento encontrado.</p>'; return; }
-    filtrados.sort((a,b)=> a.data.localeCompare(b.data));
-    filtrados.forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.style.display='flex'; div.style.justifyContent='space-between'; div.style.alignItems='center';
-      div.style.padding='8px'; div.style.margin='6px 0'; div.style.background='#f7f9fb'; div.style.borderRadius='8px';
-      const left = document.createElement('div'); left.innerHTML = `<strong>${l.nome}</strong><div style="font-size:12px">${l.data} | ${l.tipo}</div>`;
-      const right = document.createElement('div');
-      right.innerHTML = `<div style="text-align:right">R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</div>`;
-      const actions = document.createElement('div'); actions.style.marginLeft='12px';
-      const btnEdit = document.createElement('button'); btnEdit.className='action-btn edit'; btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editarLancamento(l.id);
-      const btnDel  = document.createElement('button'); btnDel.className='action-btn del'; btnDel.textContent='🗑️'; btnDel.onclick = ()=> excluirLancamento(l.id);
-      actions.appendChild(btnEdit); actions.appendChild(btnDel);
-      div.appendChild(left); div.appendChild(right); div.appendChild(actions);
-      lista.appendChild(div);
-    });
-  }catch(err){
-    console.error(err); el('listaLanc').innerHTML = '<p>Erro ao buscar lançamentos.</p>';
-  }
+  const d=await getJSON(URL_LANC);const lista=el('listaLanc');lista.innerHTML='';
+  if(!d){lista.innerHTML='<p>Nenhum lançamento encontrado.</p>';return;}
+  const nome=(el('filtroLancNome').value||'').toUpperCase();
+  const mes=el('filtroLancMes').value;
+  const arr=Object.keys(d).map(k=>({id:k,...d[k]})).filter(l=>(!nome||l.nome.toUpperCase().includes(nome))&&(!mes||l.data.startsWith(mes)));
+  if(arr.length===0){lista.innerHTML='<p>Nenhum lançamento encontrado.</p>';return;}
+  arr.sort((a,b)=>a.data.localeCompare(b.data));
+  arr.forEach(l=>{
+    const div=document.createElement('div');
+    div.style.display='flex';div.style.justifyContent='space-between';div.style.alignItems='center';
+    div.style.padding='8px';div.style.margin='6px 0';div.style.background='#f7f9fb';div.style.borderRadius='8px';
+    div.innerHTML=`<div><strong>${l.nome}</strong><div style="font-size:12px">${l.data} | ${l.tipo}</div></div>
+    <div style="text-align:right">R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</div>`;
+    const act=document.createElement('div');act.style.marginLeft='12px';
+    act.innerHTML=`<button class="action-btn edit" onclick="editarLancamento('${l.id}')">✏️</button>
+    <button class="action-btn del" onclick="excluirLancamento('${l.id}')">🗑️</button>`;
+    div.appendChild(act);lista.appendChild(div);
+  });
+}
+async function editarLancamento(id){const o=await getJSON(URL_LANC+'/'+id);el('lancId').value=id;el('lancNome').value=o.nome;el('lancData').value=o.data;el('lancTipo').value=o.tipo;el('lancValor').value=o.valor;hide('lancamentoMenuCard');show('inserirLancCard');}
+async function excluirLancamento(id){if(!confirm('Excluir?'))return;await delJSON(URL_LANC+'/'+id);mostrarLancamentos();}
+async function atualizarDatalist(){const d=await getJSON(URL_FUNC);const dl=el('nomesFuncList');dl.innerHTML='';if(!d)return;Object.values(d).forEach(f=>{const o=document.createElement('option');o.value=f.nome;dl.appendChild(o);});}
+
+/* === Gerar PDF === */
+function gerarPDF(){
+  const nome=(el('filtroLancNome').value||'').toUpperCase();
+  const mes=(el('filtroLancMes').value||'');
+  const lista=document.getElementById('listaLanc').innerText;
+  const doc=new jspdf.jsPDF();doc.text(`Relatório de Lançamentos\n\nFiltro: ${nome} ${mes}\n\n${lista}`,10,10);
+  doc.save('lancamentos.pdf');
 }
 
-async function editarLancamento(id){
-  try{
-    const l = await getJSON(URL_LANC + '/' + id);
-    if(!l) return alert('Não encontrado.');
-    el('lancId').value = id;
-    el('lancNome').value = l.nome || '';
-    el('lancData').value = l.data || '';
-    el('lancTipo').value = l.tipo || '';
-    el('lancValor').value = l.valor || '';
-    hide('cadastroMenuCard'); hide('lancamentoMenuCard'); show('inserirLancCard');
-  }catch(err){ console.error(err); alert('Erro ao carregar lançamento.'); }
-}
-
-async function excluirLancamento(id){
-  if(!confirm('Excluir este lançamento?')) return;
-  try{ await delJSON(URL_LANC + '/' + id); mostrarLancamentos(); } catch(err){ console.error(err); alert('Erro ao excluir.'); }
-}
-
-async function atualizarDatalist(){
-  try{
-    const funcs = await getJSON(URL_FUNC);
-    const list = el('nomesFuncList');
-    list.innerHTML = '';
-    if(!funcs) return;
-    Object.values(funcs).forEach(f => {
-      const opt = document.createElement('option'); opt.value = f.nome; list.appendChild(opt);
-    });
-  }catch(err){ console.error(err); }
-}
-
-async function gerarPDF(){
-  try{
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.setFontSize(14); pdf.setFont("helvetica","bold");
-    pdf.text("RELATÓRIO DE LANÇAMENTOS", 14, 18);
-    pdf.setFontSize(10); pdf.setFont("helvetica","normal");
-    let y = 30;
-    const data = await getJSON(URL_LANC);
-    if(!data) return alert('Nenhum lançamento encontrado.');
-    const arr = Object.keys(data).map(k => ({ id:k, ...data[k] }));
-    arr.forEach(item => {
-      const line = `${item.data} - ${item.nome} - ${item.tipo} - R$ ${parseFloat(item.valor).toFixed(2).replace('.',',')}`;
-      pdf.text(line, 14, y);
-      y += 8;
-      if(y > 280){ pdf.addPage(); y = 20; }
-    });
-    pdf.save('relatorio_lancamentos.pdf');
-  }catch(err){ console.error(err); alert('Erro ao gerar PDF.'); }
-}
-
-(function init(){
-  hide('homeCard'); hide('cadastroMenuCard'); hide('inserirCard'); hide('consultarCard');
-  hide('lancamentoMenuCard'); hide('inserirLancCard'); hide('consultarLancCard');
-  el('loginUsuario').focus();
-})();
+/* === Foco automático no campo Usuário ao carregar === */
+window.onload = () => {
+  const loginInput = document.getElementById('loginUsuario');
+  if (loginInput) loginInput.focus();
+};
 </script>
 </body>
 </html>
