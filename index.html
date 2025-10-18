@@ -112,8 +112,7 @@
 <body>
 <div class="wrap">
 
-  <!-- LOGIN -->
-  <!-- LOGIN -->
+<!-- LOGIN -->
 function login(){
   const u = (document.getElementById('loginUsuario').value||'').trim().toUpperCase();
   const s = (document.getElementById('loginSenha').value||'').trim().toUpperCase(); // maiúsculas também
@@ -128,7 +127,9 @@ function login(){
     alert('Usuário ou senha incorretos!');
     document.getElementById('loginUsuario').focus();
   }
-}  </div>
+}  }
+}  
+</div>
 
   <!-- CADASTRO MENU (igual à imagem) -->
   <div class="card hidden cadastro-menu" id="cadastroMenuCard">
@@ -518,4 +519,5 @@ async function gerarPDF(){
 </script>
 </body>
 </html>
+
 
