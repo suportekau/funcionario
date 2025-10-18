@@ -9,16 +9,17 @@
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     margin: 0;
-    height: 100vh;
+    padding: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100vh;
   }
   .container {
     background: #fff;
-    padding: 25px 20px;
+    padding: 25px;
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px #ccc;
     width: 100%;
     max-width: 420px;
   }
@@ -48,10 +49,7 @@
   .menu {
     display: flex;
     justify-content: space-between;
-    gap: 4%;
-  }
-  #lista, #listaLanc {
-    margin-top: 10px;
+    gap: 10px;
   }
   table {
     width: 100%;
@@ -66,7 +64,6 @@
   th {
     background: #007bff;
     color: #fff;
-    text-transform: uppercase;
   }
 </style>
 </head>
@@ -115,11 +112,9 @@ const URL_LANC = "https://funcionarios-7c778-default-rtdb.firebaseio.com/lancame
 
 /* ---- LOGIN ---- */
 function login() {
-  const u = usuario.value.trim().toUpperCase();
+  const u = usuario.value.trim();
   const s = senha.value.trim();
-  // senha original was "1234", keep numeric check (not uppercased)
   if (u === "ADMIN" && s === "1234") {
-    document.body.style.alignItems = "flex-start"; // sobe pro topo ao entrar
     loginDiv.style.display = "none";
     menuDiv.style.display = "block";
     setTimeout(()=>document.querySelector('#menuDiv button').focus(),100);
@@ -148,19 +143,19 @@ function voltarMenu() {
 
 /* ---- FUNCIONÁRIOS ---- */
 async function salvarFuncionario() {
-  const nome = document.getElementById('nome').value.trim().toUpperCase();
-  const cargo = document.getElementById('cargo').value.trim().toUpperCase();
+  const nome = document.getElementById('nome').value.trim();
+  const cargo = document.getElementById('cargo').value.trim();
   if (!nome || !cargo) return alert("Preencha todos os campos!");
   const dados = { nome, cargo };
   await fetch(URL_FUNC, { method:"POST", body:JSON.stringify(dados) });
   alert("Funcionário salvo!");
-  document.getElementById('nome').value = ""; document.getElementById('cargo').value = "";
-  document.getElementById('nome').focus();
+  nome.value = ""; cargo.value = "";
+  nome.focus();
 }
 async function mostrarFuncionarios() {
   const resp = await fetch(URL_FUNC);
   const data = await resp.json();
-  if(!data) { document.getElementById("lista").innerHTML = "<p>Nenhum funcionário encontrado.</p>"; return; }
+  if (!data) return alert("Nenhum funcionário cadastrado.");
   let html = "<table><tr><th>Nome</th><th>Cargo</th><th>Ações</th></tr>";
   for (let id in data) {
     html += `<tr>
@@ -186,20 +181,20 @@ async function excluirFuncionario(id){
 
 /* ---- LANÇAMENTOS ---- */
 async function salvarLancamento() {
-  const data = document.getElementById('dataLanc').value;
-  const func = document.getElementById('funcLanc').value.trim().toUpperCase();
-  const valor = document.getElementById('valorLanc').value;
+  const data = dataLanc.value;
+  const func = funcLanc.value.trim();
+  const valor = valorLanc.value;
   if (!data || !func || !valor) return alert("Preencha todos os campos!");
   const dados = { data, func, valor };
   await fetch(URL_LANC, { method:"POST", body:JSON.stringify(dados) });
   alert("Lançamento salvo!");
-  document.getElementById('dataLanc').value = ""; document.getElementById('funcLanc').value = ""; document.getElementById('valorLanc').value = "";
-  document.getElementById('dataLanc').focus();
+  dataLanc.value = ""; funcLanc.value = ""; valorLanc.value = "";
+  dataLanc.focus();
 }
 async function mostrarLancamentos() {
   const resp = await fetch(URL_LANC);
   const data = await resp.json();
-  if(!data) { document.getElementById("listaLanc").innerHTML = "<p>Nenhum lançamento encontrado.</p>"; return; }
+  if (!data) return alert("Nenhum lançamento encontrado.");
   let html = "<table><tr><th>Data</th><th>Funcionário</th><th>Valor</th><th>Ações</th></tr>";
   for (let id in data) {
     html += `<tr>
@@ -215,9 +210,9 @@ async function mostrarLancamentos() {
   document.getElementById("listaLanc").innerHTML = html;
 }
 function editarLanc(id,data,func,valor){
-  document.getElementById('dataLanc').value = data;
-  document.getElementById('funcLanc').value = func;
-  document.getElementById('valorLanc').value = valor;
+  dataLanc.value = data;
+  funcLanc.value = func;
+  valorLanc.value = valor;
   excluirLanc(id);
 }
 async function excluirLanc(id){
@@ -233,7 +228,7 @@ async function gerarPDF() {
   const data = await resp.json();
   if (!data) return alert("Nenhum lançamento encontrado!");
   let y = 20;
-  doc.text("RELATÓRIO DE LANÇAMENTOS", 65, 10);
+  doc.text("RELATÓRIO DE LANÇAMENTOS", 60, 10);
   let totalGeral = 0;
   for (let id in data) {
     const l = data[id];
@@ -245,7 +240,7 @@ async function gerarPDF() {
   doc.save("relatorio.pdf");
 }
 
-/* ---- MUDAR CAMPO COM ENTER ---- */
+/* ---- ENTER TROCA DE CAMPO ---- */
 document.addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
     const inputs = Array.from(document.querySelectorAll("input, select, textarea, button"));
