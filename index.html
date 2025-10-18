@@ -113,12 +113,22 @@
 <div class="wrap">
 
   <!-- LOGIN -->
-  <div class="card" id="loginCard">
-    <h2>LOGIN</h2>
-    <input id="loginUsuario" type="text" placeholder="Usuário" autocomplete="username" />
-    <input id="loginSenha" type="password" placeholder="Senha" autocomplete="current-password" />
-    <button class="primary" id="btnLogin" onclick="login()">Entrar</button>
-  </div>
+  <!-- LOGIN -->
+function login(){
+  const u = (document.getElementById('loginUsuario').value||'').trim().toUpperCase();
+  const s = (document.getElementById('loginSenha').value||'').trim().toUpperCase(); // maiúsculas também
+  console.log('login:', u, s);
+  // senha esperada (numérica) = '1234' — upper não afeta números
+  if(u === 'ADMIN' && s === '1234'){
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('homeCard').classList.remove('hidden');
+    document.getElementById('loginUsuario').value = '';
+    document.getElementById('loginSenha').value = '';
+  } else {
+    alert('Usuário ou senha incorretos!');
+    document.getElementById('loginUsuario').focus();
+  }
+}  </div>
 
   <!-- CADASTRO MENU (igual à imagem) -->
   <div class="card hidden cadastro-menu" id="cadastroMenuCard">
@@ -508,3 +518,4 @@ async function gerarPDF(){
 </script>
 </body>
 </html>
+
