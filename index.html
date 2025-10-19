@@ -152,14 +152,15 @@
     function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
     function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
     function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-    function sair(){ alert('Saindo do sistema...'); location.reload(); }
+    function sair() {
+  mostrarAviso("✅ Você clicou no botão SAIR!", null, "green");
 
-    function fazerLogin(){
-    const u=document.getElementById('loginUsuario').value.toUpperCase();
-    const s=document.getElementById('loginSenha').value;
-    if(u==="ADMIN" && s==="1234"){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); alert("Login bem-sucedido!"); atualizarDatalistLanc(); }
-    else alert("Usuário ou senha incorretos!");
-    }
+  // Após 3 segundos, recarrega ou volta pra tela de login
+  setTimeout(() => {
+    location.reload(); // ou troque por: esconderTudo(); document.getElementById('loginContainer').classList.remove('hidden');
+  }, 3000);
+}
+
 
     /* ---- Firebase Funções ---- */
     async function listarCadastrosArray(){
@@ -311,8 +312,6 @@
 
   <script>
  
- /* ---- PDF ---- */
-
 /* ---- PDF ---- */
 // === Função genérica de aviso visual (2s) + foco automático ===
 function mostrarAviso(mensagem, foco = null) {
@@ -380,9 +379,9 @@ async function gerarPDFResumoLancamentos() {
   const periodo = `Período: ${mes.split("-")[1]}/${mes.split("-")[0]}`;
 
   pdf.setFontSize(12);
-  pdf.text(nomeEmpresa, 10, 28); // nome à esquerda
-  pdf.text(periodo, pageWidth / 2, 28, { align: "center" }); // período no centro
-  pdf.text("Valor", pageWidth - 10, 28, { align: "right" }); // palavra "Valor" à direita
+  pdf.text(nomeEmpresa, 10, 24); // nome à esquerda
+  pdf.text(periodo, pageWidth / 2, 24, { align: "center" }); // período no centro
+  pdf.text("Valor", pageWidth - 10, 24, { align: "right" }); // palavra "Valor" à direita
 
   let arr = await listarLancamentosArray();
   arr = arr.filter((l) => l.data.startsWith(mes));
@@ -393,10 +392,10 @@ async function gerarPDFResumoLancamentos() {
     soma[l.nome] = (soma[l.nome] || 0) + parseFloat(l.valor);
   });
 
-  pdf.line(10, 32, pageWidth - 10, 32);
+  pdf.line(10, 25, pageWidth - 10, 25);
 
   // === LISTA DE NOMES E VALORES COM PONTOS ===
-  let y = 42;
+  let y = 32;
   pdf.setFontSize(11);
   const margem = 10;
   const larguraUtil = pageWidth - margem * 2;
@@ -524,6 +523,56 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+</script>
+<script>
+  // === MENSAGEM DE AVISO ===
+function mostrarAviso(mensagem, foco = null, cor = "red") {
+  const avisoAntigo = document.getElementById("mensagemAviso");
+  if (avisoAntigo) avisoAntigo.remove();
+
+  const aviso = document.createElement("div");
+  aviso.id = "mensagemAviso";
+  aviso.textContent = mensagem;
+  aviso.style.position = "fixed";
+  aviso.style.top = "20px";
+  aviso.style.left = "50%";
+  aviso.style.transform = "translateX(-50%)";
+  aviso.style.backgroundColor = cor;
+  aviso.style.color = "white";
+  aviso.style.padding = "10px 25px";
+  aviso.style.borderRadius = "8px";
+  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+  aviso.style.fontWeight = "bold";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontFamily = "Arial, sans-serif";
+  aviso.style.textAlign = "center";
+  aviso.style.transition = "opacity 0.4s";
+  aviso.style.opacity = "1";
+
+  document.body.appendChild(aviso);
+
+  // Remove aviso suavemente após 3 segundos
+  setTimeout(() => {
+    aviso.style.opacity = "0";
+    setTimeout(() => aviso.remove(), 400);
+    if (foco) foco.focus();
+  }, 3000);
+}
+
+// === BOTÃO SAIR ===
+
+function sairSistema() {
+  mostrarAviso("✅ Você clicou no botão SAIR!", null, "green");
+
+  // Aqui você pode colocar o que quiser após a mensagem
+  // Exemplo: voltar para a tela de login depois de 3 segundos
+  setTimeout(() => {
+    esconderTudo();
+    document.getElementById('loginContainer').classList.remove('hidden');
+    document.getElementById('loginUsuario').focus();
+  }, 3000);
+}
 
 </script>
 </body>
