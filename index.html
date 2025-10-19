@@ -254,30 +254,7 @@
     /* ==== Enter muda campo + salva automaticamente ==== */
     document.addEventListener('DOMContentLoaded', () => {
 
-    /* === LOGIN === */
-    function ativarEnterLogin() {
-    const usuario = document.getElementById('loginUsuario');
-    const senha = document.getElementById('loginSenha');
-    const btn = document.querySelector('#loginContainer button');
-    if (!usuario || !senha || !btn) return;
-
-    usuario.focus();
-
-    usuario.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        senha.focus();
-      }
-    });
-
-    senha.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        btn.click(); // faz login
-       }
-      });
-  }
-
+   
   /* === CADASTRO DE FUNCIONÁRIO === */
   function ativarEnterCadastro() {
     const nome = document.getElementById('nome');
@@ -452,5 +429,103 @@ async function gerarPDFResumoLancamentos() {
   pdf.save(`RESUMO_LANCAMENTOS_${mes.replace("-", "_")}.pdf`);
 }
   </script>
-  </body>
+
+<script>
+  
+  // === FAZER LOGIN ===
+ // === EXIBE AVISO BONITO ===
+function mostrarAviso(mensagem, foco = null, cor = "red") {
+  const avisoAntigo = document.getElementById("mensagemAviso");
+  if (avisoAntigo) avisoAntigo.remove();
+
+  const aviso = document.createElement("div");
+  aviso.id = "mensagemAviso";
+  aviso.textContent = mensagem;
+  aviso.style.position = "fixed";
+  aviso.style.top = "20px";
+  aviso.style.left = "50%";
+  aviso.style.transform = "translateX(-50%)";
+  aviso.style.backgroundColor = cor;
+  aviso.style.color = "white";
+  aviso.style.padding = "10px 25px";
+  aviso.style.borderRadius = "8px";
+  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+  aviso.style.fontWeight = "bold";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontFamily = "Arial, sans-serif";
+  aviso.style.textAlign = "center";
+  aviso.style.transition = "opacity 0.3s";
+  aviso.style.opacity = "1";
+
+  document.body.appendChild(aviso);
+
+  setTimeout(() => {
+    aviso.style.opacity = "0";
+    setTimeout(() => aviso.remove(), 300);
+    if (foco) foco.focus();
+  }, 2500);
+}
+
+// === FAZER LOGIN ===
+function fazerLogin() {
+  const u = document.getElementById('loginUsuario');
+  const s = document.getElementById('loginSenha');
+  const usuario = u.value.trim().toUpperCase();
+  const senha = s.value.trim();
+
+  u.style.border = s.style.border = "1px solid #ccc";
+
+  if (!usuario) {
+    u.style.border = "2px solid red";
+    mostrarAviso("❌ Informe o usuário!", u, "red");
+    return;
+  }
+
+  if (!senha) {
+    s.style.border = "2px solid red";
+    mostrarAviso("❌ Informe a senha!", s, "red");
+    return;
+  }
+
+  if (usuario === "ADMIN" && senha === "1234") {
+    u.style.border = s.style.border = "2px solid green";
+    mostrarAviso("✅ Login bem-sucedido!", null, "green");
+
+    if (typeof esconderTudo === "function") esconderTudo();
+    const menu = document.getElementById('menu');
+    if (menu) menu.classList.remove('hidden');
+    if (typeof atualizarDatalistLanc === "function") atualizarDatalistLanc();
+  } else {
+    u.style.border = s.style.border = "2px solid red";
+    mostrarAviso("❌ Usuário ou senha incorretos!", u, "red");
+  }
+}
+
+// === FOCO AUTOMÁTICO E ENTER FUNCIONAL ===
+document.addEventListener("DOMContentLoaded", () => {
+  const usuario = document.getElementById("loginUsuario");
+  const senha = document.getElementById("loginSenha");
+
+  if (usuario) usuario.focus();
+
+  // Enter no campo usuário → vai pra senha
+  usuario.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      senha.focus();
+    }
+  });
+
+  // Enter no campo senha → faz login
+  senha.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      fazerLogin();
+    }
+  });
+});
+
+</script>
+</body>
   </html>
+
