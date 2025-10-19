@@ -1,116 +1,531 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Relatório de Funcionários</title>
-  <!-- Importa jsPDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-</head>
-<body>
-  <button id="btnRelatorio">Gerar Relatório</button>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sistema Simples - Funcionários (Firebase)</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-transform: uppercase;
+    box-sizing: border-box;
+    }
+    .container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    box-sizing: border-box;
+    }
+    h2 { margin-bottom: 20px; font-size: 1.4em; }
+    input, select, textarea {
+    width: 100%; padding: 10px; margin: 5px 0;
+    border-radius: 6px; border: 1px solid #ccc;
+    font-size: 16px; box-sizing: border-box;
+    text-transform: uppercase;
+    }
+    button {
+    width: 100%; padding: 12px; margin: 8px 0;
+    border: none; border-radius: 8px;
+    background-color: #007bff; color: white;
+    font-size: 16px; cursor: pointer; transition: background 0.2s;
+    }
+    button:hover { background-color: #0056b3; }
+    .btn-voltar { background-color: #6c757d; }
+    .btn-voltar:hover { background-color: #565e64; }
+    .hidden { display: none; }
+    .lista { text-align: left; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+    .item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f1f3f5; padding: 6px 8px; border-radius: 6px; margin: 4px 0;
+    transition: background 0.2s;
+    }
+    .item:hover { background-color: #e0e3e7; }
+    .btn-excluir {
+    width: 28px; height: 28px; display:flex; align-items:center; justify-content:center;
+    background-color:#dc3545; color:white; border:none; border-radius:50%; cursor:pointer;
+    font-size:14px; flex-shrink:0; transition: background .2s, transform .1s;
+    }
+    .btn-excluir:hover{ background-color:#b02a37; transform: scale(1.1); }
+    </style>
 
-  <script>
-    // 🔹 Exemplo de dados — substitua pelos seus arrays reais
-    const employees = [
-      { id: 1, name: 'João Silva' },
-      { id: 2, name: 'Maria Souza' }
-    ];
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    </head>
+    <body>
 
-    const lancamentos = [
-      { funcionarioId: 1, tipo: 'Venda', data: '08/10/2025', valor: 1200 },
-      { funcionarioId: 1, tipo: 'Comissão', data: '08/10/2025', valor: 300 },
-      { funcionarioId: 2, tipo: 'Serviço', data: '07/10/2025', valor: 800 }
-    ];
+    <!-- LOGIN -->
+    <div class="container" id="loginContainer">
+    <h2>Login</h2>
+    <input type="text" id="loginUsuario" placeholder="Usuário" />
+    <input type="password" id="loginSenha" placeholder="Senha" />
+    <button onclick="fazerLogin()">Entrar</button>
+    </div>
 
-    // 🔹 Função auxiliar para totalizar por funcionário
-    function calcTotalByFunc(id) {
-      return lancamentos
-        .filter(l => l.funcionarioId == id)
-        .reduce((soma, l) => soma + Number(l.valor || 0), 0);
+    <!-- MENU PRINCIPAL -->
+    <div class="container hidden" id="menu">
+    <h2>Menu Principal</h2>
+    <button onclick="abrirCadastro()">Cadastro</button>
+    <button onclick="abrirLancamento()">Lançamento</button>
+    <button onclick="sair()">Sair</button>
+    </div>
+
+    <!-- MENU CADASTRO -->
+    <div class="container hidden" id="menuCadastro">
+    <h2>Cadastro</h2>
+    <button onclick="abrirInserir()">Inserir</button>
+    <button onclick="abrirConsultar()">Consultar</button>
+    <button class="btn-voltar" onclick="voltar()">Voltar</button>
+    </div>
+
+    <!-- INSERIR CADASTRO -->
+    <div class="container hidden" id="inserir">
+    <h2>Inserir / Editar Funcionário</h2>
+    <input type="hidden" id="idEditando" />
+    <input type="text" id="nome" placeholder="Nome" />
+    <input type="text" id="cargo" placeholder="Cargo" />
+    <button onclick="salvarCadastro()">Salvar</button>
+    <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+    </div>
+
+    <!-- CONSULTAR CADASTRO -->
+    <div class="container hidden" id="consultar">
+    <h2>Consultar Funcionários</h2>
+    <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
+    <div class="lista" id="listaCadastros"></div>
+    <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
+    </div>
+
+    <!-- MENU LANÇAMENTO -->
+    <div class="container hidden" id="menuLancamento">
+    <h2>Lançamento</h2>
+    <button onclick="abrirInserirLancamento()">Inserir</button>
+    <button onclick="abrirConsultarLancamento()">Consultar</button>
+    <button class="btn-voltar" onclick="voltar()">Voltar</button>
+    </div>
+
+    <!-- INSERIR LANÇAMENTO -->
+    <div class="container hidden" id="inserirLancamento">
+    <h2>Inserir / Editar Lançamento</h2>
+    <input type="hidden" id="idLancEditando" />
+    <input list="nomesCadastradosLanc" id="nomeLanc" placeholder="Nome do Funcionário" />
+    <datalist id="nomesCadastradosLanc"></datalist>
+    <input type="date" id="dataLanc" />
+    <select id="tipoLanc">
+      <option value="">Selecione Tipo</option>
+      <option value="VALE">VALE</option>
+      <option value="COMPRA">COMPRA</option>
+    </select>
+    <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
+    <button onclick="salvarLancamento()">Salvar</button>
+    <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+    </div>
+
+    <!-- CONSULTAR LANÇAMENTO -->
+    <div class="container hidden" id="consultarLancamento">
+    <h2>Consultar Lançamentos</h2>
+    <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
+    <input type="month" id="filtroMesAno" onchange="mostrarLancamentos()" />
+    <div class="lista" id="listaLancamentos"></div>
+    <button onclick="gerarPDFResumoLancamentos()">Gerar PDF</button>
+    <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
+    </div>
+
+    <script>
+    const FIREBASE_DATABASE_URL = "https://funcionarios-7c778-default-rtdb.firebaseio.com";
+    const AUTH_PARAM = "";
+
+    function dbUrl(path){ const p = path.startsWith("/")?path.slice(1):path; return `${FIREBASE_DATABASE_URL}/${p}.json${AUTH_PARAM}`; }
+
+    function esconderTudo(){ document.querySelectorAll('.container').forEach(div=>div.classList.add('hidden')); }
+    function abrirCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+    function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+    function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
+    function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
+    function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
+    function sair(){ alert('Saindo do sistema...'); location.reload(); }
+
+    function fazerLogin(){
+    const u=document.getElementById('loginUsuario').value.toUpperCase();
+    const s=document.getElementById('loginSenha').value;
+    if(u==="ADMIN" && s==="1234"){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); alert("Login bem-sucedido!"); atualizarDatalistLanc(); }
+    else alert("Usuário ou senha incorretos!");
     }
 
-    // 🔹 Espera o HTML carregar
+    /* ---- Firebase Funções ---- */
+    async function listarCadastrosArray(){
+    const res=await fetch(dbUrl("/cadastros")); const data=await res.json()||{};
+    return Object.entries(data).map(([k,v])=>({id:k,nome:v.nome||"",cargo:v.cargo||""}));
+    }
+    async function adicionarCadastro(c){await fetch(dbUrl("/cadastros"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)});}
+    async function atualizarCadastro(id,c){await fetch(dbUrl(`/cadastros/${id}`),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)});}
+    async function excluirCadastroFb(id){await fetch(dbUrl(`/cadastros/${id}`),{method:"DELETE"});}
+    async function listarLancamentosArray(){
+    const res=await fetch(dbUrl("/lancamentos")); const data=await res.json()||{};
+    return Object.entries(data).map(([k,v])=>({id:k,...v}));
+    }
+    async function adicionarLancamento(l){await fetch(dbUrl("/lancamentos"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(l)});}
+    async function atualizarLancamento(id,l){await fetch(dbUrl(`/lancamentos/${id}`),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(l)});}
+    async function excluirLancamentoFb(id){await fetch(dbUrl(`/lancamentos/${id}`),{method:"DELETE"});}
+
+    /* ---- Cadastro ---- */
+    async function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+    async function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
+    async function salvarCadastro(){
+    const nome=document.getElementById('nome').value.toUpperCase();
+    const cargo=document.getElementById('cargo').value;
+    const id=document.getElementById('idEditando').value;
+    if(!nome||!cargo)return alert("Preencha tudo");
+    if(id) await atualizarCadastro(id,{nome,cargo}); else await adicionarCadastro({nome,cargo});
+    voltarCadastro(); mostrarCadastros(); atualizarDatalistLanc();
+    }
+    async function mostrarCadastros(){
+    const filtro=document.getElementById('filtro').value.toUpperCase();
+    const lista=document.getElementById('listaCadastros'); lista.innerHTML="";
+    const arr=await listarCadastrosArray();
+    arr.filter(c=>c.nome.includes(filtro)).forEach(c=>{
+    const d=document.createElement('div');
+    d.className='item';
+    d.innerHTML=`<span ondblclick="editarCadastro('${c.id}')"><b>${c.nome}</b> - ${c.cargo}</span>
+    <button class='btn-excluir' onclick="excluirCadastro('${c.id}')">🗑️</button>`;
+    lista.appendChild(d);
+    });
+    }
+    async function editarCadastro(id){
+    const arr=await listarCadastrosArray(); const c=arr.find(x=>x.id===id);
+    if(!c)return; esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
+    document.getElementById('idEditando').value=c.id; document.getElementById('nome').value=c.nome; document.getElementById('cargo').value=c.cargo;
+    }
+    async function excluirCadastro(id){ if(confirm("Excluir?")){await excluirCadastroFb(id); mostrarCadastros(); atualizarDatalistLanc();} }
+    function limparCamposCadastro(){document.getElementById('idEditando').value='';document.getElementById('nome').value='';document.getElementById('cargo').value='';}
+
+    /* ---- Lançamentos ---- */
+    async function abrirInserirLancamento(){ esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden'); atualizarDatalistLanc(); }
+    async function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
+    async function salvarLancamento(){
+    const nome=document.getElementById('nomeLanc').value.toUpperCase();
+    const data=document.getElementById('dataLanc').value;
+    const tipo=document.getElementById('tipoLanc').value;
+    const valor=parseFloat(document.getElementById('valorLanc').value);
+    const id=document.getElementById('idLancEditando').value;
+    if(!nome||!data||!tipo||isNaN(valor))return alert("Preencha tudo");
+    if(id) await atualizarLancamento(id,{nome,data,tipo,valor}); else await adicionarLancamento({nome,data,tipo,valor});
+    voltarLancamento(); mostrarLancamentos();
+    }
+    async function mostrarLancamentos(){
+    const lista=document.getElementById('listaLancamentos'); lista.innerHTML="";
+    const filtro=document.getElementById('filtroLanc').value.toUpperCase();
+    const mes=document.getElementById('filtroMesAno').value;
+    let arr=await listarLancamentosArray();
+    if(filtro)arr=arr.filter(l=>l.nome.includes(filtro));
+    if(mes)arr=arr.filter(l=>l.data.startsWith(mes));
+    arr.forEach(l=>{
+      const d=document.createElement('div');
+      d.className='item';
+      d.innerHTML=`<span ondblclick="editarLancamento('${l.id}')"><b>${l.nome}</b> | ${l.data} | ${l.tipo} | R$ ${l.valor}</span>
+      <button class='btn-excluir' onclick="excluirLancamento('${l.id}')">🗑️</button>`;
+      lista.appendChild(d);
+    });
+    }
+    async function editarLancamento(id){
+    const arr=await listarLancamentosArray(); const l=arr.find(x=>x.id===id);
+    if(!l)return; esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden');
+    document.getElementById('idLancEditando').value=l.id;
+    document.getElementById('nomeLanc').value=l.nome;
+    document.getElementById('dataLanc').value=l.data;
+    document.getElementById('tipoLanc').value=l.tipo;
+    document.getElementById('valorLanc').value=l.valor;
+    }
+    async function excluirLancamento(id){ if(confirm("Excluir?")){await excluirLancamentoFb(id); mostrarLancamentos();} }
+    async function atualizarDatalistLanc(){
+    const dl=document.getElementById('nomesCadastradosLanc'); dl.innerHTML="";
+    const arr=await listarCadastrosArray(); arr.forEach(c=>{const o=document.createElement('option');o.value=c.nome;dl.appendChild(o);});
+    }
+
+    /* ==== Enter muda campo + salva automaticamente ==== */
     document.addEventListener('DOMContentLoaded', () => {
-      const botao = document.getElementById('btnRelatorio');
 
-      botao.addEventListener('click', () => {
-        if (!employees.length) {
-          alert('Nenhum funcionário cadastrado.');
-          return;
-        }
+   
+  /* === CADASTRO DE FUNCIONÁRIO === */
+  function ativarEnterCadastro() {
+    const nome = document.getElementById('nome');
+    const cargo = document.getElementById('cargo');
+    const btnSalvar = document.querySelector('#inserir button:not(.btn-voltar)');
+    if (!nome || !cargo || !btnSalvar) return;
 
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        let y = 20;
+    const inputs = [nome, cargo];
+    nome.focus();
 
-        // Logo (exemplo — substitua pelo seu)
-        const logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABtklEQVRYR+2XwU3DMBSEv+KRoXKEVlpI/YTUKuRBH6D5tGFEVBuRXKgQEXXgl2fXvmuTM8lUScGwfAVeMA3wF8iABFJwnAWtGdIcwCPcILPAvT4gHHAq7wCV/5aB8kJAO5gH+svfZgBLn3xqNRpDo1ALpfnctqX3W4CsZgIQCPcU9YAlQGUB8sJlPQOgN9yD+dEBwg7lwCfiI/oHkH6GvEZo4qDx4wXnCsG4FYF6wF9Q9h8P4eIIMbNgA8vxtWeW4IGVY2IHZUS/4dxKvAKvF0hFuv0ALh5nki4Vt1iBDM5zMDiR1Y10ACr7Au/8xvgHnZnQ2+Gvl8q7Q3jce7On4Qb+2jvRvN+7pU+H9KkbAhcFzi+Cbj7BWkRAq3JrZKQp2U9C04ED7dQ8tH7D0c+ITBvfc+W/1IDxWgR1H8Bp6oZUlR3AdwAAAABJRU5ErkJggg==";
-        doc.addImage(logo, 'PNG', 160, 10, 40, 15);
-
-        // Título e data
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.text('Relatório de Funcionários e Lançamentos', 10, y);
-        y += 8;
-
-        const hoje = new Date().toLocaleDateString('pt-BR');
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(11);
-        doc.text(`Gerado em: ${hoje}`, 10, y);
-        y += 10;
-
-        // Loop pelos funcionários
-        employees.forEach(emp => {
-          const totalFunc = calcTotalByFunc(emp.id);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(12);
-          doc.text(`${emp.id} - ${emp.name} (Total: R$ ${totalFunc.toFixed(2)})`, 10, y);
-          y += 6;
-
-          const lancs = lancamentos.filter(l => l.funcionarioId == emp.id);
-          if (lancs.length) {
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.text('Tipo', 12, y);
-            doc.text('Data', 70, y);
-            doc.text('Valor (R$)', 120, y);
-            y += 5;
-            doc.setFont('helvetica', 'normal');
-
-            lancs.forEach(l => {
-              doc.text(l.tipo, 12, y);
-              doc.text(l.data, 70, y);
-              doc.text(Number(l.valor).toFixed(2), 120, y);
-              y += 6;
-              if (y > 280) { doc.addPage(); y = 20; }
-            });
+    inputs.forEach((input, index) => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const next = inputs[index + 1];
+          if (next) {
+            next.focus();
           } else {
-            doc.setFont('helvetica', 'normal');
-            doc.text('• Nenhum lançamento.', 12, y);
-            y += 6;
+            btnSalvar.click(); // último campo → salvar
           }
-
-          y += 4;
-          if (y > 280) { doc.addPage(); y = 20; }
-        });
-
-        // Total geral
-        const totalGeralPDF = lancamentos.reduce((s, l) => s + Number(l.valor || 0), 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text(`TOTAL GERAL: R$ ${totalGeralPDF.toFixed(2)}`, 10, y);
-
-        // ✅ Opção garantida — baixar PDF (funciona em qualquer navegador)
-        doc.save('relatorio-funcionarios.pdf');
-
-        // 🔄 Se quiser abrir em nova aba (pode ser bloqueado pelo navegador):
-        /*
-        const blob = doc.output('blob');
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        */
+        }
       });
     });
+  }
+
+  /* === LANÇAMENTO === */
+  function ativarEnterLancamento() {
+    const nomeLanc = document.getElementById('nomeLanc');
+    const dataLanc = document.getElementById('dataLanc');
+    const tipoLanc = document.getElementById('tipoLanc');
+    const valorLanc = document.getElementById('valorLanc');
+    const btnSalvar = document.querySelector('#inserirLancamento button:not(.btn-voltar)');
+    if (!nomeLanc || !dataLanc || !tipoLanc || !valorLanc || !btnSalvar) return;
+
+    const inputs = [nomeLanc, dataLanc, tipoLanc, valorLanc];
+    nomeLanc.focus();
+
+    inputs.forEach((input, index) => {
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const next = inputs[index + 1];
+          if (next) next.focus(); else btnSalvar.click();
+        }
+      });
+    });
+  }
+
+  ativarEnterLogin();
+  ativarEnterCadastro();
+  ativarEnterLancamento();
+  });
   </script>
+
+  <script>
+ 
+ /* ---- PDF ---- */
+
+/* ---- PDF ---- */
+// === Função genérica de aviso visual (2s) + foco automático ===
+function mostrarAviso(mensagem, foco = null) {
+  // Remove aviso anterior se já existir
+  const avisoAntigo = document.getElementById("mensagemAviso");
+  if (avisoAntigo) avisoAntigo.remove();
+
+  // Cria o aviso
+  const aviso = document.createElement("div");
+  aviso.id = "mensagemAviso";
+  aviso.textContent = mensagem;
+  aviso.style.position = "fixed";
+  aviso.style.top = "20px";
+  aviso.style.left = "50%";
+  aviso.style.transform = "translateX(-50%)";
+  aviso.style.backgroundColor = "#ff4d4d";
+  aviso.style.color = "white";
+  aviso.style.padding = "10px 25px";
+  aviso.style.borderRadius = "8px";
+  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+  aviso.style.fontWeight = "bold";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontFamily = "Arial, sans-serif";
+  aviso.style.textAlign = "center";
+  aviso.style.transition = "opacity 0.3s";
+  aviso.style.opacity = "1";
+
+  document.body.appendChild(aviso);
+
+  // Remove após 2 segundos e foca no campo/botão
+  setTimeout(() => {
+    aviso.style.opacity = "0";
+    setTimeout(() => aviso.remove(), 300);
+    if (foco) foco.focus();
+  }, 3000);
+}
+
+// === Função principal de gerar PDF ===
+async function gerarPDFResumoLancamentos() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  const filtro = document.getElementById("filtroMesAno");
+  const mes = filtro.value;
+
+  if (!mes) {
+    mostrarAviso("Selecione o PERÍODO (mês/ano) antes de gerar o PDF!", filtro);
+    return;
+  }
+
+  // === CABEÇALHO ===
+  pdf.setFontSize(14);
+  pdf.text("SUPERMERCADO LEV +", pageWidth / 2, 15, { align: "center" });
+
+  // Data atual (dia/mes/ano)
+  const hoje = new Date();
+  const dataFormatada = hoje.toLocaleDateString("pt-BR");
+  pdf.setFontSize(10);
+  pdf.text(dataFormatada, pageWidth - 10, 15, { align: "right" }); // data à direita da linha do título
+
+  pdf.line(10, 20, pageWidth - 10, 20);
+
+  const nomeEmpresa = "None";
+  const periodo = `Período: ${mes.split("-")[1]}/${mes.split("-")[0]}`;
+
+  pdf.setFontSize(12);
+  pdf.text(nomeEmpresa, 10, 28); // nome à esquerda
+  pdf.text(periodo, pageWidth / 2, 28, { align: "center" }); // período no centro
+  pdf.text("Valor", pageWidth - 10, 28, { align: "right" }); // palavra "Valor" à direita
+
+  let arr = await listarLancamentosArray();
+  arr = arr.filter((l) => l.data.startsWith(mes));
+
+  // === SOMAR POR NOME ===
+  const soma = {};
+  arr.forEach((l) => {
+    soma[l.nome] = (soma[l.nome] || 0) + parseFloat(l.valor);
+  });
+
+  pdf.line(10, 32, pageWidth - 10, 32);
+
+  // === LISTA DE NOMES E VALORES COM PONTOS ===
+  let y = 42;
+  pdf.setFontSize(11);
+  const margem = 10;
+  const larguraUtil = pageWidth - margem * 2;
+
+  for (const nome in soma) {
+    const valor = "R$ " + soma[nome].toFixed(2).replace(".", ",");
+    const larguraNome = pdf.getTextWidth(nome);
+    const larguraValor = pdf.getTextWidth(valor);
+    const pontosDisponiveis = larguraUtil - (larguraNome + larguraValor + 4);
+    const numPontos = Math.floor(pontosDisponiveis / pdf.getTextWidth("."));
+    const pontos = ".".repeat(numPontos > 0 ? numPontos : 0);
+    const linha = `${nome} ${pontos} ${valor}`;
+    pdf.text(linha, margem, y);
+    y += 8;
+    if (y > 280) {
+      pdf.addPage();
+      y = 20;
+    }
+  }
+
+  // === TOTAL FINAL ===
+  y += 10;
+  const total = Object.values(soma).reduce((a, b) => a + b, 0);
+  const totalFormatado = "R$ " + total.toFixed(2).replace(".", ",");
+
+  pdf.setFont("helvetica", "bold");
+  pdf.text("TOTAL GERAL:", 10, y);
+  pdf.text(totalFormatado, pageWidth - 10, y, { align: "right" });
+
+  pdf.save(`RESUMO_LANCAMENTOS_${mes.replace("-", "_")}.pdf`);
+}
+  </script>
+
+<script>
+  
+  // === FAZER LOGIN ===
+ // === EXIBE AVISO BONITO ===
+function mostrarAviso(mensagem, foco = null, cor = "red") {
+  const avisoAntigo = document.getElementById("mensagemAviso");
+  if (avisoAntigo) avisoAntigo.remove();
+
+  const aviso = document.createElement("div");
+  aviso.id = "mensagemAviso";
+  aviso.textContent = mensagem;
+  aviso.style.position = "fixed";
+  aviso.style.top = "20px";
+  aviso.style.left = "50%";
+  aviso.style.transform = "translateX(-50%)";
+  aviso.style.backgroundColor = cor;
+  aviso.style.color = "white";
+  aviso.style.padding = "10px 25px";
+  aviso.style.borderRadius = "8px";
+  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+  aviso.style.fontWeight = "bold";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontFamily = "Arial, sans-serif";
+  aviso.style.textAlign = "center";
+  aviso.style.transition = "opacity 0.3s";
+  aviso.style.opacity = "1";
+
+  document.body.appendChild(aviso);
+
+  setTimeout(() => {
+    aviso.style.opacity = "0";
+    setTimeout(() => aviso.remove(), 300);
+    if (foco) foco.focus();
+  }, 2500);
+}
+
+// === FAZER LOGIN ===
+function fazerLogin() {
+  const u = document.getElementById('loginUsuario');
+  const s = document.getElementById('loginSenha');
+  const usuario = u.value.trim().toUpperCase();
+  const senha = s.value.trim();
+
+  u.style.border = s.style.border = "1px solid #ccc";
+
+  if (!usuario) {
+    u.style.border = "2px solid red";
+    mostrarAviso("❌ Informe o usuário!", u, "red");
+    return;
+  }
+
+  if (!senha) {
+    s.style.border = "2px solid red";
+    mostrarAviso("❌ Informe a senha!", s, "red");
+    return;
+  }
+
+  if (usuario === "ADMIN" && senha === "1234") {
+    u.style.border = s.style.border = "2px solid green";
+    mostrarAviso("✅ Login bem-sucedido!", null, "green");
+
+    if (typeof esconderTudo === "function") esconderTudo();
+    const menu = document.getElementById('menu');
+    if (menu) menu.classList.remove('hidden');
+    if (typeof atualizarDatalistLanc === "function") atualizarDatalistLanc();
+  } else {
+    u.style.border = s.style.border = "2px solid red";
+    mostrarAviso("❌ Usuário ou senha incorretos!", u, "red");
+  }
+}
+
+// === FOCO AUTOMÁTICO E ENTER FUNCIONAL ===
+document.addEventListener("DOMContentLoaded", () => {
+  const usuario = document.getElementById("loginUsuario");
+  const senha = document.getElementById("loginSenha");
+
+  if (usuario) usuario.focus();
+
+  // Enter no campo usuário → vai pra senha
+  usuario.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      senha.focus();
+    }
+  });
+
+  // Enter no campo senha → faz login
+  senha.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      fazerLogin();
+    }
+  });
+});
+
+</script>
 </body>
-</html>
+  </html>
+
