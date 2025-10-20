@@ -63,7 +63,7 @@
     </head>
     <body>
 
-    <!-- LOGIN -->
+  <!-- LOGIN -->
     <div class="container" id="loginContainer">
     <h2>Login</h2>
     <input type="text" id="loginUsuario" placeholder="Usuário" />
@@ -71,15 +71,15 @@
     <button onclick="fazerLogin()">Entrar</button>
     </div>
 
-    <!-- MENU PRINCIPAL -->
+  <!-- MENU PRINCIPAL -->
     <div class="container hidden" id="menu">
     <h2>Menu Principal</h2>
     <button onclick="abrirCadastro()">Cadastro</button>
     <button onclick="abrirLancamento()">Lançamento</button>
-    <button onclick="sair()">Sair</button>
+    <button onclick="sairSistema()">Sair</button>
     </div>
 
-    <!-- MENU CADASTRO -->
+  <!-- MENU CADASTRO -->
     <div class="container hidden" id="menuCadastro">
     <h2>Cadastro</h2>
     <button onclick="abrirInserir()">Inserir</button>
@@ -87,7 +87,7 @@
     <button class="btn-voltar" onclick="voltar()">Voltar</button>
     </div>
 
-    <!-- INSERIR CADASTRO -->
+  <!-- INSERIR CADASTRO -->
     <div class="container hidden" id="inserir">
     <h2>Inserir / Editar Funcionário</h2>
     <input type="hidden" id="idEditando" />
@@ -97,7 +97,7 @@
     <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
     </div>
 
-    <!-- CONSULTAR CADASTRO -->
+  <!-- CONSULTAR CADASTRO -->
     <div class="container hidden" id="consultar">
     <h2>Consultar Funcionários</h2>
     <input type="text" id="filtro" placeholder="Filtrar por nome" oninput="mostrarCadastros()" />
@@ -105,7 +105,7 @@
     <button class="btn-voltar" onclick="voltarCadastro()">Voltar</button>
     </div>
 
-    <!-- MENU LANÇAMENTO -->
+  <!-- MENU LANÇAMENTO -->
     <div class="container hidden" id="menuLancamento">
     <h2>Lançamento</h2>
     <button onclick="abrirInserirLancamento()">Inserir</button>
@@ -113,7 +113,7 @@
     <button class="btn-voltar" onclick="voltar()">Voltar</button>
     </div>
 
-    <!-- INSERIR LANÇAMENTO -->
+  <!-- INSERIR LANÇAMENTO -->
     <div class="container hidden" id="inserirLancamento">
     <h2>Inserir / Editar Lançamento</h2>
     <input type="hidden" id="idLancEditando" />
@@ -121,16 +121,16 @@
     <datalist id="nomesCadastradosLanc"></datalist>
     <input type="date" id="dataLanc" />
     <select id="tipoLanc">
-      <option value="">Selecione Tipo</option>
-      <option value="VALE">VALE</option>
-      <option value="COMPRA">COMPRA</option>
+    <option value="">Selecione Tipo</option>
+    <option value="VALE">VALE</option>
+    <option value="COMPRA">COMPRA</option>
     </select>
     <input type="number" id="valorLanc" placeholder="Valor" step="0.01" />
     <button onclick="salvarLancamento()">Salvar</button>
     <button class="btn-voltar" onclick="voltarLancamento()">Voltar</button>
     </div>
 
-    <!-- CONSULTAR LANÇAMENTO -->
+  <!-- CONSULTAR LANÇAMENTO -->
     <div class="container hidden" id="consultarLancamento">
     <h2>Consultar Lançamentos</h2>
     <input type="text" id="filtroLanc" placeholder="Filtrar por nome" oninput="mostrarLancamentos()" />
@@ -152,17 +152,8 @@
     function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
     function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
     function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-    function sair() {
-  mostrarAviso("✅ Você clicou no botão SAIR!", null, "green");
-
-  // Após 3 segundos, recarrega ou volta pra tela de login
-  setTimeout(() => {
-    location.reload(); // ou troque por: esconderTudo(); document.getElementById('loginContainer').classList.remove('hidden');
-  }, 3000);
-}
-
-
-    /* ---- Firebase Funções ---- */
+   
+  /* ---- Firebase Funções ---- */
     async function listarCadastrosArray(){
     const res=await fetch(dbUrl("/cadastros")); const data=await res.json()||{};
     return Object.entries(data).map(([k,v])=>({id:k,nome:v.nome||"",cargo:v.cargo||""}));
@@ -209,7 +200,7 @@
     async function excluirCadastro(id){ if(confirm("Excluir?")){await excluirCadastroFb(id); mostrarCadastros(); atualizarDatalistLanc();} }
     function limparCamposCadastro(){document.getElementById('idEditando').value='';document.getElementById('nome').value='';document.getElementById('cargo').value='';}
 
-    /* ---- Lançamentos ---- */
+  /* ---- Lançamentos ---- */
     async function abrirInserirLancamento(){ esconderTudo(); document.getElementById('inserirLancamento').classList.remove('hidden'); atualizarDatalistLanc(); }
     async function abrirConsultarLancamento(){ esconderTudo(); document.getElementById('consultarLancamento').classList.remove('hidden'); mostrarLancamentos(); }
     async function salvarLancamento(){
@@ -252,7 +243,7 @@
     const arr=await listarCadastrosArray(); arr.forEach(c=>{const o=document.createElement('option');o.value=c.nome;dl.appendChild(o);});
     }
 
-    /* ==== Enter muda campo + salva automaticamente ==== */
+  /* ==== Enter muda campo + salva automaticamente ==== */
     document.addEventListener('DOMContentLoaded', () => {
 
    
@@ -267,22 +258,21 @@
     nome.focus();
 
     inputs.forEach((input, index) => {
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          const next = inputs[index + 1];
-          if (next) {
-            next.focus();
-          } else {
-            btnSalvar.click(); // último campo → salvar
-          }
-        }
-      });
+    input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+    event.preventDefault();
+    const next = inputs[index + 1];
+    if (next) {
+    next.focus();
+    } else {
+    btnSalvar.click(); // último campo → salvar
+    }
+    }
     });
-  }
-
+    });
+    }
   /* === LANÇAMENTO === */
-  function ativarEnterLancamento() {
+    function ativarEnterLancamento() {
     const nomeLanc = document.getElementById('nomeLanc');
     const dataLanc = document.getElementById('dataLanc');
     const tipoLanc = document.getElementById('tipoLanc');
@@ -294,113 +284,69 @@
     nomeLanc.focus();
 
     inputs.forEach((input, index) => {
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          const next = inputs[index + 1];
-          if (next) next.focus(); else btnSalvar.click();
-        }
-      });
+    input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+    event.preventDefault();
+    const next = inputs[index + 1];
+    if (next) next.focus(); else btnSalvar.click();
+    }
     });
-  }
+    });
+    }
 
-  ativarEnterLogin();
-  ativarEnterCadastro();
-  ativarEnterLancamento();
-  });
-  </script>
+    ativarEnterLogin();
+    ativarEnterCadastro();
+    ativarEnterLancamento();
+    });
+    </script>
 
-  <script>
+    <script>
  
-/* ---- PDF ---- */
-// === Função genérica de aviso visual (2s) + foco automático ===
-function mostrarAviso(mensagem, foco = null) {
-  // Remove aviso anterior se já existir
-  const avisoAntigo = document.getElementById("mensagemAviso");
-  if (avisoAntigo) avisoAntigo.remove();
-
-  // Cria o aviso
-  const aviso = document.createElement("div");
-  aviso.id = "mensagemAviso";
-  aviso.textContent = mensagem;
-  aviso.style.position = "fixed";
-  aviso.style.top = "20px";
-  aviso.style.left = "50%";
-  aviso.style.transform = "translateX(-50%)";
-  aviso.style.backgroundColor = "#ff4d4d";
-  aviso.style.color = "white";
-  aviso.style.padding = "10px 25px";
-  aviso.style.borderRadius = "8px";
-  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-  aviso.style.fontWeight = "bold";
-  aviso.style.zIndex = "9999";
-  aviso.style.fontFamily = "Arial, sans-serif";
-  aviso.style.textAlign = "center";
-  aviso.style.transition = "opacity 0.3s";
-  aviso.style.opacity = "1";
-
-  document.body.appendChild(aviso);
-
-  // Remove após 2 segundos e foca no campo/botão
-  setTimeout(() => {
-    aviso.style.opacity = "0";
-    setTimeout(() => aviso.remove(), 300);
-    if (foco) foco.focus();
-  }, 3000);
-}
-
-// === Função principal de gerar PDF ===
-async function gerarPDFResumoLancamentos() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-
-  const filtro = document.getElementById("filtroMesAno");
-  const mes = filtro.value;
-
-  if (!mes) {
+  /* ---- PDF ---- */
+    // === Função principal de gerar PDF ===
+   async function gerarPDFResumoLancamentos() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const filtro = document.getElementById("filtroMesAno");
+    const mes = filtro.value;
+    if (!mes) {
     mostrarAviso("Selecione o PERÍODO (mês/ano) antes de gerar o PDF!", filtro);
     return;
-  }
+   }
 
   // === CABEÇALHO ===
-  pdf.setFontSize(14);
-  pdf.text("SUPERMERCADO LEV +", pageWidth / 2, 15, { align: "center" });
+    pdf.setFontSize(14);
+    pdf.text("SUPERMERCADO LEV +", pageWidth / 2, 15, { align: "center" });
 
   // Data atual (dia/mes/ano)
-  const hoje = new Date();
-  const dataFormatada = hoje.toLocaleDateString("pt-BR");
-  pdf.setFontSize(10);
-  pdf.text(dataFormatada, pageWidth - 10, 15, { align: "right" }); // data à direita da linha do título
-
-  pdf.line(10, 20, pageWidth - 10, 20);
-
-  const nomeEmpresa = "None";
-  const periodo = `Período: ${mes.split("-")[1]}/${mes.split("-")[0]}`;
-
-  pdf.setFontSize(12);
-  pdf.text(nomeEmpresa, 10, 24); // nome à esquerda
-  pdf.text(periodo, pageWidth / 2, 24, { align: "center" }); // período no centro
-  pdf.text("Valor", pageWidth - 10, 24, { align: "right" }); // palavra "Valor" à direita
-
-  let arr = await listarLancamentosArray();
-  arr = arr.filter((l) => l.data.startsWith(mes));
+    const hoje = new Date();
+    const dataFormatada = hoje.toLocaleDateString("pt-BR");
+    pdf.setFontSize(10);
+    pdf.text(dataFormatada, pageWidth - 10, 15, { align: "right" }); // data à direita da linha do título
+    pdf.line(10, 20, pageWidth - 10, 20);
+    const nomeEmpresa = "None";
+    const periodo = `Período: ${mes.split("-")[1]}/${mes.split("-")[0]}`;
+    pdf.setFontSize(12);
+    pdf.text(nomeEmpresa, 10, 24); // nome à esquerda
+    pdf.text(periodo, pageWidth / 2, 24, { align: "center" }); // período no centro
+    pdf.text("Valor", pageWidth - 10, 24, { align: "right" }); // palavra "Valor" à direita
+    let arr = await listarLancamentosArray();
+    arr = arr.filter((l) => l.data.startsWith(mes));
 
   // === SOMAR POR NOME ===
-  const soma = {};
-  arr.forEach((l) => {
+    const soma = {};
+    arr.forEach((l) => {
     soma[l.nome] = (soma[l.nome] || 0) + parseFloat(l.valor);
-  });
-
-  pdf.line(10, 25, pageWidth - 10, 25);
+    });
+    pdf.line(10, 25, pageWidth - 10, 25);
 
   // === LISTA DE NOMES E VALORES COM PONTOS ===
-  let y = 32;
-  pdf.setFontSize(11);
-  const margem = 10;
-  const larguraUtil = pageWidth - margem * 2;
-
-  for (const nome in soma) {
+    let y = 32;
+    pdf.setFontSize(11);
+    const margem = 10;
+    const larguraUtil = pageWidth - margem * 2;
+    for (const nome in soma) {
     const valor = "R$ " + soma[nome].toFixed(2).replace(".", ",");
     const larguraNome = pdf.getTextWidth(nome);
     const larguraValor = pdf.getTextWidth(valor);
@@ -411,10 +357,10 @@ async function gerarPDFResumoLancamentos() {
     pdf.text(linha, margem, y);
     y += 8;
     if (y > 280) {
-      pdf.addPage();
-      y = 20;
+    pdf.addPage();
+    y = 20;
     }
-  }
+    }
 
   // === TOTAL FINAL ===
   y += 10;
@@ -429,108 +375,67 @@ async function gerarPDFResumoLancamentos() {
 }
   </script>
 
-<script>
+  <script>
   
-  // === FAZER LOGIN ===
- // === EXIBE AVISO BONITO ===
-function mostrarAviso(mensagem, foco = null, cor = "red") {
-  const avisoAntigo = document.getElementById("mensagemAviso");
-  if (avisoAntigo) avisoAntigo.remove();
-
-  const aviso = document.createElement("div");
-  aviso.id = "mensagemAviso";
-  aviso.textContent = mensagem;
-  aviso.style.position = "fixed";
-  aviso.style.top = "20px";
-  aviso.style.left = "50%";
-  aviso.style.transform = "translateX(-50%)";
-  aviso.style.backgroundColor = cor;
-  aviso.style.color = "white";
-  aviso.style.padding = "10px 25px";
-  aviso.style.borderRadius = "8px";
-  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-  aviso.style.fontWeight = "bold";
-  aviso.style.zIndex = "9999";
-  aviso.style.fontFamily = "Arial, sans-serif";
-  aviso.style.textAlign = "center";
-  aviso.style.transition = "opacity 0.3s";
-  aviso.style.opacity = "1";
-
-  document.body.appendChild(aviso);
-
-  setTimeout(() => {
-    aviso.style.opacity = "0";
-    setTimeout(() => aviso.remove(), 300);
-    if (foco) foco.focus();
-  }, 2500);
-}
 
 // === FAZER LOGIN ===
-function fazerLogin() {
+  function fazerLogin() {
   const u = document.getElementById('loginUsuario');
   const s = document.getElementById('loginSenha');
   const usuario = u.value.trim().toUpperCase();
   const senha = s.value.trim();
-
   u.style.border = s.style.border = "1px solid #ccc";
-
   if (!usuario) {
-    u.style.border = "2px solid red";
-    mostrarAviso("❌ Informe o usuário!", u, "red");
-    return;
+  u.style.border = "2px solid red";
+  mostrarAviso("❌ Informe o usuário!", u, "red");
+  return;
   }
-
   if (!senha) {
-    s.style.border = "2px solid red";
-    mostrarAviso("❌ Informe a senha!", s, "red");
-    return;
+  s.style.border = "2px solid red";
+  mostrarAviso("❌ Informe a senha!", s, "red");
+  return;
   }
-
   if (usuario === "ADMIN" && senha === "1234") {
-    u.style.border = s.style.border = "2px solid green";
-    mostrarAviso("✅ Login bem-sucedido!", null, "green");
-
-    if (typeof esconderTudo === "function") esconderTudo();
-    const menu = document.getElementById('menu');
-    if (menu) menu.classList.remove('hidden');
-    if (typeof atualizarDatalistLanc === "function") atualizarDatalistLanc();
+  u.style.border = s.style.border = "2px solid green";
+  mostrarAviso("✅ Login bem-sucedido!", null, "green");
+  if (typeof esconderTudo === "function") esconderTudo();
+  const menu = document.getElementById('menu');
+  if (menu) menu.classList.remove('hidden');
+  if (typeof atualizarDatalistLanc === "function") atualizarDatalistLanc();
   } else {
-    u.style.border = s.style.border = "2px solid red";
-    mostrarAviso("❌ Usuário ou senha incorretos!", u, "red");
+  u.style.border = s.style.border = "2px solid red";
+  mostrarAviso("❌ Usuário ou senha incorretos!", u, "red");
   }
-}
+  } 
 
 // === FOCO AUTOMÁTICO E ENTER FUNCIONAL ===
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
   const usuario = document.getElementById("loginUsuario");
   const senha = document.getElementById("loginSenha");
-
   if (usuario) usuario.focus();
-
   // Enter no campo usuário → vai pra senha
   usuario.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      senha.focus();
-    }
+  if (e.key === "Enter") {
+  e.preventDefault();
+  senha.focus();
+  }
   });
 
-  // Enter no campo senha → faz login
+// Enter no campo senha → faz login
   senha.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      fazerLogin();
-    }
+  if (e.key === "Enter") {
+  e.preventDefault();
+  fazerLogin();
+  }
   });
-});
+  });
 
-</script>
-<script>
-  // === MENSAGEM DE AVISO ===
+  </script>
+  <script>
+// === MENSAGEM DE AVISO ===
 function mostrarAviso(mensagem, foco = null, cor = "red") {
   const avisoAntigo = document.getElementById("mensagemAviso");
   if (avisoAntigo) avisoAntigo.remove();
-
   const aviso = document.createElement("div");
   aviso.id = "mensagemAviso";
   aviso.textContent = mensagem;
@@ -549,33 +454,36 @@ function mostrarAviso(mensagem, foco = null, cor = "red") {
   aviso.style.textAlign = "center";
   aviso.style.transition = "opacity 0.4s";
   aviso.style.opacity = "1";
-
   document.body.appendChild(aviso);
 
-  // Remove aviso suavemente após 3 segundos
+// Remove aviso suavemente após 3 segundos
   setTimeout(() => {
-    aviso.style.opacity = "0";
-    setTimeout(() => aviso.remove(), 400);
-    if (foco) foco.focus();
+  aviso.style.opacity = "0";
+  setTimeout(() => aviso.remove(), 400);
+  if (foco) foco.focus();
   }, 3000);
-}
+  }
 
 // === BOTÃO SAIR ===
-
-function sairSistema() {
-  mostrarAviso("✅ Você clicou no botão SAIR!", null, "green");
-
-  // Aqui você pode colocar o que quiser após a mensagem
-  // Exemplo: voltar para a tela de login depois de 3 segundos
+  function sairSistema() {
+  mostrarAviso("✅ Você saiu do sistema!", null, "green");
   setTimeout(() => {
-    esconderTudo();
-    document.getElementById('loginContainer').classList.remove('hidden');
-    document.getElementById('loginUsuario').focus();
-  }, 3000);
-}
+  esconderTudo();
+  const loginDiv = document.getElementById('loginContainer');
+  const usuario = document.getElementById('loginUsuario');
+  const senha = document.getElementById('loginSenha');
+
+// limpa campos
+    if (usuario) usuario.value = "";
+    if (senha) senha.value = "";
+
+// mostra tela de login novamente
+    if (loginDiv) loginDiv.classList.remove('hidden');
+    // foca no campo de usuário
+    if (usuario) usuario.focus();
+  }, 2500);
+  }
 
 </script>
 </body>
-  </html>
-
-
+</html>
