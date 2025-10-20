@@ -533,8 +533,32 @@ window.atualizarCadastro = async function(id, c) {
 };
 
 window.excluirCadastroFb = async function(id) {
-  await remove(ref(window.db, "cadastros/" + id));
+  try {
+    // 1️⃣ Verifica se há lançamentos vinculados ao funcionário
+    const snap = await get(ref(window.db, "lancamentos"));
+    const data = snap.val() || {};
+
+    // Procura lançamentos com o nome do funcionário
+    const temLancamento = Object.values(data).some(l => l.nome && l.nome.toUpperCase && l.nome.toUpperCase() ===
+      (await get(ref(window.db, "cadastros/" + id)))
+        .val()
+        ?.nome?.toUpperCase()
+    );
+
+    if (temLancamento) {
+      alert("❌ Este funcionário possui lançamentos e não pode ser excluído.\n\nApague os lançamentos primeiro!");
+      return;
+    }
+
+    // 2️⃣ Caso não tenha lançamentos, exclui normalmente
+    await remove(ref(window.db, "cadastros/" + id));
+    alert("✅ Funcionário excluído com sucesso!");
+  } catch (erro) {
+    console.error("Erro ao excluir funcionário:", erro);
+    alert("⚠️ Erro ao excluir funcionário. Verifique o console.");
+  }
 };
+
 
 // === FUNÇÕES DE LANÇAMENTOS ===
 window.listarLancamentosArray = async function() {
