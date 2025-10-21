@@ -188,18 +188,33 @@ async function salvarCadastro(){
   if(id) await atualizarCadastro(id,{nome,cargo}); else await adicionarCadastro({nome,cargo});
   voltarCadastro(); mostrarCadastros(); atualizarDatalistLanc();
 }
-async function mostrarCadastros(){
-  const filtro=document.getElementById('filtro').value.toUpperCase();
-  const lista=document.getElementById('listaCadastros'); lista.innerHTML="";
-  const arr=await listarCadastrosArray();
-  arr.filter(c=>c.nome.includes(filtro)).forEach(c=>{
-    const d=document.createElement('div');
-    d.className='item';
-    d.innerHTML=`<span ondblclick="editarCadastro('${c.id}')"><b>${c.nome}</b> - ${c.cargo}</span>
-    <button class='btn-excluir' onclick="excluirCadastro('${c.id}')">🗑️</button>`;
-    lista.appendChild(d);
+function mostrarLancamentos() {
+  const lista = document.getElementById('listaLancamentos');
+  const filtro = document.getElementById('filtroLanc').value.toUpperCase();
+  const mes = document.getElementById('filtroMesAno').value;
+
+  // 🔥 Atualização em tempo real
+  firebase.database().ref("lancamentos").on("value", (snapshot) => {
+    lista.innerHTML = "";
+    const data = snapshot.val() || {};
+    Object.entries(data)
+      .filter(([id, l]) =>
+        (!filtro || (l.nome && l.nome.toUpperCase().includes(filtro))) &&
+        (!mes || (l.data || "").startsWith(mes))
+      )
+      .forEach(([id, l]) => {
+        const d = document.createElement('div');
+        d.className = 'item';
+        d.innerHTML = `
+          <span ondblclick="editarLancamento('${id}')">
+            <b>${l.nome}</b> | ${l.data} | ${l.tipo} | R$ ${l.valor}
+          </span>
+          <button class='btn-excluir' onclick="excluirLancamento('${id}')">🗑️</button>`;
+        lista.appendChild(d);
+      });
   });
 }
+
 async function editarCadastro(id){
   const arr=await listarCadastrosArray(); const c=arr.find(x=>x.id===id);
   if(!c)return; esconderTudo(); document.getElementById('inserir').classList.remove('hidden');
@@ -348,6 +363,41 @@ document.addEventListener('DOMContentLoaded', () => {
   ativarEnterCadastro();
   ativarEnterLancamento();
 });
+
 </script>
+
+<!-- 🔥 SDKs Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+<script>
+  // === CONFIGURAÇÃO DO FIREBASE ===
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "funcionarios-7c778.firebaseapp.com",
+    databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+    projectId: "funcionarios-7c778",
+    storageBucket: "funcionarios-7c778.appspot.com",
+    messagingSenderId: "XXXXXXXXXXX",
+    appId: "1:XXXXXXXXXXX:web:XXXXXXXXXXX"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // === ATUALIZAÇÃO EM TEMPO REAL ===
+  db.ref("cadastros").on("value", snapshot => {
+    const data = snapshot.val() || {};
+    console.log("📡 Atualização em tempo real (cadastros):", data);
+    mostrarCadastros(); // Atualiza lista automaticamente
+  });
+
+  db.ref("lancamentos").on("value", snapshot => {
+    const data = snapshot.val() || {};
+    console.log("📡 Atualização em tempo real (lançamentos):", data);
+    mostrarLancamentos(); // Atualiza lista automaticamente
+  });
+</script>
+
 </body>
 </html>
