@@ -239,8 +239,10 @@ function abrirLancamento(){ esconderTudo(); document.getElementById('menuLancame
 function voltar(){ esconderTudo(); document.getElementById('menu').classList.remove('hidden'); }
 function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
 function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
-function sair(){ alert('Saindo do sistema...'); location.reload(); }
-
+function sair() {
+  mostrarAviso("🚪 Você clicou no botão Sair", "red");
+  setTimeout(() => location.reload(), 1500); // Espera 1.5s antes de recarregar a página
+}
 function fazerLogin(){
   const u=document.getElementById('loginUsuario').value.toUpperCase();
   const s=document.getElementById('loginSenha').value;
@@ -389,16 +391,6 @@ async function gerarPDFResumoLancamentos(){
     const botao = document.querySelector("#loginContainer button");
 
     if (usuario && senha && botao) {
-      // Foco automático no campo usuário
-      usuario.focus();
-
-      // Pressionar Enter no campo usuário → vai para senha
-      usuario.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          senha.focus();
-        }
-      });
 
       // Pressionar Enter no campo senha → faz login
       senha.addEventListener("keydown", (e) => {
