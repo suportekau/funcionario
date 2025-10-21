@@ -155,6 +155,8 @@
 </head>
 <body>
 
+
+  
 <!-- LOGIN -->
 <div class="login-box" id="loginContainer">
   <h2>LOGIN</h2>
@@ -270,7 +272,15 @@ async function atualizarLancamento(id,l){ await db.ref("lancamentos/"+id).update
 async function excluirLancamentoFb(id){ await db.ref("lancamentos/"+id).remove(); }
 
 /* === Cadastro === */
-async function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
+async function abrirInserir() {
+  esconderTudo();
+  document.getElementById('inserir').classList.remove('hidden');
+  limparCamposCadastro();
+
+  // Focar no campo nome
+  const nomeCampo = document.getElementById('nome');
+  if (nomeCampo) nomeCampo.focus();
+}
 async function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
 async function salvarCadastro(){
   const nome=document.getElementById('nome').value.toUpperCase();
@@ -278,6 +288,16 @@ async function salvarCadastro(){
   const id=document.getElementById('idEditando').value;
   if(!nome||!cargo)return alert("Preencha tudo");
   if(id) await atualizarCadastro(id,{nome,cargo}); else await adicionarCadastro({nome,cargo});
+ // Limpar campos
+  limparCamposCadastro();
+
+  // Focar no campo nome para próximo cadastro
+  const nomeCampo = document.getElementById('nome');
+  if (nomeCampo) nomeCampo.focus();
+
+  // Atualizar lista de cadastros
+  mostrarCadastros();
+
 }
 async function mostrarCadastros(){
   const filtro=document.getElementById('filtro').value.toUpperCase();
@@ -311,18 +331,28 @@ async function salvarLancamento(){
   if(!nome||!data||!tipo||isNaN(valor))return alert("Preencha tudo");
   if(id) await atualizarLancamento(id,{nome,data,tipo,valor}); else await adicionarLancamento({nome,data,tipo,valor});
 }
-async function mostrarLancamentos(){
-  const lista=document.getElementById('listaLancamentos'); lista.innerHTML="";
-  const filtro=document.getElementById('filtroLanc').value.toUpperCase();
-  const mes=document.getElementById('filtroMesAno').value;
-  let arr=await listarLancamentosArray();
-  if(filtro)arr=arr.filter(l=>l.nome.includes(filtro));
-  if(mes)arr=arr.filter(l=>l.data.startsWith(mes));
-  arr.forEach(l=>{
-    const d=document.createElement('div');
-    d.className='item';
-    d.innerHTML=`<span ondblclick="editarLancamento('${l.id}')"><b>${l.nome}</b> | ${l.data} | ${l.tipo} | R$ ${l.valor}</span>
-    <button class='btn-excluir' onclick="excluirLancamento('${l.id}')">🗑️</button>`;
+async function mostrarLancamentos() {
+  const lista = document.getElementById('listaLancamentos');
+  const filtro = document.getElementById('filtroLanc').value.toUpperCase();
+  const mes = document.getElementById('filtroMesAno').value;
+
+  lista.innerHTML = "";
+
+  // ✅ Campo mês/ano obrigatório
+  if (!mes) {
+    lista.innerHTML = "<div style='color:red; font-weight:bold;'>Selecione mês e ano para exibir os lançamentos.</div>";
+    return;
+  }
+
+  let arr = await listarLancamentosArray();
+  if (filtro) arr = arr.filter(l => l.nome.includes(filtro));
+  arr = arr.filter(l => l.data.startsWith(mes));
+
+  arr.forEach(l => {
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = `<span ondblclick="editarLancamento('${l.id}')"><b>${l.nome}</b> | ${l.data} | ${l.tipo} | R$ ${l.valor}</span>
+                   <button class='btn-excluir' onclick="excluirLancamento('${l.id}')">🗑️</button>`;
     lista.appendChild(d);
   });
 }
@@ -342,26 +372,78 @@ async function atualizarDatalistLanc(){
 }
 
 /* === PDF === */
-async function gerarPDFResumoLancamentos(){
+async function gerarPDFResumoLancamentos() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
+
   pdf.setFontSize(14);
-  pdf.text("SUPERMERCADO LEV +", pageWidth/2, 15, {align:"center"});
-  pdf.line(10,20,pageWidth-10,20);
-  let y=30; const mes=document.getElementById('filtroMesAno').value;
-  let arr=await listarLancamentosArray(); if(mes)arr=arr.filter(l=>l.data.startsWith(mes));
-  const soma={}; arr.forEach(l=>soma[l.nome]=(soma[l.nome]||0)+parseFloat(l.valor));
-  for(const nome in soma){ const v="R$ "+soma[nome].toFixed(2).replace('.',',');
-    pdf.text(`${nome} ................ ${v}`,10,y); y+=8; if(y>280){pdf.addPage();y=20;}
+  pdf.text("SUPERMERCADO LEV +", pageWidth / 2, 15, { align: "center" });
+  //pdf.line(10, 20, pageWidth - 10, 20);
+
+  // === Mostrar período abaixo do título ===
+  const mesAno = document.getElementById('filtroMesAno').value;
+  let periodoTexto = "Período: ";
+  if (mesAno) {
+    const [ano, mes] = mesAno.split("-");
+    periodoTexto += `${mes}/${ano}`;
+  } else {
+    periodoTexto += "Todos";
   }
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(periodoTexto, pageWidth / 2, 22, { align: "center" });
+
+  pdf.line(10, 28, pageWidth - 10, 28);
+
+  let y = 35;
+
+  let arr = await listarLancamentosArray();
+  if (mesAno) arr = arr.filter(l => l.data.startsWith(mesAno));
+
+  const soma = {};
+  arr.forEach(l => soma[l.nome] = (soma[l.nome] || 0) + parseFloat(l.valor));
+
+  pdf.setFontSize(12);
+  for (const nome in soma) {
+    const valor = "R$ " + soma[nome].toFixed(2).replace('.', ',');
+
+    // === Criar linha com pontos ===
+    const linha = nome + " ";
+    const larguraNome = pdf.getTextWidth(linha);
+    const larguraTotal = pageWidth - 20; // margem 10 + 10
+    const larguraPontos = larguraTotal - larguraNome - pdf.getTextWidth(valor);
+    const pontos = ".".repeat(Math.floor(larguraPontos / pdf.getTextWidth(".")));
+
+    pdf.text(nome + " " + pontos + " " + valor, 10, y);
+    y += 8;
+    if (y > 280) {
+      pdf.addPage();
+      y = 20;
+    }
+  }
+
+  const total = Object.values(soma).reduce((a, b) => a + b, 0);
+  y += 10;
+  pdf.setFont("helvetica", "bold");
+  const totalStr = "R$ " + total.toFixed(2).replace('.', ',');
+  const linhaTotal = "TOTAL ";
+  const larguraTotalLinha = pageWidth - 20;
+  const larguraPontosTotal = larguraTotalLinha - pdf.getTextWidth(linhaTotal) - pdf.getTextWidth(totalStr);
+  const pontosTotal = ".".repeat(Math.floor(larguraPontosTotal / pdf.getTextWidth(".")));
+  pdf.text(linhaTotal + pontosTotal + totalStr, 10, y);
+
+  pdf.save("RESUMO_LANCAMENTOS.pdf");
+}
   const total=Object.values(soma).reduce((a,b)=>a+b,0);
   y+=10; pdf.setFont("helvetica","bold");
   pdf.text(`TOTAL ................ R$ ${total.toFixed(2).replace('.',',')}`,10,y);
   pdf.save("RESUMO_LANCAMENTOS.pdf");
-}
-</script>
 
+</script>
+<script>
+  
+</script>
 <!-- 🔥 SDKs Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
@@ -512,6 +594,54 @@ function fazerLogin() {
 
 </script>
 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+  // === Cadastro de Funcionários ===
+  const nome = document.getElementById("nome");
+  const cargo = document.getElementById("cargo");
+  const salvar = document.querySelector("#inserir button");
 
+  if (nome && cargo && salvar) {
+    nome.focus(); // Foco inicial no nome
+
+    nome.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        cargo.focus();
+      }
+    });
+
+    cargo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        salvar.click();
+      }
+    });
+  }
+
+  // === Lançamento ===
+  const nomeLanc = document.getElementById("nomeLanc");
+  const dataLanc = document.getElementById("dataLanc");
+  const tipoLanc = document.getElementById("tipoLanc");
+  const valorLanc = document.getElementById("valorLanc");
+  const salvarLanc = document.querySelector("#inserirLancamento button");
+
+  if (nomeLanc && dataLanc && tipoLanc && valorLanc && salvarLanc) {
+    nomeLanc.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); dataLanc.focus(); }
+    });
+    dataLanc.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); tipoLanc.focus(); }
+    });
+    tipoLanc.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); valorLanc.focus(); }
+    });
+    valorLanc.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); salvarLanc.click(); }
+    });
+  }
+});
+
+</script>
 </body>
 </html>
