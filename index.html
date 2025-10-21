@@ -435,6 +435,7 @@ async function gerarPDFResumoLancamentos(){
   });
 
  
+  
   // === MENSAGEM FLUTUANTE ===
   function mostrarAviso(msg, cor = "green") {
     let aviso = document.getElementById("avisoLogin");
@@ -459,49 +460,66 @@ async function gerarPDFResumoLancamentos(){
     setTimeout(() => (aviso.style.display = "none"), 2000);
   }
 
-  // === FOCO E ENTER ===
-  document.addEventListener("DOMContentLoaded", () => {
-    const usuario = document.getElementById("loginUsuario");
-    const senha = document.getElementById("loginSenha");
-    const botao = document.querySelector("#loginContainer button");
+  // === LOGIN ===
+function fazerLogin() {
+  const usuarioEl = document.getElementById("loginUsuario");
+  const senhaEl = document.getElementById("loginSenha");
+  const usuario = usuarioEl.value.trim().toUpperCase();
+  const senha = senhaEl.value.trim();
 
-    if (usuario && senha && botao) {
-      usuario.focus();
+  // Limpa estilos antigos
+  usuarioEl.style.border = senhaEl.style.border = "1px solid #ccc";
 
-      usuario.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          senha.focus();
-        }
-      });
+  // === CAMPOS VAZIOS ===
+  if (!usuario && !senha) {
+    mostrarAviso("❌ Informe usuário e senha!", "red");
+    usuarioEl.focus();
+    usuarioEl.value = "";
+    senhaEl.value = "";
+    usuarioEl.style.border = senhaEl.style.border = "2px solid red";
+    return;
+  }
+  if (!usuario) {
+    mostrarAviso("❌ Informe o usuário!", "red");
+    usuarioEl.focus();
+    usuarioEl.value = "";
+    usuarioEl.style.border = "2px solid red";
+    return;
+  }
+  if (!senha) {
+    mostrarAviso("❌ Informe a senha!", "red");
+    senhaEl.focus();
+    senhaEl.value = "";
+    senhaEl.style.border = "2px solid red";
+    return;
+  }
 
-      senha.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          botao.click();
-        }
-      });
-    }
-  });
+  // === LOGIN CORRETO ===
+  if (usuario === "ADMIN" && senha === "1234") {
+    mostrarAviso("✅ Login realizado com sucesso!", "green");
+    setTimeout(() => {
+      document.getElementById("loginContainer").classList.add("hidden");
+      document.getElementById("menu").classList.remove("hidden");
+      atualizarDatalistLanc();
+    }, 500);
+  } 
+  // === LOGIN ERRADO ===
+  else {
+    mostrarAviso("❌ Usuário ou senha incorretos!", "red");
+    usuarioEl.style.border = senhaEl.style.border = "2px solid red";
 
-  // === LOGIN SIMPLES ===
-  function fazerLogin() {
-    const usuario = document.getElementById("loginUsuario").value.trim().toUpperCase();
-    const senha = document.getElementById("loginSenha").value.trim();
-
-    if (usuario === "ADMIN" && senha === "1234") {
-      mostrarAviso("✅ Login realizado com sucesso!", "green");
-      setTimeout(() => {
-        document.getElementById("loginContainer").classList.add("hidden");
-        document.getElementById("menu").classList.remove("hidden");
-        atualizarDatalistLanc();
-      }, 500);
+    if (usuario !== "ADMIN") {
+      usuarioEl.value = "";
+      usuarioEl.focus();
     } else {
-      mostrarAviso("❌ Usuário ou senha incorretos!", "red");
-      document.getElementById("loginUsuario").focus();
+      senhaEl.value = "";
+      senhaEl.focus();
     }
   }
+}
+
 </script>
+
 
 </body>
 </html>
