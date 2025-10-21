@@ -434,17 +434,70 @@ async function gerarPDFResumoLancamentos(){
     }
   });
 
-  // === Login simples ===
+ 
+  // === MENSAGEM FLUTUANTE ===
+  function mostrarAviso(msg, cor = "green") {
+    let aviso = document.getElementById("avisoLogin");
+    if (!aviso) {
+      aviso = document.createElement("div");
+      aviso.id = "avisoLogin";
+      aviso.style.position = "fixed";
+      aviso.style.top = "20px";
+      aviso.style.left = "50%";
+      aviso.style.transform = "translateX(-50%)";
+      aviso.style.padding = "12px 20px";
+      aviso.style.borderRadius = "8px";
+      aviso.style.color = "#fff";
+      aviso.style.fontWeight = "bold";
+      aviso.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+      aviso.style.zIndex = "9999";
+      document.body.appendChild(aviso);
+    }
+    aviso.style.backgroundColor = cor === "green" ? "#28a745" : "#dc3545";
+    aviso.textContent = msg;
+    aviso.style.display = "block";
+    setTimeout(() => (aviso.style.display = "none"), 2000);
+  }
+
+  // === FOCO E ENTER ===
+  document.addEventListener("DOMContentLoaded", () => {
+    const usuario = document.getElementById("loginUsuario");
+    const senha = document.getElementById("loginSenha");
+    const botao = document.querySelector("#loginContainer button");
+
+    if (usuario && senha && botao) {
+      usuario.focus();
+
+      usuario.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          senha.focus();
+        }
+      });
+
+      senha.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          botao.click();
+        }
+      });
+    }
+  });
+
+  // === LOGIN SIMPLES ===
   function fazerLogin() {
     const usuario = document.getElementById("loginUsuario").value.trim().toUpperCase();
     const senha = document.getElementById("loginSenha").value.trim();
 
     if (usuario === "ADMIN" && senha === "1234") {
-      alert("✅ Login realizado com sucesso!");
-      document.getElementById("loginContainer").classList.add("hidden");
-      document.getElementById("menu").classList.remove("hidden");
+      mostrarAviso("✅ Login realizado com sucesso!", "green");
+      setTimeout(() => {
+        document.getElementById("loginContainer").classList.add("hidden");
+        document.getElementById("menu").classList.remove("hidden");
+        atualizarDatalistLanc();
+      }, 500);
     } else {
-      alert("❌ Usuário ou senha incorretos!");
+      mostrarAviso("❌ Usuário ou senha incorretos!", "red");
       document.getElementById("loginUsuario").focus();
     }
   }
