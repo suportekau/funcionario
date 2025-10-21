@@ -193,6 +193,28 @@ function mostrarLancamentos() {
   const filtro = document.getElementById('filtroLanc').value.toUpperCase();
   const mes = document.getElementById('filtroMesAno').value;
 
+  db.ref("lancamentos").off(); // evita múltiplos listeners
+  db.ref("lancamentos").on("value", (snapshot) => {
+    lista.innerHTML = "";
+    const data = snapshot.val() || {};
+
+    Object.entries(data)
+      .filter(([id, l]) =>
+        (!filtro || (l.nome && l.nome.toUpperCase().includes(filtro))) &&
+        (!mes || (l.data || "").startsWith(mes))
+      )
+      .forEach(([id, l]) => {
+        const d = document.createElement('div');
+        d.className = 'item';
+        d.innerHTML = `
+          <span ondblclick="editarLancamento('${id}')">
+            <b>${l.nome}</b> | ${l.data} | ${l.tipo} | R$ ${l.valor}
+          </span>
+          <button class='btn-excluir' onclick="excluirLancamento('${id}')">🗑️</button>`;
+        lista.appendChild(d);
+      });
+  });
+
   // 🔥 Atualização em tempo real
   firebase.database().ref("lancamentos").on("value", (snapshot) => {
     lista.innerHTML = "";
