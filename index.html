@@ -153,6 +153,22 @@
     function voltarCadastro(){ esconderTudo(); document.getElementById('menuCadastro').classList.remove('hidden'); }
     function voltarLancamento(){ esconderTudo(); document.getElementById('menuLancamento').classList.remove('hidden'); }
    
+  /* ---- Firebase Funções ---- */
+    async function listarCadastrosArray(){
+    const res=await fetch(dbUrl("/cadastros")); const data=await res.json()||{};
+    return Object.entries(data).map(([k,v])=>({id:k,nome:v.nome||"",cargo:v.cargo||""}));
+    }
+    async function adicionarCadastro(c){await fetch(dbUrl("/cadastros"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)});}
+    async function atualizarCadastro(id,c){await fetch(dbUrl(`/cadastros/${id}`),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(c)});}
+    async function excluirCadastroFb(id){await fetch(dbUrl(`/cadastros/${id}`),{method:"DELETE"});}
+    async function listarLancamentosArray(){
+    const res=await fetch(dbUrl("/lancamentos")); const data=await res.json()||{};
+    return Object.entries(data).map(([k,v])=>({id:k,...v}));
+    }
+    async function adicionarLancamento(l){await fetch(dbUrl("/lancamentos"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(l)});}
+    async function atualizarLancamento(id,l){await fetch(dbUrl(`/lancamentos/${id}`),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(l)});}
+    async function excluirLancamentoFb(id){await fetch(dbUrl(`/lancamentos/${id}`),{method:"DELETE"});}
+
     /* ---- Cadastro ---- */
     async function abrirInserir(){ esconderTudo(); document.getElementById('inserir').classList.remove('hidden'); limparCamposCadastro(); }
     async function abrirConsultar(){ esconderTudo(); document.getElementById('consultar').classList.remove('hidden'); mostrarCadastros(); }
@@ -508,92 +524,6 @@ function mostrarAviso(mensagem, foco = null, cor = "red") {
 
   console.log("✅ Firebase SDK conectado com sucesso!");
 
-</script>
-<script type="module">
-import { ref, set, push, get, update, remove, onValue } 
-  from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-// === REFERÊNCIAS PRINCIPAIS ===
-const cadastrosRef = ref(window.db, "cadastros");
-const lancamentosRef = ref(window.db, "lancamentos");
-
-// === FUNÇÕES DE CADASTRO ===
-window.listarCadastrosArray = async function() {
-  const snap = await get(cadastrosRef);
-  const data = snap.val() || {};
-  return Object.entries(data).map(([id, v]) => ({ id, nome: v.nome, cargo: v.cargo }));
-};
-
-window.adicionarCadastro = async function(c) {
-  await push(cadastrosRef, c);
-};
-
-window.atualizarCadastro = async function(id, c) {
-  await update(ref(window.db, "cadastros/" + id), c);
-};
-
-window.excluirCadastroFb = async function(id) {
-  try {
-    // 1️⃣ Verifica se há lançamentos vinculados ao funcionário
-    const snap = await get(ref(window.db, "lancamentos"));
-    const data = snap.val() || {};
-
-    // Procura lançamentos com o nome do funcionário
-    const temLancamento = Object.values(data).some(l => l.nome && l.nome.toUpperCase && l.nome.toUpperCase() ===
-      (await get(ref(window.db, "cadastros/" + id)))
-        .val()
-        ?.nome?.toUpperCase()
-    );
-
-    if (temLancamento) {
-      alert("❌ Este funcionário possui lançamentos e não pode ser excluído.\n\nApague os lançamentos primeiro!");
-      return;
-    }
-
-    // 2️⃣ Caso não tenha lançamentos, exclui normalmente
-    await remove(ref(window.db, "cadastros/" + id));
-    alert("✅ Funcionário excluído com sucesso!");
-  } catch (erro) {
-    console.error("Erro ao excluir funcionário:", erro);
-    alert("⚠️ Erro ao excluir funcionário. Verifique o console.");
-  }
-};
-
-
-// === FUNÇÕES DE LANÇAMENTOS ===
-window.listarLancamentosArray = async function() {
-  const snap = await get(lancamentosRef);
-  const data = snap.val() || {};
-  return Object.entries(data).map(([id, v]) => ({ id, ...v }));
-};
-
-window.adicionarLancamento = async function(l) {
-  await push(lancamentosRef, l);
-};
-
-window.atualizarLancamento = async function(id, l) {
-  await update(ref(window.db, "lancamentos/" + id), l);
-};
-
-window.excluirLancamentoFb = async function(id) {
-  await remove(ref(window.db, "lancamentos/" + id));
-};
-
-// === ATUALIZAÇÃO EM TEMPO REAL ===
-onValue(cadastrosRef, () => {
-  if (document.getElementById("consultar") && !document.getElementById("consultar").classList.contains("hidden")) {
-    window.mostrarCadastros();
-  }
-  window.atualizarDatalistLanc();
-});
-
-onValue(lancamentosRef, () => {
-  if (document.getElementById("consultarLancamento") && !document.getElementById("consultarLancamento").classList.contains("hidden")) {
-    window.mostrarLancamentos();
-  }
-});
-
-console.log("🔥 CRUD com SDK ativo e sincronizando em tempo real!");
 </script>
 
 </body>
