@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - Funcionários</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+  <h2>Cadastro de Funcionários</h2>
+
+  <label>Nome:</label><br>
+  <input id="nome" placeholder="Digite o nome"><br><br>
+
+  <label>Cargo:</label><br>
+  <input id="cargo" placeholder="Digite o cargo"><br><br>
+
+  <button onclick="salvar()">Salvar</button>
+  <button onclick="listar()">Listar</button>
+
+  <ul id="lista"></ul>
+
+  <!-- Importa o Firebase -->
+  <script type="module">
+    // Importa os módulos necessários
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, push, get, child } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+    // Configuração do seu projeto Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH9MG50ynnt4SiXGAFymBH9nXmBqLwTtU",
+      authDomain: "funcionarios-7c778.firebaseapp.com",
+      databaseURL: "https://funcionarios-7c778-default-rtdb.firebaseio.com",
+      projectId: "funcionarios-7c778",
+      storageBucket: "funcionarios-7c778.firebasestorage.app",
+      messagingSenderId: "632364021109",
+      appId: "1:632364021109:web:fcfaf1de66901c8a8b4f3c",
+      measurementId: "G-46DKFS3LHV"
+    };
+
+    // Inicializa o Firebase e o Banco de Dados
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Função para salvar funcionário
+    async function salvar() {
+      const nome = document.getElementById("nome").value.trim();
+      const cargo = document.getElementById("cargo").value.trim();
+      if (!nome || !cargo) return alert("Preencha todos os campos!");
+
+      await push(ref(db, "funcionarios"), { nome, cargo });
+      alert("✅ Funcionário salvo com sucesso!");
+      document.getElementById("nome").value = "";
+      document.getElementById("cargo").value = "";
+    }
+
+    // Função para listar funcionários
+    async function listar() {
+      const lista = document.getElementById("lista");
+      lista.innerHTML = "";
+
+      const snapshot = await get(child(ref(db), "funcionarios"));
+      if (snapshot.exists()) {
+        const dados = snapshot.val();
+        Object.keys(dados).forEach(id => {
+          const item = document.createElement("li");
+          item.textContent = `${dados[id].nome} - ${dados[id].cargo}`;
+          lista.appendChild(item);
+        });
+      } else {
+        lista.innerHTML = "<li>Nenhum funcionário encontrado.</li>";
+      }
+    }
+  </script>
+</body>
+</html>
